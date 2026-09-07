@@ -155,10 +155,24 @@ const audit = async (page) =>
       if (x < 0 || y < 0 || x > vw || y > vh) return false;
       const top = document.elementFromPoint(x, y);
       if (!top) return false;
-      const inA = a.contains(top) || top === a;
-      const inB = b.contains(top) || top === b;
+      /*
+       * Ownership has to look UP as well as down.
+       *
+       * SVG <text> is wrapped in a <g>, and elementFromPoint returns the group,
+       * not the text. Testing only `a.contains(top)` meant neither label owned
+       * the point and every colliding station name on the network diagram went
+       * unreported - the gate passed a map whose labels sat on top of each
+       * other.
+       *
+       * A shared ancestor (the <svg> itself) contains BOTH, which is what still
+       * rules out the "any common container proves it" false positive: that
+       * case makes ownsA and ownsB both true, and the pair is skipped.
+       */
+      const owns = (el) => top === el || el.contains(top) || top.contains(el);
+      const ownsA = owns(a);
+      const ownsB = owns(b);
       // Exactly one of them owns the point: the other is underneath it.
-      return inA !== inB;
+      return ownsA !== ownsB;
     };
 
     // The header floats over the page by design; pairs involving it are the

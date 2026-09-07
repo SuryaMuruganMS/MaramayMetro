@@ -31,7 +31,15 @@
   let morph = $state(0);
 
   const W = 100;
-  const H = 70;
+  /**
+   * The drawing area, not the coordinate space.
+   *
+   * Nodes are placed on a 100x70 grid, but nothing sits below y=50 - the tallest
+   * thing down there is Sabiha Gökçen. Rendering the full 70 left a third of the
+   * frame empty under the diagram. The viewBox is cropped to what is actually
+   * drawn, plus room for the labels that hang below the spine.
+   */
+  const H = 56;
 
   // The section register is a different projection entirely: chainage across,
   // real elevation down. It only has data for the Marmaray spine, and says so.
@@ -64,6 +72,31 @@
    * looking for them.
    */
   const byName = $derived([...NODES].sort((a, b) => a.name.localeCompare(b.name, locale)));
+
+  /**
+   * Label placement along the Marmaray spine.
+   *
+   * Eleven stations sit on one horizontal line, and right-anchored labels ran
+   * straight through each other - Bakırköy over Kazlıçeşme over Yenikapı. Real
+   * transit diagrams solve this by alternating sides of the line, so that is
+   * what happens here: consecutive spine stations take turns above and below,
+   * which doubles the room each name has without moving a single station.
+   */
+  const SPINE_Y = 40;
+  const spineOrder = NODES.filter((n) => n.y === SPINE_Y)
+    .sort((a, b) => a.x - b.x)
+    .map((n) => n.id);
+
+  function label(n: Node): { x: number; y: number; anchor: string } {
+    const p = pos(n);
+    const i = spineOrder.indexOf(n.id);
+    if (i >= 0 && register !== 'section') {
+      // Above on even, below on odd. Centred, so the name grows either side of
+      // its own station rather than into the next one.
+      return { x: p.x, y: i % 2 === 0 ? p.y - 2.8 : p.y + 4.2, anchor: 'middle' };
+    }
+    return { x: p.x + 2.2, y: p.y + 0.7, anchor: 'start' };
+  }
 
   const shown = $derived(NODES.filter((n) => !stepFreeOnly || n.stepFree));
   const shownIds = $derived(new Set(shown.map((n) => n.id)));
@@ -171,7 +204,7 @@
            it bends, which is one of the things the morph shows. -->
       {#if register !== 'section'}
         <path
-          d={morph < 0.5 ? 'M53,0 L53,70' : 'M55,0 C53,14 57,26 54,38 C52,46 56,56 53,70'}
+          d={morph < 0.5 ? 'M53,0 L53,56' : 'M55,0 C53,12 57,24 54,34 C52,42 56,50 53,56'}
           stroke="var(--turquoise)"
           stroke-width={2.4}
           fill="none"
@@ -232,8 +265,13 @@
               stroke-width={n.lines.length > 1 ? 0.7 : 0.5}
             />
             {#if n.lines.length > 1 || register === 'section' || focused === n.id}
-              <text x={p.x + 2.2} y={p.y + 0.7} class="stn__label" font-size="1.9"
-                >{n.name}</text
+              {@const l = label(n)}
+              <text
+                x={l.x}
+                y={l.y}
+                text-anchor={l.anchor}
+                class="stn__label"
+                font-size="1.7">{n.name}</text
               >
             {/if}
           </g>
@@ -379,10 +417,17 @@
     overflow-x: auto;
   }
   .netmap__svg {
+    /* Bounded by HEIGHT, not width. A 100x70 viewBox stretched to a 1290px
+       column comes out 900px tall and runs off the bottom of the screen; the
+       whole point of a network diagram is seeing all of it at once. */
     width: 100%;
+    max-width: calc(64vh * (100 / 56));
+    max-height: 64vh;
     min-width: 620px;
+    aspect-ratio: 100 / 56;
     height: auto;
     display: block;
+    margin-inline: auto;
   }
 
   .stn__label {
