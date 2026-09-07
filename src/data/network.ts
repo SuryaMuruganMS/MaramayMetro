@@ -16,11 +16,18 @@
  * readable abstraction of real geography, which is the entire point of a transit
  * diagram and the reason /harita also offers a geographic register.
  *
+ * The real positions live in `geography.ts` and are surveyed, not estimated.
+ * Keeping the two apart is deliberate: this file is a drawing and that one is a
+ * measurement, and the moment they share a field somebody will edit one meaning
+ * the other.
+ *
  * COLOURS are ours, from the İznik palette, not the operator's signage. A
  * concept build has no business publishing line colours it cannot source, and
  * inventing plausible ones for a real network is the quiet kind of dishonesty
  * this project avoids. Said outright on /renkler.
  */
+
+import { railKm, minutesFor } from '../lib/geo.ts';
 
 export interface Node {
   id: string;
@@ -28,17 +35,15 @@ export interface Node {
   /** Schematic position, Beck grammar. */
   x: number;
   y: number;
-  /**
-   * Approximate geographic position on the same grid, for the geographic
-   * register and the morph between the two.
+  /*
+   * There is no geographic position here any more.
    *
-   * INDICATIVE. These are placed by eye from the shape of the city, not
-   * projected from surveyed coordinates, and the register labels itself as such.
-   * The value of the morph is showing HOW MUCH a diagram distorts, which
-   * survives approximate positions; a claim of accuracy would not.
+   * It used to be a pair of numbers placed by eye, labelled indicative. Real
+   * coordinates for every one of these platforms are in `geography.ts`, taken
+   * from OpenStreetMap and projected properly, so the geographic register is
+   * now a map rather than an impression of one — and the morph between the two
+   * registers shows a real distortion instead of an imagined one.
    */
-  gx: number;
-  gy: number;
   /** Lines calling here. Two or more makes it an interchange. */
   lines: string[];
   continent: 'EU' | 'AS';
@@ -63,8 +68,6 @@ export const NODES: Node[] = [
     name: 'Halkalı',
     x: 4,
     y: 40,
-    gx: 8,
-    gy: 40,
     lines: ['MR'],
     continent: 'EU',
     stepFree: true,
@@ -74,8 +77,6 @@ export const NODES: Node[] = [
     name: 'Bakırköy',
     x: 12,
     y: 40,
-    gx: 20,
-    gy: 45,
     lines: ['MR', 'M3'],
     continent: 'EU',
     stepFree: true,
@@ -85,8 +86,6 @@ export const NODES: Node[] = [
     name: 'Kazlıçeşme',
     x: 17,
     y: 40,
-    gx: 34,
-    gy: 44,
     lines: ['MR', 'T1'],
     continent: 'EU',
     stepFree: true,
@@ -96,8 +95,6 @@ export const NODES: Node[] = [
     name: 'Yenikapı',
     x: 24,
     y: 40,
-    gx: 41,
-    gy: 43,
     lines: ['MR', 'M1A', 'M1B', 'M2'],
     continent: 'EU',
     stepFree: true,
@@ -107,8 +104,6 @@ export const NODES: Node[] = [
     name: 'Sirkeci',
     x: 38,
     y: 40,
-    gx: 48,
-    gy: 39,
     lines: ['MR', 'T1'],
     continent: 'EU',
     stepFree: true,
@@ -118,8 +113,6 @@ export const NODES: Node[] = [
     name: 'Üsküdar',
     x: 58,
     y: 40,
-    gx: 57,
-    gy: 38,
     lines: ['MR', 'M5'],
     continent: 'AS',
     stepFree: true,
@@ -129,8 +122,6 @@ export const NODES: Node[] = [
     name: 'Ayrılık Çeşmesi',
     x: 63,
     y: 40,
-    gx: 59,
-    gy: 40,
     lines: ['MR', 'M4'],
     continent: 'AS',
     stepFree: true,
@@ -140,8 +131,6 @@ export const NODES: Node[] = [
     name: 'Söğütlüçeşme',
     x: 67,
     y: 40,
-    gx: 60,
-    gy: 41,
     lines: ['MR'],
     continent: 'AS',
     stepFree: true,
@@ -151,8 +140,6 @@ export const NODES: Node[] = [
     name: 'Bostancı',
     x: 78,
     y: 40,
-    gx: 66,
-    gy: 45,
     lines: ['MR', 'M8'],
     continent: 'AS',
     stepFree: true,
@@ -162,8 +149,6 @@ export const NODES: Node[] = [
     name: 'Pendik',
     x: 88,
     y: 40,
-    gx: 82,
-    gy: 47,
     lines: ['MR'],
     continent: 'AS',
     stepFree: true,
@@ -173,8 +158,6 @@ export const NODES: Node[] = [
     name: 'Gebze',
     x: 96,
     y: 40,
-    gx: 94,
-    gy: 48,
     lines: ['MR'],
     continent: 'AS',
     stepFree: true,
@@ -186,8 +169,6 @@ export const NODES: Node[] = [
     name: 'Vezneciler',
     x: 30,
     y: 34,
-    gx: 45,
-    gy: 41,
     lines: ['M2'],
     continent: 'EU',
     stepFree: true,
@@ -197,8 +178,6 @@ export const NODES: Node[] = [
     name: 'Şişhane',
     x: 34,
     y: 28,
-    gx: 49,
-    gy: 35,
     lines: ['M2', 'F2'],
     continent: 'EU',
     stepFree: true,
@@ -208,8 +187,6 @@ export const NODES: Node[] = [
     name: 'Taksim',
     x: 36,
     y: 24,
-    gx: 51,
-    gy: 32,
     lines: ['M2'],
     continent: 'EU',
     stepFree: true,
@@ -219,8 +196,6 @@ export const NODES: Node[] = [
     name: 'Mecidiyeköy',
     x: 36,
     y: 18,
-    gx: 51,
-    gy: 26,
     lines: ['M2', 'M7'],
     continent: 'EU',
     stepFree: true,
@@ -230,8 +205,6 @@ export const NODES: Node[] = [
     name: 'Gayrettepe',
     x: 36,
     y: 15,
-    gx: 52,
-    gy: 24,
     lines: ['M2', 'M11'],
     continent: 'EU',
     stepFree: true,
@@ -241,8 +214,6 @@ export const NODES: Node[] = [
     name: 'Levent',
     x: 36,
     y: 12,
-    gx: 53,
-    gy: 22,
     lines: ['M2', 'M6'],
     continent: 'EU',
     stepFree: true,
@@ -252,8 +223,6 @@ export const NODES: Node[] = [
     name: 'Hacıosman',
     x: 36,
     y: 4,
-    gx: 55,
-    gy: 12,
     lines: ['M2'],
     continent: 'EU',
     stepFree: true,
@@ -265,8 +234,6 @@ export const NODES: Node[] = [
     name: 'Kirazlı',
     x: 12,
     y: 28,
-    gx: 22,
-    gy: 34,
     lines: ['M1B', 'M3'],
     continent: 'EU',
     stepFree: true,
@@ -276,8 +243,6 @@ export const NODES: Node[] = [
     name: 'Atatürk Havalimanı',
     x: 8,
     y: 48,
-    gx: 22,
-    gy: 44,
     lines: ['M1A'],
     continent: 'EU',
     stepFree: true,
@@ -287,8 +252,6 @@ export const NODES: Node[] = [
     name: 'Otogar',
     x: 16,
     y: 34,
-    gx: 26,
-    gy: 36,
     lines: ['M1A', 'M1B'],
     continent: 'EU',
     stepFree: true,
@@ -300,8 +263,6 @@ export const NODES: Node[] = [
     name: 'Kayaşehir Merkez',
     x: 7,
     y: 12,
-    gx: 14,
-    gy: 22,
     lines: ['M3'],
     continent: 'EU',
     stepFree: true,
@@ -311,8 +272,6 @@ export const NODES: Node[] = [
     name: 'Mahmutbey',
     x: 12,
     y: 22,
-    gx: 22,
-    gy: 30,
     lines: ['M3', 'M7'],
     continent: 'EU',
     stepFree: true,
@@ -322,8 +281,6 @@ export const NODES: Node[] = [
     name: 'Ataköy',
     x: 15,
     y: 46,
-    gx: 26,
-    gy: 45,
     lines: ['M9'],
     continent: 'EU',
     stepFree: true,
@@ -333,8 +290,6 @@ export const NODES: Node[] = [
     name: 'Olimpiyat',
     x: 11,
     y: 18,
-    gx: 16,
-    gy: 28,
     lines: ['M9', 'M3'],
     continent: 'EU',
     stepFree: true,
@@ -346,8 +301,6 @@ export const NODES: Node[] = [
     name: 'Boğaziçi Ü. / Hisarüstü',
     x: 42,
     y: 9,
-    gx: 57,
-    gy: 20,
     lines: ['M6'],
     continent: 'EU',
     stepFree: true,
@@ -357,8 +310,6 @@ export const NODES: Node[] = [
     name: 'İstanbul Havalimanı',
     x: 22,
     y: 6,
-    gx: 22,
-    gy: 10,
     lines: ['M11'],
     continent: 'EU',
     stepFree: true,
@@ -370,8 +321,6 @@ export const NODES: Node[] = [
     name: 'Yıldız',
     x: 42,
     y: 20,
-    gx: 53,
-    gy: 29,
     lines: ['M7'],
     continent: 'EU',
     stepFree: true,
@@ -383,8 +332,6 @@ export const NODES: Node[] = [
     name: 'Karaköy',
     x: 38,
     y: 33,
-    gx: 49,
-    gy: 37,
     lines: ['F2', 'T1'],
     continent: 'EU',
     stepFree: false,
@@ -396,8 +343,6 @@ export const NODES: Node[] = [
     name: 'Kadıköy',
     x: 62,
     y: 46,
-    gx: 58,
-    gy: 42,
     lines: ['M4'],
     continent: 'AS',
     stepFree: true,
@@ -407,8 +352,6 @@ export const NODES: Node[] = [
     name: 'Kozyatağı',
     x: 76,
     y: 46,
-    gx: 65,
-    gy: 42,
     lines: ['M4'],
     continent: 'AS',
     stepFree: true,
@@ -418,8 +361,6 @@ export const NODES: Node[] = [
     name: 'Kartal',
     x: 84,
     y: 46,
-    gx: 76,
-    gy: 46,
     lines: ['M4'],
     continent: 'AS',
     stepFree: true,
@@ -429,8 +370,6 @@ export const NODES: Node[] = [
     name: 'Sabiha Gökçen Havalimanı',
     x: 94,
     y: 50,
-    gx: 84,
-    gy: 42,
     lines: ['M4'],
     continent: 'AS',
     stepFree: true,
@@ -440,8 +379,6 @@ export const NODES: Node[] = [
     name: 'Ünalan',
     x: 68,
     y: 44,
-    gx: 61,
-    gy: 38,
     lines: ['M4', 'M8'],
     continent: 'AS',
     stepFree: true,
@@ -451,8 +388,6 @@ export const NODES: Node[] = [
     name: 'Samandıra Merkez',
     x: 82,
     y: 30,
-    gx: 74,
-    gy: 36,
     lines: ['M5'],
     continent: 'AS',
     stepFree: true,
@@ -462,8 +397,6 @@ export const NODES: Node[] = [
     name: 'Ümraniye',
     x: 70,
     y: 32,
-    gx: 63,
-    gy: 33,
     lines: ['M5'],
     continent: 'AS',
     stepFree: true,
@@ -473,8 +406,6 @@ export const NODES: Node[] = [
     name: 'Parseller',
     x: 80,
     y: 24,
-    gx: 70,
-    gy: 30,
     lines: ['M8'],
     continent: 'AS',
     stepFree: true,
@@ -484,8 +415,6 @@ export const NODES: Node[] = [
     name: 'Küçükbakkalköy',
     x: 74,
     y: 36,
-    gx: 63,
-    gy: 40,
     lines: ['M8'],
     continent: 'AS',
     stepFree: true,
@@ -649,10 +578,17 @@ export interface Edge {
 }
 
 /**
- * Adjacency, built from the routes. Times are indicative: they scale with the
- * schematic distance between nodes, which is a reasonable proxy on a network
- * whose drawn nodes are mostly interchanges, and is labelled as indicative
- * everywhere it surfaces.
+ * Adjacency, built from the routes.
+ *
+ * Times come from real distance and the service's real average speed, not from
+ * the drawing. They used to be scaled off the schematic, which was fine while
+ * the schematic was the only geometry we had — but it made the planner quote
+ * Halkalı to Sabiha Gökçen in forty-seven minutes for seventy kilometres, an
+ * average of ninety km/h on a metro. Real coordinates fixed the distance; this
+ * fixes the time that follows from it.
+ *
+ * Still indicative, and still said to be. A real timetable has peak and
+ * off-peak, junction conflicts and turnround allowances; this has an average.
  */
 export const GRAPH: Map<string, Edge[]> = (() => {
   const g = new Map<string, Edge[]>();
@@ -665,9 +601,7 @@ export const GRAPH: Map<string, Edge[]> = (() => {
     for (let i = 0; i < line.route.length - 1; i++) {
       const a = nodeById.get(line.route[i]!)!;
       const b = nodeById.get(line.route[i + 1]!)!;
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      // ~0.45 min per schematic unit, floored so no hop is instant.
-      const minutes = Math.max(2, Math.round(d * 0.45));
+      const minutes = minutesFor(railKm(a.id, b.id), line.kind);
       add(a.id, { to: b.id, line: line.id, minutes });
       add(b.id, { to: a.id, line: line.id, minutes });
     }

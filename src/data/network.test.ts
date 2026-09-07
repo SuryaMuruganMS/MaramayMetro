@@ -62,17 +62,12 @@ describe('the network graph', () => {
     }
   });
 
-  it('keeps every node inside the drawing area, in both registers', () => {
+  it('keeps every node inside the schematic drawing area', () => {
     for (const n of NODES) {
-      for (const [ax, ay] of [
-        [n.x, n.y],
-        [n.gx, n.gy],
-      ]) {
-        expect(ax).toBeGreaterThanOrEqual(0);
-        expect(ax).toBeLessThanOrEqual(100);
-        expect(ay).toBeGreaterThanOrEqual(0);
-        expect(ay).toBeLessThanOrEqual(70);
-      }
+      expect(n.x).toBeGreaterThanOrEqual(0);
+      expect(n.x).toBeLessThanOrEqual(100);
+      expect(n.y).toBeGreaterThanOrEqual(0);
+      expect(n.y).toBeLessThanOrEqual(70);
     }
   });
 

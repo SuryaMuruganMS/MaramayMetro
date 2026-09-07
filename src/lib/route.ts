@@ -1,4 +1,5 @@
-import { GRAPH, LINES, nodeById, type Node } from '../data/network.ts';
+import { GRAPH, nodeById, type Node } from '../data/network.ts';
+import { railKm } from './geo.ts';
 
 /**
  * Finding a way across the network.
@@ -42,7 +43,7 @@ export interface Leg {
   /** Every station called at, boarding station first. */
   stops: string[];
   minutes: number;
-  /** Route distance, kilometres. See `distance.ts` for how this is scaled. */
+  /** Distance along the track, kilometres. See `geo.ts` for the scaling. */
   km: number;
 }
 
@@ -56,48 +57,6 @@ export interface Route {
   /** Number of changes of train. One fewer than the number of legs. */
   changes: number;
   km: number;
-}
-
-// ---------------------------------------------------------------------------
-// Distance
-// ---------------------------------------------------------------------------
-
-/**
- * How long is a grid unit?
- *
- * The geographic coordinates in `network.ts` are placed by eye, on a 100x70
- * grid, and are honest about being indicative. But their SHAPE is right, and
- * one distance on this network is known exactly: Marmaray is 76.6 km from
- * Halkalı to Gebze. So rather than typing a scale factor and hoping, the scale
- * is DERIVED - measure the Marmaray spine in grid units, divide the real length
- * by it, and every other distance on the map inherits that calibration.
- *
- * It also means the constant cannot go stale. Nudge a station to make a label
- * fit and the scale re-derives on the next build; nothing silently drifts.
- */
-const MARMARAY_KM = 76.6;
-
-const gridLength = (ids: string[]): number => {
-  let d = 0;
-  for (let i = 0; i < ids.length - 1; i++) {
-    const a = nodeById.get(ids[i]!)!;
-    const b = nodeById.get(ids[i + 1]!)!;
-    d += Math.hypot(a.gx - b.gx, a.gy - b.gy);
-  }
-  return d;
-};
-
-export const KM_PER_UNIT: number = (() => {
-  const mr = LINES.find((l) => l.id === 'MR')!;
-  return MARMARAY_KM / gridLength(mr.route);
-})();
-
-/** Distance between two adjacent drawn stations, kilometres. */
-export function hopKm(a: string, b: string): number {
-  const na = nodeById.get(a);
-  const nb = nodeById.get(b);
-  if (!na || !nb) return 0;
-  return Math.hypot(na.gx - nb.gx, na.gy - nb.gy) * KM_PER_UNIT;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +147,7 @@ function toLegs(from: string, hops: Hop[]): Leg[] {
     cur.stops.push(h.node);
     cur.to = h.node;
     cur.minutes += h.minutes;
-    cur.km += hopKm(at, h.node);
+    cur.km += railKm(at, h.node);
     at = h.node;
   }
   return legs;

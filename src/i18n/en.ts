@@ -103,7 +103,7 @@ export const en = {
   'map.stepFree': 'Step-free stations only',
   'map.alt': 'The İstanbul rail network: eleven metro lines, Marmaray, tram and the Tünel.',
   'map.geoCaveat':
-    'Real coastline from OpenStreetMap. Station positions are placed against it and are accurate to a few hundred metres.',
+    'Coastline and station positions are OpenStreetMap\u2019s. The coast is simplified to about a hundred metres; each station is its own platform\u2019s coordinates.',
   'map.sectionCaveat':
     'The section covers only the Marmaray central tunnel; there is no level data for the other lines.',
   'map.tableToggle': 'Open the map as a table',
@@ -124,6 +124,18 @@ export const en = {
   'map.depth': 'Platform level',
   'map.connections': 'Connections',
   'map.planFrom': 'Plan a journey from here',
+  'map.calls': 'Lines calling here',
+  'map.otherSide': 'Across the Bosphorus',
+  'map.otherSideBody': 'The shortest way from this station to the other continent.',
+  'map.coords': 'Coordinates',
+  'map.faresFrom': 'Fares from here',
+  'map.notOnLine': 'Not on the Marmaray central tunnel, so there is no level for it here.',
+  'map.hereAlready': 'This station is on the crossing itself.',
+  'map.linesHeading': 'Lines',
+  'map.drawnNote':
+    'The network has {all} stations; {drawn} are drawn here, including all {interchanges} interchanges.',
+  'map.pickPrompt': 'Select a station on the map to open it.',
+  'map.source': 'Geography: OpenStreetMap contributors, ODbL.',
 
   // ------------------------------------------------------------------- planner
   'plan.title': 'Journey planner',

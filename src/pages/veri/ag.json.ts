@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { LINES, NODES } from '../../data/network.ts';
+import { GEO } from '../../data/geography.ts';
 
 /**
  * The network graph, as a file.
@@ -14,6 +15,7 @@ export const GET: APIRoute = () =>
     JSON.stringify(
       {
         note: 'Concept build by Continuum Studios. Not an official dataset. Drawn subset: termini and all interchanges.',
+        locationSource: 'OpenStreetMap contributors, ODbL.',
         stations: NODES.map((n) => ({
           id: n.id,
           name: n.name,
@@ -21,7 +23,9 @@ export const GET: APIRoute = () =>
           continent: n.continent,
           stepFree: n.stepFree,
           schematic: { x: n.x, y: n.y },
-          geographicIndicative: { x: n.gx, y: n.gy },
+          // Real coordinates, from OpenStreetMap. The schematic pair above is a
+          // drawing; this pair is where the platform is.
+          location: GEO[n.id] ? { lat: GEO[n.id]!.lat, lon: GEO[n.id]!.lon } : null,
         })),
         lines: LINES.map((l) => ({
           id: l.id,

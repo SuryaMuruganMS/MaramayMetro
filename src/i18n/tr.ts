@@ -86,7 +86,7 @@ export const tr: Record<Keys, string> = {
   'map.stepFree': 'Yalnızca engelsiz istasyonlar',
   'map.alt': 'İstanbul raylı sistem ağı: on bir metro hattı, Marmaray, tramvay ve Tünel.',
   'map.geoCaveat':
-    'Kıyı çizgisi OpenStreetMap’ten alınmıştır. İstasyon konumları buna göre yerleştirilmiştir ve birkaç yüz metre hassasiyetindedir.',
+    'Kıyı çizgisi ve istasyon konumları OpenStreetMap’ten. Kıyı yaklaşık yüz metreye sadeleştirildi; her istasyon kendi peronunun koordinatıdır.',
   'map.sectionCaveat':
     'Kesit yalnızca Marmaray merkez tünel kesitini gösterir; diğer hatların kot verisi yoktur.',
   'map.tableToggle': 'Haritayı tablo olarak aç',
@@ -107,6 +107,18 @@ export const tr: Record<Keys, string> = {
   'map.depth': 'Peron kotu',
   'map.connections': 'Bağlantılar',
   'map.planFrom': 'Buradan sefer planla',
+  'map.calls': 'Buraya uğrayan hatlar',
+  'map.otherSide': 'Boğaz’ın karşısına',
+  'map.otherSideBody': 'Bu istasyondan diğer kıtaya en kısa yol.',
+  'map.coords': 'Koordinatlar',
+  'map.faresFrom': 'Buradan ücretler',
+  'map.notOnLine': 'Marmaray merkez tünelinde değil; bu yüzden burada kot bilgisi yok.',
+  'map.hereAlready': 'Bu istasyon zaten geçişin üzerinde.',
+  'map.linesHeading': 'Hatlar',
+  'map.drawnNote':
+    'Ağda toplam {all} istasyon var; burada {drawn} tanesi çizili — {interchanges} aktarma noktasının tamamı dahil.',
+  'map.pickPrompt': 'Açmak için haritadan bir istasyon seçin.',
+  'map.source': 'Coğrafya: OpenStreetMap katkıcıları, ODbL.',
 
   'plan.title': 'Sefer planlayıcı',
   'plan.lede':

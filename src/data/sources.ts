@@ -59,6 +59,12 @@ export const SOURCES = {
     covers: 'Mean annual days with lying snow.',
     confidence: 'derived',
   },
+  openstreetmap: {
+    label: 'OpenStreetMap contributors, ODbL',
+    covers:
+      'The coastline of the Bosphorus, the Golden Horn and the Marmara shore, the Princes’ Islands and the inland reservoirs, and the coordinates of every station drawn on the geographic register.',
+    confidence: 'measured',
+  },
   'alignment-indicative': {
     label: 'Reconstructed from the published long-section',
     covers:

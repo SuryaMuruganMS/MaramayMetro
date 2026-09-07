@@ -40,7 +40,39 @@ const ROUTES = [
   '/en/kazi/',
   '/en/harita/',
   '/en/sefer/',
+
+  /**
+   * The map's other two registers, which a plain page load never reaches.
+   *
+   * The geographic register is where labels are most likely to collide: on the
+   * ground eight stations sit inside two kilometres of Karaköy, where the
+   * diagram gives them a whole quadrant. It is placed by an algorithm rather
+   * than by hand, which is exactly the kind of thing that needs a gate rather
+   * than a look.
+   */
+  {
+    path: '/harita/',
+    name: '/harita/ (geographic)',
+    prepare: async (page) => {
+      await page.locator('.seg__btn').nth(1).click({ force: true });
+      // Longer than the 900ms morph, so the audit sees it settled.
+      await page.waitForTimeout(1100);
+    },
+  },
+  {
+    path: '/harita/',
+    name: '/harita/ (station open)',
+    prepare: async (page) => {
+      await page.locator('.seg__btn').nth(1).click({ force: true });
+      await page.waitForTimeout(1100);
+      await page.locator('g.stn[aria-label="Yenikapı"]').click({ force: true });
+      await page.waitForTimeout(300);
+    },
+  },
 ];
+
+/** Routes may be a bare path or a path with an interaction to run first. */
+const routeOf = (r) => (typeof r === 'string' ? { path: r, name: r } : r);
 
 const WIDTHS = [
   { w: 1600, h: 900, name: 'wide' },
@@ -243,15 +275,26 @@ for (const service of ['day', 'night']) {
     });
     const page = await ctx.newPage();
 
-    for (const route of ROUTES) {
-      await page.goto(BASE + route, { waitUntil: 'load' });
+    for (const entry of ROUTES) {
+      const route = routeOf(entry);
+      await page.goto(BASE + route.path, { waitUntil: 'load' });
       await page.evaluate((svc) => {
         document.documentElement.setAttribute('data-service', svc);
       }, service);
+      if (route.prepare) {
+        // At the reflow width the map's controls may be off-screen or the
+        // island not yet hydrated; a variant that cannot be set up is skipped
+        // rather than failed, because the plain route already covers the page.
+        try {
+          await route.prepare(page);
+        } catch {
+          continue;
+        }
+      }
 
       // The crossing is the only route with a scroll-position dimension; every
       // other page is audited top and bottom.
-      const isCrossing = route === '/' || route === '/en/';
+      const isCrossing = route.path === '/' || route.path === '/en/';
       const positions = isCrossing ? SCROLLS : [0, 1];
 
       for (const p of positions) {
@@ -278,7 +321,7 @@ for (const service of ['day', 'night']) {
         const problems = await audit(page);
         audits++;
         for (const pr of problems) {
-          found.push({ route, service, width: size.name, at: p, ...pr });
+          found.push({ route: route.name, service, width: size.name, at: p, ...pr });
         }
       }
     }

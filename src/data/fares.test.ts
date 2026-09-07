@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { findRoute, KM_PER_UNIT, hopKm } from '../lib/route.ts';
+import { findRoute } from '../lib/route.ts';
+import { railKm, RAIL_FACTOR, chordKm } from '../lib/geo.ts';
+import { MARMARAY_ROUTE } from './geography.ts';
 import {
   fareFor,
   legKurus,
@@ -30,29 +32,30 @@ import { NODES } from './network.ts';
  */
 
 describe('distance scale', () => {
-  it('calibrates the grid against the one length we know exactly', () => {
+  it('calibrates against the one length we know exactly', () => {
     // Marmaray is 76.6 km, so summing the spine at this scale must return it.
-    const spine = [
-      'halkali',
-      'bakirkoy',
-      'kazlicesme',
-      'yenikapi',
-      'sirkeci',
-      'uskudar',
-      'ayrilik-cesmesi',
-      'sogutlucesme',
-      'bostanci',
-      'pendik',
-      'gebze',
-    ];
     let km = 0;
-    for (let i = 0; i < spine.length - 1; i++) km += hopKm(spine[i]!, spine[i + 1]!);
+    for (let i = 0; i < MARMARAY_ROUTE.length - 1; i++) {
+      km += railKm(MARMARAY_ROUTE[i]!, MARMARAY_ROUTE[i + 1]!);
+    }
     expect(km).toBeCloseTo(76.6, 6);
   });
 
-  it('is a positive scale, not an accidental zero', () => {
-    expect(KM_PER_UNIT).toBeGreaterThan(0.5);
-    expect(KM_PER_UNIT).toBeLessThan(1.5);
+  it('makes track longer than the straight line, but not absurdly so', () => {
+    // A factor under 1 would mean the trains cut corners; much over 1.3 would
+    // mean the station coordinates are wrong rather than the track being bendy.
+    expect(RAIL_FACTOR).toBeGreaterThan(1);
+    expect(RAIL_FACTOR).toBeLessThan(1.3);
+  });
+
+  it('measures real ground distances', () => {
+    // Sirkeci to Üsküdar is the crossing itself: a shade over three kilometres
+    // of Bosphorus, which is a figure anybody can check on a map.
+    expect(chordKm('sirkeci', 'uskudar')).toBeGreaterThan(2.8);
+    expect(chordKm('sirkeci', 'uskudar')).toBeLessThan(3.8);
+    // Halkalı to Gebze as the crow flies is well short of the railway's 76.6.
+    expect(chordKm('halkali', 'gebze')).toBeGreaterThan(50);
+    expect(chordKm('halkali', 'gebze')).toBeLessThan(70);
   });
 });
 

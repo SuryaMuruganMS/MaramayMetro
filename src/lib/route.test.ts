@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { findRoute, CHANGE_PENALTY, hopKm } from './route.ts';
+import { findRoute, CHANGE_PENALTY } from './route.ts';
+import { railKm } from './geo.ts';
 import { NODES, lineById } from '../data/network.ts';
 
 describe('findRoute', () => {
@@ -80,7 +81,7 @@ describe('findRoute', () => {
   it('measures a leg as the sum of its hops, not as the crow flies', () => {
     const r = findRoute('halkali', 'gebze')!;
     const byHop = r.legs[0]!.stops.reduce(
-      (n, s, i, arr) => (i === 0 ? 0 : n + hopKm(arr[i - 1]!, s)),
+      (n, s, i, arr) => (i === 0 ? 0 : n + railKm(arr[i - 1]!, s)),
       0,
     );
     expect(r.legs[0]!.km).toBeCloseTo(byHop, 6);

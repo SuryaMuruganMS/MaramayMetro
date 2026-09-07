@@ -97,7 +97,7 @@ export const ar: Record<Keys, string> = {
   'map.stepFree': 'المحطات الخالية من الدرجات فقط',
   'map.alt': 'شبكة السكك في إسطنبول: أحد عشر خط مترو، ومرمراي، والترام، وتونيل.',
   'map.geoCaveat':
-    'خط الساحل مأخوذ من OpenStreetMap. مواقع المحطات موضوعة عليه بدقة تقارب بضع مئات من الأمتار.',
+    'خط الساحل ومواقع المحطات من OpenStreetMap. الساحل مبسَّط إلى نحو مئة متر، وكل محطة هي إحداثيات رصيفها نفسه.',
   'map.sectionCaveat':
     'المقطع يغطي نفق مرمراي الأوسط فقط؛ لا تتوفر بيانات مناسيب للخطوط الأخرى.',
   'map.tableToggle': 'افتح الخريطة كجدول',
@@ -118,6 +118,18 @@ export const ar: Record<Keys, string> = {
   'map.depth': 'منسوب الرصيف',
   'map.connections': 'الوصلات',
   'map.planFrom': 'خطط رحلة من هنا',
+  'map.calls': 'الخطوط التي تقف هنا',
+  'map.otherSide': 'إلى الضفة الأخرى من البوسفور',
+  'map.otherSideBody': 'أقصر طريق من هذه المحطة إلى القارة الأخرى.',
+  'map.coords': 'الإحداثيات',
+  'map.faresFrom': 'الأجور من هنا',
+  'map.notOnLine': 'ليست على نفق مرمراي الأوسط، فلا منسوب لها هنا.',
+  'map.hereAlready': 'هذه المحطة على المعبر نفسه.',
+  'map.linesHeading': 'الخطوط',
+  'map.drawnNote':
+    'تضم الشبكة {all} محطة، ورُسم منها هنا {drawn}، بما في ذلك محطات التبديل كلها وعددها {interchanges}.',
+  'map.pickPrompt': 'اختر محطة على الخريطة لفتحها.',
+  'map.source': 'الجغرافيا: مساهمو OpenStreetMap، رخصة ODbL.',
 
   'plan.title': 'مخطط الرحلة',
   'plan.lede':

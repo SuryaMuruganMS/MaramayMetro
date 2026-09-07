@@ -11,6 +11,14 @@ interface Props {
 const { locale } = Astro.props;
 const tt = translator(locale);
 
+/**
+ * Everything the island can render, resolved here.
+ *
+ * The map is one component but two pieces of interface - the diagram and the
+ * card that opens when a station is picked - and both take their strings from
+ * this one list. Listing them rather than shipping the dictionary keeps the
+ * page carrying only what it can actually say.
+ */
 const KEYS = [
   'reg.label',
   'reg.diagram',
@@ -20,6 +28,7 @@ const KEYS = [
   'map.alt',
   'map.geoCaveat',
   'map.sectionCaveat',
+  'map.click',
   'map.tableToggle',
   'map.tableCaption',
   'map.station',
@@ -29,15 +38,34 @@ const KEYS = [
   'map.yes',
   'map.no',
   'map.notAll',
+  'map.pickPrompt',
+  'map.source',
+  // the station card
+  'map.openStation',
+  'map.close',
+  'map.calls',
+  'map.depth',
+  'map.notOnLine',
+  'map.otherSide',
+  'map.hereAlready',
+  'map.coords',
+  'map.planFrom',
+  'map.faresFrom',
+  'plan.duration',
+  'plan.changes',
+  'plan.fare',
+  'x.km',
+  'x.min',
   'j.europe',
   'j.asia',
 ];
 const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
 
-const note =
-  locale === 'tr'
-    ? `Ağda toplam ${num(NETWORK.stations.value, locale)} istasyon var; bu şemada ${DRAWN_STATIONS} tanesi çizili — ${INTERCHANGES.length} aktarma noktasının tamamı dahil.`
-    : `The network has ${num(NETWORK.stations.value, locale)} stations; ${DRAWN_STATIONS} are drawn here, including all ${INTERCHANGES.length} interchanges.`;
+/** Counts substituted into one sentence, so the sentence can be translated. */
+const note = tt('map.drawnNote')
+  .replace('{all}', num(NETWORK.stations.value, locale))
+  .replace('{drawn}', num(DRAWN_STATIONS, locale))
+  .replace('{interchanges}', num(INTERCHANGES.length, locale));
 ---
 
 <section class="section">
@@ -51,7 +79,7 @@ const note =
     <NetworkMap client:load locale={locale} labels={labels} />
 
     <div class="lines">
-      <h2>{locale === 'tr' ? 'Hatlar' : 'Lines'}</h2>
+      <h2>{tt('map.linesHeading')}</h2>
       <ul class="lines__list">
         {
           LINES.map((l) => (
