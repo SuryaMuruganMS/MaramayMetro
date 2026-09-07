@@ -1,0 +1,88 @@
+---
+import { formatLevel } from '../../lib/chainage.ts';
+import { upper, type Locale } from '../../lib/locale.ts';
+
+/**
+ * The station nameplate.
+ *
+ * An enamelled platform sign: a heavy coloured bar, the name set large in the
+ * display face, and the level in mono at the end. This is the object a
+ * passenger actually reads to know where they are, so on this site it is the
+ * largest thing on a stop panel.
+ *
+ * The name goes through the Turkish-aware case mapper, never CSS
+ * `text-transform`, which applies the browser's locale rules and turns
+ * "Sirkeci" into "SIRKECI" instead of "SİRKECİ".
+ */
+interface Props {
+  name: string;
+  level: number;
+  locale: Locale;
+}
+const { name, level } = Astro.props;
+// Always mapped in Turkish: these are Turkish place names regardless of the
+// language the surrounding page is written in.
+const shown = upper(name, 'tr');
+---
+
+<div class="plate">
+  <span class="plate__bar" aria-hidden="true"></span>
+  <span class="plate__name">{shown}</span>
+  <span class="plate__level mono" aria-hidden="true">{formatLevel(level)}</span>
+</div>
+
+<style>
+  .plate {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-snug);
+    align-self: flex-start;
+    max-width: 100%;
+    padding: var(--sp-tight) var(--sp-base) var(--sp-tight) var(--sp-snug);
+    border-radius: var(--r-capsule);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    /* Enamel: a hard specular edge along the top, not a soft drop shadow. */
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, #fff 55%, transparent),
+      0 1px 0 color-mix(in oklab, var(--ink) 8%, transparent);
+  }
+  .plate__bar {
+    flex: none;
+    width: 7px;
+    align-self: stretch;
+    min-height: 2.2em;
+    border-radius: var(--r-capsule);
+    background: var(--accent);
+  }
+  .plate__name {
+    font-family: var(--f-display);
+    font-weight: 700;
+    /* Signage scale. This is meant to be read across a platform. */
+    font-size: clamp(1.7rem, 5.2vw, 4.4rem);
+    line-height: 1;
+    letter-spacing: -0.022em;
+    /* Variable width axis, driven by travel speed. The name narrows as you
+       pass it, the way a sign does when you are not stopping. */
+    font-stretch: calc(100% - var(--vel, 0) * 6%);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .plate__level {
+    flex: none;
+    font-size: var(--t-small);
+    color: var(--ink-3);
+    padding-left: var(--sp-snug);
+    border-left: 1px solid var(--rule);
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 640px) {
+    .plate__level {
+      display: none;
+    }
+  }
+</style>

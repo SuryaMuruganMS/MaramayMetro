@@ -1,0 +1,52 @@
+{
+  "name": "marmaray-crossing",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Crossing - a concept transit site for the Marmaray, where horizontal scroll is distance, vertical is depth below the Bosphorus, and at two stations depth is also time.",
+  "engines": {
+    "node": ">=20.3.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "check:svelte": "svelte-check --tsconfig ./tsconfig.json --threshold error",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "budgets": "node scripts/check-budgets.mjs",
+    "check:layout": "node scripts/check-layout.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "verify": "npm run test && npm run lint && npm run check && npm run check:svelte && npm run check:contrast && npm run build && npm run budgets"
+  },
+  "dependencies": {
+    "@astrojs/svelte": "^9.0.1",
+    "astro": "^7.2.10",
+    "svelte": "^5.57.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@eslint/js": "^10.0.1",
+    "@fontsource-variable/azeret-mono": "^5.3.0",
+    "@fontsource-variable/rubik": "^5.3.0",
+    "@fontsource-variable/source-sans-3": "^5.3.0",
+    "@types/node": "^24.13.3",
+    "eslint": "^10.9.1",
+    "eslint-plugin-astro": "^3.1.0",
+    "eslint-plugin-svelte": "^3.23.0",
+    "playwright": "^1.63.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-svelte": "^4.1.1",
+    "svelte-check": "^4.7.6",
+    "svelte-eslint-parser": "^1.8.1",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^5.0.0"
+  }
+}

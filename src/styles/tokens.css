@@ -1,0 +1,311 @@
+/* ==========================================================================
+   The Crossing — design tokens
+
+   Two colour systems that never blend, which is the deliberate opposite of the
+   single interpolated ramp on our Kestrel project and the reason the two sites
+   cannot be mistaken for each other.
+
+     1. LINE COLOUR is flat İznik pigment at full chroma. Identity. Never a
+        gradient, because signage is not a gradient.
+
+     2. DEPTH STRATA is the ground behind everything, and it STEPS. Five discrete
+        bands from surface to abyssal. You can see the horizon you crossed, which
+        a continuous fade hides.
+
+   The İznik palette is the documented four-colour scheme of 16th-century Ottoman
+   tilework: cobalt, turquoise, Armenian bole red, and gold, on a white slip.
+   These are not arbitrary brand colours; they come from the city the site is
+   about.
+
+   DAY AND NIGHT are service hours, not a preference. Night keeps the pigments at
+   full strength and drops the strata to near-black, because that is what a metro
+   actually looks like at one in the morning.
+   ========================================================================== */
+
+:root {
+  /* ---------------------------------------------------------- İznik pigment */
+  --cobalt: #1b4f9c;
+  --cobalt-deep: #123a78;
+  --cobalt-lift: #3f74c4;
+  --turquoise: #0f6a68;
+  --turquoise-lift: #2aa39f;
+  --bole: #b32d26;
+  --bole-lift: #dd5349;
+  --gold: #8a6212;
+  --gold-lift: #cb9a33;
+  --slip: #f8f9f8; /* the white a tile is painted on */
+
+  /* ------------------------------------------------------------ depth strata
+     Day service. Deeper gains BLUE, and loses only a little lightness.
+
+     The first cut ran to #94b1c0 at the bottom on the reasoning that deeper
+     should be darker. On a light ground that put the secondary inks at 1.38:1 -
+     the same failure as our last project, where the ground moved and the ink
+     did not. The water column reads perfectly well as increasing saturation,
+     and saturation costs no contrast. */
+  --band-surface: #eef2f3;
+  --band-shallow: #e3edf2;
+  --band-deep: #d7e7ef;
+  --band-seabed: #cbe1ec;
+  --band-abyssal: #bedbe9;
+
+  /* Resolved by [data-band] below. Everything paints from these two. */
+  --ground: var(--band-surface);
+  --ground-2: #ffffff;
+  --surface: #ffffff;
+
+  /* -------------------------------------------------------------------- ink */
+  --ink: #0d171c;
+  --ink-2: #2e424a;
+  /* Both secondary inks are held to 4.5:1 against the DARKEST day band, not
+     against the lightest. An ink that only passes at the surface fails the
+     moment the reader descends. */
+  --ink-3: #41545d;
+  --ink-4: #4b5e67;
+  --ink-on-pigment: #ffffff;
+
+  --rule: #c2d0d6;
+  --rule-soft: #d8e2e6;
+  --rule-strong: #94a7b0;
+
+  /* ----------------------------------------------------------------- accent
+     The site's single accent is bole red. Cobalt is structural, turquoise is
+     for the water, gold is for the engineering record. Four pigments, four
+     jobs — none of them decorative. */
+  --accent: var(--bole);
+  --accent-ink: #9b271f;
+  --accent-wash: #fae9e7;
+
+  /* --------------------------------------------------------------- semantic
+     Kept separate from the pigments so a service alert never reads as brand. */
+  --ok: #1c7a52;
+  --warn: #98620f;
+  --stop: #b3221c;
+
+  /* ------------------------------------------------------------------- type
+     Rubik carries the signage voice: geometric, faintly rounded, the family a
+     transit authority would actually commission. Source Sans 3 does the reading.
+     Azeret Mono does the numbers — chainage, depth, times.
+
+     All three are chosen for full Turkish orthography (ı İ ş ğ ü ö ç), not
+     retrofitted to it. */
+  --f-display: 'Rubik Variable', 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  --f-body:
+    'Source Sans 3 Variable', 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --f-mono: 'Azeret Mono Variable', 'Azeret Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* Signage runs large. A platform sign is read at ten metres, and the station
+     names on this site behave the same way. */
+  --t-mega: clamp(3rem, 11vw, 9rem);
+  --t-h1: clamp(2.1rem, 5.6vw, 4rem);
+  --t-h2: clamp(1.5rem, 3.2vw, 2.2rem);
+  --t-h3: clamp(1.15rem, 2vw, 1.4rem);
+  --t-lede: clamp(1.05rem, 1.5vw, 1.24rem);
+  --t-body: 1rem;
+  --t-small: 0.875rem;
+  --t-micro: 0.6875rem;
+
+  --tr-display: -0.03em;
+  --tr-label: 0.14em;
+
+  /* ----------------------------------------------------------------- space */
+  --sp-hair: 4px;
+  --sp-tight: 8px;
+  --sp-snug: 14px;
+  --sp-base: 22px;
+  --sp-roomy: 36px;
+  --sp-loose: 60px;
+  --sp-vast: 104px;
+
+  --margin: clamp(18px, 4vw, 56px);
+  --shell: 1280px;
+  --measure: 66ch;
+
+  /* ---------------------------------------------------------------- shapes
+     Fully rounded. Every other site in this portfolio uses a radius of zero;
+     this one is built from roundels, capsules and tiles. */
+  --r-capsule: 999px;
+  --r-tile: 3px;
+  --r-panel: 6px;
+
+  --border-hair: 1px solid var(--rule);
+  --border-tile: 1px solid var(--rule-strong);
+
+  /* ----------------------------------------------------------------- motion */
+  --d-hover: 140ms;
+  --d-press: 90ms;
+  --d-ui: 240ms;
+  --d-scene: 620ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-mech: cubic-bezier(0.5, 0, 0.2, 1); /* mechanical, for flaps and doors */
+
+  /* ------------------------------------------------------------ furniture
+     Reserved gutters, so fixed chrome can never sit on top of copy. This is the
+     lesson from Kestrel, where a fixed gauge covered content at sixty different
+     scroll positions before a gate caught it. */
+  --rail-h: 74px;
+  --head-h: 60px;
+  --readout-w: 0px;
+
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   Depth strata. Set by the engine as [data-band] on <html>.
+
+   Stepped on purpose. The transition is short so a band change reads as a
+   threshold being crossed rather than as a fade.
+   -------------------------------------------------------------------------- */
+:root[data-band='surface'] {
+  --ground: var(--band-surface);
+}
+:root[data-band='shallow'] {
+  --ground: var(--band-shallow);
+}
+:root[data-band='deep'] {
+  --ground: var(--band-deep);
+}
+:root[data-band='seabed'] {
+  --ground: var(--band-seabed);
+}
+:root[data-band='abyssal'] {
+  --ground: var(--band-abyssal);
+}
+
+/* --------------------------------------------------------------------------
+   Night service.
+
+   Not a dark mode. Marmaray closes; this is what the network looks like while
+   it is shut. Pigments hold their chroma, the strata go to almost nothing, and
+   the only colour left on screen is signage.
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-service='day']) {
+    --cobalt: #5f97e2;
+    --cobalt-deep: #3d6db6;
+    --cobalt-lift: #8fb8ee;
+    --turquoise: #2fb5ad;
+    --turquoise-lift: #55cfc7;
+    --bole: #ef6156;
+    --bole-lift: #ff8b80;
+    --gold: #d5a343;
+    --gold-lift: #e8bd63;
+    --slip: #0d1519;
+
+    --band-surface: #0b1418;
+    --band-shallow: #091319;
+    --band-deep: #07121b;
+    --band-seabed: #05101a;
+    --band-abyssal: #030b13;
+
+    --ground: var(--band-surface);
+    --ground-2: #101b20;
+    --surface: #132026;
+
+    --ink: #e9f1f3;
+    --ink-2: #aec0c7;
+    --ink-3: #7e9198;
+    --ink-4: #6e848e;
+    --ink-on-pigment: #06121a;
+
+    --rule: #24343b;
+    --rule-soft: #18242a;
+    --rule-strong: #3b525c;
+
+    --accent: var(--bole);
+    --accent-ink: #ff9188;
+    --accent-wash: #2a1310;
+
+    --ok: #4bbd88;
+    --warn: #d5a343;
+    --stop: #ff6f64;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-service='night'] {
+  --cobalt: #5f97e2;
+  --cobalt-deep: #3d6db6;
+  --cobalt-lift: #8fb8ee;
+  --turquoise: #2fb5ad;
+  --turquoise-lift: #55cfc7;
+  --bole: #ef6156;
+  --bole-lift: #ff8b80;
+  --gold: #d5a343;
+  --gold-lift: #e8bd63;
+  --slip: #0d1519;
+
+  --band-surface: #0b1418;
+  --band-shallow: #091319;
+  --band-deep: #07121b;
+  --band-seabed: #05101a;
+  --band-abyssal: #030b13;
+
+  --ground: var(--band-surface);
+  --ground-2: #101b20;
+  --surface: #132026;
+
+  --ink: #e9f1f3;
+  --ink-2: #aec0c7;
+  --ink-3: #7e9198;
+  --ink-4: #6e848e;
+  --ink-on-pigment: #06121a;
+
+  --rule: #24343b;
+  --rule-soft: #18242a;
+  --rule-strong: #3b525c;
+
+  --accent: var(--bole);
+  --accent-ink: #ff9188;
+  --accent-wash: #2a1310;
+
+  --ok: #4bbd88;
+  --warn: #d5a343;
+  --stop: #ff6f64;
+
+  color-scheme: dark;
+}
+
+/* Re-resolve the band under night service, since the band values changed. */
+:root[data-service='night'][data-band='shallow'],
+:root[data-band='shallow'] {
+  --ground: var(--band-shallow);
+}
+:root[data-service='night'][data-band='deep'],
+:root[data-band='deep'] {
+  --ground: var(--band-deep);
+}
+:root[data-service='night'][data-band='seabed'],
+:root[data-band='seabed'] {
+  --ground: var(--band-seabed);
+}
+:root[data-service='night'][data-band='abyssal'],
+:root[data-band='abyssal'] {
+  --ground: var(--band-abyssal);
+}
+
+/* --------------------------------------------------------------------------
+   Line colours.
+
+   These are OUR palette, derived from İznik, not the operator's official
+   signage colours. A concept build has no business publishing colours it cannot
+   source, and inventing plausible ones for a real network is exactly the class
+   of quiet dishonesty this project is trying to avoid. Said plainly on /renkler.
+   -------------------------------------------------------------------------- */
+:root {
+  --line-marmaray: #c4362f;
+  --line-m1: #1b4f9c;
+  --line-m2: #12807d;
+  --line-m3: #a8791c;
+  --line-m4: #8c3f76;
+  --line-m5: #2f6b3f;
+  --line-m6: #7a5230;
+  --line-m7: #b4527e;
+  --line-m8: #3d6f96;
+  --line-m9: #96821f;
+  --line-m11: #4a4f8c;
+  --line-t1: #1f7a86;
+  --line-f2: #6b4a86;
+}

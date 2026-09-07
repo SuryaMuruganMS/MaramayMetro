@@ -1,0 +1,126 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import { translator } from '../../lib/i18n.ts';
+import { href, type Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+/**
+ * Illustrative fares.
+ *
+ * Real İstanbulkart fares change often and are set by the authority. Publishing
+ * a number here that someone might rely on and be wrong about at a gate is the
+ * exact failure this site is built to avoid, so every amount is marked and the
+ * page points at the official source for the real one.
+ *
+ * The transfer rule is real; the amounts are not. That distinction is stated
+ * rather than left for the reader to work out.
+ */
+const ROWS = [
+  { k: { tr: 'Tam', en: 'Full' }, first: '₺X', transfer: '₺Y' },
+  { k: { tr: 'Öğrenci', en: 'Student' }, first: '₺X', transfer: '₺Y' },
+  { k: { tr: 'Aylık abonman', en: 'Monthly pass' }, first: '₺Z', transfer: '—' },
+];
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.fares')}
+      title={tt('fare.title')}
+      lede={tt('fare.lede')}
+    />
+
+    <div class="warn">
+      <p>
+        {
+          locale === 'tr'
+            ? 'Aşağıdaki tablodaki tutarlar yer tutucudur ve kasıtlı olarak gerçek değildir. Bir tarife sayfası, güncel olmadığında yanlış bilgi verir; kavramsal bir çalışmanın güncel tarife yayımlaması mümkün değil, o yüzden hiç yayımlamıyor.'
+            : 'The amounts in the table below are placeholders and deliberately not real. A fares page misinforms the moment it goes stale, and a concept build cannot keep fares current — so it does not publish them at all.'
+        }
+      </p>
+      <a
+        class="tile tile--sm"
+        href="https://www.metro.istanbul/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {tt('disclosure.link')}
+        <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+
+    <div class="tw">
+      <table>
+        <caption>{tt('fare.notReal')}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{locale === 'tr' ? 'Tarife' : 'Fare type'}</th>
+            <th scope="col">{locale === 'tr' ? 'İlk biniş' : 'First tap'}</th>
+            <th scope="col">{tt('fare.transfer')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            ROWS.map((r) => (
+              <tr>
+                <th scope="row">{locale === 'tr' ? r.k.tr : r.k.en}</th>
+                <td>
+                  <span class="fig fig--indicative">{r.first}</span>
+                </td>
+                <td>
+                  <span class="fig fig--indicative">{r.transfer}</span>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="block">
+      <h2>{tt('fare.transfer')}</h2>
+      <p>{tt('fare.transferBody')}</p>
+
+      <h2>{tt('fare.card')}</h2>
+      <p>{tt('fare.cardBody')}</p>
+
+      <p>
+        <a href={href('/sefer', locale)}>{tt('plan.title')}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .warn {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-base);
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: 1px solid var(--warn);
+    border-left-width: 3px;
+    border-radius: var(--r-panel);
+  }
+  .warn p {
+    flex: 1 1 320px;
+    margin: 0;
+    font-size: var(--t-small);
+  }
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    max-width: 68rem;
+  }
+  .block h2 {
+    margin-top: var(--sp-base);
+  }
+</style>

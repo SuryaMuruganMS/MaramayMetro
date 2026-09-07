@@ -1,0 +1,127 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import { translator } from '../../lib/i18n.ts';
+import { SOURCES } from '../../data/sources.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const CONF: Record<string, string> = {
+  measured: tt('src.measured'),
+  derived: tt('src.derived'),
+  indicative: tt('src.indicativeC'),
+};
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('x.source')}
+      title={tt('src.title')}
+      lede={tt('src.lede')}
+    />
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{tt('x.source')}</th>
+            <th scope="col">{tt('src.covers')}</th>
+            <th scope="col">{tt('src.confidence')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            Object.values(SOURCES).map((s) => (
+              <tr>
+                <th scope="row">{s.label}</th>
+                <td>{s.covers}</td>
+                <td>
+                  <span class={`conf conf--${s.confidence}`}>{CONF[s.confidence]}</span>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="how">
+      <h2>{tt('src.howTitle')}</h2>
+      <p>{tt('src.howBody')}</p>
+
+      <!-- The three treatments, side by side, so the page demonstrates the
+           thing it is describing rather than only asserting it. -->
+      <ul class="demo">
+        <li>
+          <span class="fig fig--measured">13.6 km</span>
+          <span class="demo__k mono">{tt('src.measured')}</span>
+        </li>
+        <li>
+          <span class="fig fig--derived">3–7</span>
+          <span class="demo__k mono">{tt('src.derived')}</span>
+        </li>
+        <li>
+          <span class="fig fig--indicative">−27 m</span>
+          <span class="demo__k mono">{tt('src.indicativeC')}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .how {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    max-width: 72rem;
+  }
+  .conf {
+    display: inline-flex;
+    padding: 2px 10px;
+    border-radius: var(--r-capsule);
+    font-family: var(--f-mono);
+    font-size: var(--t-micro);
+    white-space: nowrap;
+  }
+  .conf--measured {
+    background: color-mix(in oklab, var(--ok) 14%, transparent);
+    color: var(--ok);
+  }
+  .conf--derived {
+    background: color-mix(in oklab, var(--cobalt) 15%, transparent);
+    color: var(--cobalt);
+  }
+  .conf--indicative {
+    background: color-mix(in oklab, var(--gold) 18%, transparent);
+    color: var(--warn);
+  }
+  .demo {
+    list-style: none;
+    margin: var(--sp-tight) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-roomy);
+  }
+  .demo li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .demo .fig {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .demo__k {
+    font-size: var(--t-micro);
+    letter-spacing: 0.1em;
+    color: var(--ink-4);
+  }
+</style>

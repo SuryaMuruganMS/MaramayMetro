@@ -1,0 +1,110 @@
+---
+import Girih from './Girih.astro';
+
+/**
+ * A photograph in a platform advertising frame.
+ *
+ * Real metro platforms hang images in enamelled frames at fixed poster
+ * proportions. Presenting screenshots and photographs that way puts them in the
+ * world of the site instead of pasting them onto it.
+ *
+ * WHEN THERE IS NO PHOTOGRAPH
+ * The fallback is not a grey box with a camera icon. İstanbul's stations are
+ * tiled, so an untenanted frame shows an İznik tile panel - a designed object
+ * in its own right. The page reads as finished either way, which matters
+ * because a portfolio piece full of "image pending" placeholders reads as
+ * abandoned rather than as work in progress.
+ */
+interface Props {
+  src?: string;
+  alt?: string;
+  caption?: string;
+  /** Poster proportion. Real frames are portrait; platform panels are wide. */
+  ratio?: string;
+  tint?: 'cobalt' | 'turquoise' | 'bole' | 'gold';
+}
+const { src, alt = '', caption, ratio = '4 / 3', tint = 'cobalt' } = Astro.props;
+---
+
+<figure class="poster" style={`--ratio:${ratio}; --tint: var(--${tint})`}>
+  <div class="poster__frame">
+    {
+      src ? (
+        <img class="poster__img" src={src} alt={alt} loading="lazy" decoding="async" />
+      ) : (
+        <div class="poster__tile" role="img" aria-label={alt}>
+          <Girih size={112} opacity={0.34} />
+          <span class="poster__glaze" />
+        </div>
+      )
+    }
+    <span class="poster__rim" aria-hidden="true"></span>
+  </div>
+  {caption && <figcaption class="poster__cap mono">{caption}</figcaption>}
+</figure>
+
+<style>
+  .poster {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+    min-width: 0;
+  }
+  .poster__frame {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    overflow: hidden;
+    border-radius: var(--r-panel);
+    /* The frame is a physical object: a hard bevel, not a soft shadow. */
+    background: var(--surface);
+    box-shadow:
+      inset 0 0 0 1px var(--rule-strong),
+      inset 0 0 0 7px var(--surface),
+      inset 0 0 0 8px color-mix(in oklab, var(--ink) 14%, transparent);
+  }
+  .poster__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .poster__tile {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    color: var(--tint);
+    background:
+      radial-gradient(
+        120% 90% at 22% 8%,
+        color-mix(in oklab, var(--tint) 34%, transparent),
+        transparent 66%
+      ),
+      color-mix(in oklab, var(--tint) 20%, var(--surface));
+  }
+  /* Glaze: the specular sheen that tells you a tile is glazed rather than
+     painted. One hard highlight, top-left, as light actually falls. */
+  .poster__glaze {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      142deg,
+      color-mix(in oklab, #fff 30%, transparent) 0%,
+      transparent 34%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+  .poster__rim {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--r-panel);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 34%, transparent);
+    pointer-events: none;
+  }
+  .poster__cap {
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    color: var(--ink-4);
+    max-width: 44ch;
+  }
+</style>

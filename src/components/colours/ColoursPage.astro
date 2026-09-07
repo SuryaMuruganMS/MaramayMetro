@@ -1,0 +1,171 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import { translator } from '../../lib/i18n.ts';
+import { LINES } from '../../data/network.ts';
+import { BAND_ORDER } from '../../lib/chainage.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const PIGMENTS = [
+  { id: 'cobalt', tr: 'Kobalt', en: 'Cobalt', use: { tr: 'Yapı', en: 'Structure' } },
+  { id: 'turquoise', tr: 'Turkuaz', en: 'Turquoise', use: { tr: 'Su', en: 'Water' } },
+  { id: 'bole', tr: 'Bolu kırmızısı', en: 'Bole red', use: { tr: 'Vurgu', en: 'Accent' } },
+  {
+    id: 'gold',
+    tr: 'Altın',
+    en: 'Gold',
+    use: { tr: 'Mühendislik kaydı', en: 'Engineering record' },
+  },
+];
+
+const BAND_LABEL: Record<string, { tr: string; en: string }> = {
+  surface: { tr: 'Yüzey', en: 'Surface' },
+  shallow: { tr: 'Sığ', en: 'Shallow' },
+  deep: { tr: 'Derin', en: 'Deep' },
+  seabed: { tr: 'Deniz tabanı', en: 'Seabed' },
+  abyssal: { tr: 'En derin', en: 'Abyssal' },
+};
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.colours')}
+      title={tt('col.title')}
+      lede={tt('col.lede')}
+    />
+
+    <div class="block">
+      <h2>{tt('col.whyTitle')}</h2>
+      <p>{tt('col.whyBody')}</p>
+    </div>
+
+    <div class="block">
+      <h2>{tt('col.iznik')}</h2>
+      <p>{tt('col.iznikBody')}</p>
+      <ul class="swatches">
+        {
+          PIGMENTS.map((p) => (
+            <li class="sw">
+              <span class="sw__chip" style={`background: var(--${p.id})`} />
+              <span class="sw__name">{locale === 'tr' ? p.tr : p.en}</span>
+              <span class="sw__use mono">{locale === 'tr' ? p.use.tr : p.use.en}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>{tt('col.strata')}</h2>
+      <p>{tt('col.strataBody')}</p>
+      <!-- Drawn as hard-edged blocks, because that is exactly how the page uses
+           them. A gradient here would misrepresent the system. -->
+      <ul class="bands">
+        {
+          BAND_ORDER.map((b) => (
+            <li class="band">
+              <span class="band__chip" style={`background: var(--band-${b})`} />
+              <span class="band__name mono">{BAND_LABEL[b]![locale]}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>{locale === 'tr' ? 'Hat renkleri' : 'Line colours'}</h2>
+      <ul class="swatches">
+        {
+          LINES.map((l) => (
+            <li class="sw">
+              <span class="sw__chip" style={`background:${l.colour}`} />
+              <span class="sw__name">{l.name}</span>
+              <span class="sw__use mono">{l.kind}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    max-width: 72rem;
+  }
+  .swatches {
+    list-style: none;
+    margin: var(--sp-tight) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: var(--sp-tight);
+  }
+  .sw {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-tight);
+    padding: 8px 12px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-capsule);
+    background: var(--surface);
+    min-width: 0;
+  }
+  .sw__chip {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--r-capsule);
+    flex: none;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
+  }
+  .sw__name {
+    font-weight: 600;
+    font-size: var(--t-small);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .sw__use {
+    margin-left: auto;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--ink-4);
+    white-space: nowrap;
+  }
+  .bands {
+    list-style: none;
+    margin: var(--sp-tight) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+  }
+  .band {
+    flex: 1 1 120px;
+    display: flex;
+    flex-direction: column;
+  }
+  .band__chip {
+    height: 66px;
+  }
+  .band__name {
+    padding: 7px 10px;
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    background: var(--surface);
+    border-top: 1px solid var(--rule);
+  }
+</style>

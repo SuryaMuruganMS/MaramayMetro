@@ -1,0 +1,79 @@
+---
+/**
+ * Girih.
+ *
+ * Ten-fold interlaced strapwork — the geometry of the city's own ornament, and
+ * the reason this site cannot be confused with the others in the portfolio.
+ * Nothing built on a western grid produces decagonal symmetry.
+ *
+ * Generated rather than drawn: the star is computed from its own construction
+ * (twenty vertices, alternating radii, eighteen degrees apart) so the geometry
+ * is real and not an approximation traced by hand.
+ *
+ * Used on set-pieces only. As wallpaper it would stop being a construction
+ * system and become a texture, which is the opposite of what girih is.
+ */
+interface Props {
+  /** Tile size in px. Larger reads as architecture, smaller as fabric. */
+  size?: number;
+  opacity?: number;
+}
+const { size = 132, opacity } = Astro.props;
+
+const R = size / 2;
+const OUTER = R * 0.92;
+const INNER = R * 0.44;
+
+// A decagram: twenty points, alternating between the two radii.
+const star = Array.from({ length: 20 }, (_, i) => {
+  const a = (Math.PI / 10) * i - Math.PI / 2;
+  const rad = i % 2 === 0 ? OUTER : INNER;
+  return `${(R + rad * Math.cos(a)).toFixed(2)},${(R + rad * Math.sin(a)).toFixed(2)}`;
+}).join(' ');
+
+// The straps that carry the pattern into the neighbouring tiles. Girih is a
+// tiling, so the motif has to leave the tile to be one.
+const straps = Array.from({ length: 10 }, (_, i) => {
+  const a = (Math.PI / 5) * i - Math.PI / 2;
+  return {
+    x1: (R + INNER * Math.cos(a)).toFixed(2),
+    y1: (R + INNER * Math.sin(a)).toFixed(2),
+    x2: (R + R * 1.5 * Math.cos(a)).toFixed(2),
+    y2: (R + R * 1.5 * Math.sin(a)).toFixed(2),
+  };
+});
+
+const id = `girih-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<svg
+  class="girih"
+  style={opacity !== undefined ? `opacity:${opacity}` : undefined}
+  aria-hidden="true"
+>
+  <defs>
+    <pattern id={id} width={size} height={size} patternUnits="userSpaceOnUse">
+      <polygon
+        points={star}
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        stroke-linejoin="round"></polygon>
+      {
+        straps.map((s) => (
+          <line
+            x1={s.x1}
+            y1={s.y1}
+            x2={s.x2}
+            y2={s.y2}
+            stroke="currentColor"
+            stroke-width="1"
+          />
+        ))
+      }
+      <circle cx={R} cy={R} r={INNER * 0.34} fill="none" stroke="currentColor" stroke-width="1"
+      ></circle>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill={`url(#${id})`}></rect>
+</svg>

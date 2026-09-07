@@ -1,0 +1,373 @@
+/* ==========================================================================
+   Panels — what is actually on the track
+   ========================================================================== */
+
+/* Snap markers. Zero-size elements at each platform's scroll offset. Proximity
+   snapping, never mandatory: the train settles at stations without trapping the
+   reader between them. */
+.snap {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  scroll-snap-align: start;
+  pointer-events: none;
+}
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  html:not([data-view='plan']) {
+    scroll-snap-type: y proximity;
+  }
+}
+
+/* =============================================================== STOP panel
+   Two columns, because a stop is a whole screen and a column of text down the
+   left leaves half of it empty. The argument sits left, the platform sits
+   right - which is also where the photographs go when they arrive.
+   ========================================================================== */
+.stop__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: start;
+  gap: var(--sp-loose);
+  width: 100%;
+  max-width: 92rem;
+  margin-top: var(--sp-base);
+}
+@media (max-width: 1240px) {
+  .stop__cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-roomy);
+    max-width: 46rem;
+  }
+  .stop__cols .poster {
+    display: none;
+  }
+}
+
+.stop__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-snug);
+  max-width: 46rem;
+}
+.stop__head {
+  /* The nameplate already carries the name at signage scale; this is the
+     editorial headline under it, so it stays quieter on purpose. */
+  font-size: var(--t-h3);
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+}
+.stop__text {
+  font-size: var(--t-lede);
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 52ch;
+}
+.stop__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-base);
+  margin: 0;
+  padding-top: var(--sp-snug);
+  border-top: 1px solid var(--rule);
+}
+.stop__fact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.stop__fact dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.stop__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-tight);
+}
+.chip--ok {
+  color: var(--ok);
+  background: color-mix(in oklab, var(--ok) 12%, transparent);
+}
+.stop__body .tile {
+  align-self: flex-start;
+}
+
+/* ================================================================ RUN panel */
+.panel--run {
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--sp-snug);
+}
+.run__line {
+  font-family: var(--f-display);
+  font-size: clamp(1.6rem, 4.4vw, 3.4rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+  white-space: pre-line;
+  max-width: 22ch;
+  color: var(--ink-2);
+  /* Motion smear. Station names blur as you pass them; so does this. A real
+     directional blur needs an SVG filter that cannot read a custom property,
+     so two offset shadows do the work at a fraction of the cost. */
+  text-shadow:
+    calc(var(--vel, 0) * 5px) 0 0 color-mix(in oklab, currentColor 22%, transparent),
+    calc(var(--vel, 0) * -5px) 0 0 color-mix(in oklab, currentColor 22%, transparent);
+}
+.run__note {
+  font-size: var(--t-micro);
+  letter-spacing: 0.1em;
+  color: var(--ink-4);
+  max-width: 40ch;
+}
+
+/* =========================================================== CROSSING panel
+   The climax. Everything here exists to make sixty metres of water legible.
+   ========================================================================== */
+.panel--crossing {
+  justify-content: stretch;
+  padding-inline: 0;
+  overflow: hidden;
+}
+
+/* The sea, above the track. Drawn rather than photographed, so it themes with
+   the rest of the site and costs nothing to load. */
+.sea {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 44%;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--turquoise) 26%, transparent),
+    color-mix(in oklab, var(--turquoise) 6%, transparent)
+  );
+  overflow: hidden;
+}
+.sea__surface {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--turquoise);
+  opacity: 0.85;
+}
+/* Ships. The Bosphorus is one of the busiest straits on earth, so there is
+   always something overhead — a fact the reader can watch rather than be told. */
+.sea__ship {
+  position: absolute;
+  top: 0;
+  width: 62px;
+  height: 15px;
+  translate: 0 -11px;
+  background: var(--ink-3);
+  opacity: 0.5;
+  clip-path: polygon(0 42%, 100% 42%, 88% 100%, 12% 100%, 0 42%);
+}
+.sea__ship::after {
+  content: '';
+  position: absolute;
+  left: 38%;
+  bottom: 58%;
+  width: 13px;
+  height: 8px;
+  background: inherit;
+}
+.sea__ship--a {
+  left: 12%;
+  animation: drift 52s linear infinite;
+}
+.sea__ship--b {
+  left: 64%;
+  scale: -0.8 0.8;
+  animation: drift 71s linear infinite reverse;
+}
+@keyframes drift {
+  from {
+    transform: translateX(-14vw);
+  }
+  to {
+    transform: translateX(46vw);
+  }
+}
+
+.crossing__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr minmax(min(38rem, 74vw), 44rem) 1fr;
+  align-items: center;
+  gap: var(--sp-roomy);
+  height: 100%;
+  padding: calc(var(--head-h) + var(--sp-roomy)) var(--margin)
+    calc(var(--rail-h) + var(--sp-roomy));
+}
+.crossing__approach,
+.crossing__after {
+  font-size: var(--t-micro);
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  max-width: 20ch;
+}
+.crossing__after {
+  justify-self: end;
+  text-align: right;
+}
+.crossing__mid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-snug);
+  align-items: center;
+  text-align: center;
+}
+.crossing__head {
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+}
+.crossing__text {
+  font-size: var(--t-lede);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 46ch;
+}
+
+/* The eleven precast elements, as eleven marks. The one you are inside fills.
+   A count you can see beats a number you are told. */
+.elements {
+  display: flex;
+  gap: 5px;
+  list-style: none;
+  margin: var(--sp-tight) 0 0;
+  padding: 0;
+}
+.elements__e {
+  width: 26px;
+  height: 11px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--gold) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gold) 45%, transparent);
+  transition: background-color 160ms linear;
+}
+/* Lit by the engine as you pass each joint. CSS cannot compare :nth-child to a
+   custom property, so the engine toggles the class directly - eleven elements
+   is a small enough set that this costs nothing. */
+.elements__e.is-lit {
+  background: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+.elements__e.is-here {
+  background: var(--accent);
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 3px color-mix(in oklab, var(--accent) 26%, transparent);
+}
+
+.crossing__scale {
+  font-size: var(--t-micro);
+  letter-spacing: 0.14em;
+  color: var(--ink-4);
+}
+
+/* The continental divide, at the real midpoint of the strait. */
+.divide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* The crossing panel spans ch 5650–7900; the divide sits at 6700. */
+  left: calc((6700 - 5650) / (7900 - 5650) * 100%);
+  width: 0;
+  pointer-events: none;
+}
+.divide__rule {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  translate: -50% 0;
+  background: repeating-linear-gradient(180deg, var(--accent) 0 9px, transparent 9px 18px);
+  opacity: 0.85;
+  /* Interrupted across the text band. A survey line on a drawing breaks where
+     an annotation crosses it rather than running through the lettering, and
+     running through it is exactly what this did. */
+  mask-image: linear-gradient(180deg, #000 0 30%, transparent 30% 70%, #000 70% 100%);
+}
+/* Clear of the centred crossing text. At 46% the tag sat straight through the
+   paragraph it was annotating. */
+.divide__tag {
+  position: absolute;
+  top: 13%;
+  left: 0;
+  translate: -50% 0;
+  padding: 4px 12px;
+  border-radius: var(--r-capsule);
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--t-micro);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.divide__eu,
+.divide__as {
+  position: absolute;
+  top: 21%;
+  font-size: var(--t-micro);
+  letter-spacing: 0.22em;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+.divide__eu {
+  right: 14px;
+}
+.divide__as {
+  left: 14px;
+}
+/* Absolutely positioned children do not respect the panel's padding, so the
+   rail's height has to be cleared explicitly or this label sits under it. */
+.divide__ch {
+  position: absolute;
+  bottom: calc(var(--rail-h) + 18px);
+  left: 0;
+  translate: -50% 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+/* ============================================================ ARRIVAL panel */
+.panel--arrival {
+  position: relative;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--ink);
+}
+.arrival__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-base);
+  max-width: 46rem;
+}
+.arrival__body h2 {
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  letter-spacing: -0.035em;
+}
+.arrival__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-tight);
+}
+
+/* ==========================================================================
+   Plan view corrections
+
+   Panels are laid out for a full-height screen. In the linear layout they are
+   ordinary sections, so the vertical centring and the absolute furniture have
+   to be undone — otherwise the crossing's sea sits on top of its own text.
+   ========================================================================== */

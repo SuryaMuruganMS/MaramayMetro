@@ -1,0 +1,99 @@
+---
+import { translator } from '../../lib/i18n.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+/**
+ * The concept label.
+ *
+ * This site is dressed as a public transit authority for a real network in a
+ * real city. Someone landing on it from a search result has every reason to
+ * believe it, and people rely on transit sites for fares, service times and
+ * step-free access - facts that have consequences off the screen.
+ *
+ * So the label is permanent, undismissable, in normal flow above everything
+ * else, and it links to the official site rather than merely disowning it.
+ * Being useful to a lost visitor is a better disclosure than a legal line.
+ */
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+---
+
+<div class="disclosure">
+  <div class="disclosure__inner">
+    <span class="disclosure__tag mono">{tt('disclosure.label')}</span>
+    <p class="disclosure__body">{tt('disclosure.body')}</p>
+    <a
+      class="disclosure__link mono"
+      href="https://www.metro.istanbul/"
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      {tt('disclosure.link')}
+      <span aria-hidden="true">↗</span>
+    </a>
+  </div>
+</div>
+
+<style>
+  .disclosure {
+    position: relative;
+    z-index: 80;
+    background: var(--ink);
+    color: var(--slip);
+  }
+  /* Night service inverts the page but this bar must stay the loudest thing on
+     it, so it takes the accent rather than following the strata. */
+  :global(:root[data-service='night']) .disclosure {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .disclosure__inner {
+    width: min(100% - var(--margin) * 2, var(--shell));
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-tight) var(--sp-snug);
+    padding: 7px 0;
+  }
+
+  .disclosure__tag {
+    flex: none;
+    padding: 2px 10px;
+    border-radius: var(--r-capsule);
+    background: var(--accent);
+    color: #fff;
+    font-size: var(--t-micro);
+    letter-spacing: 0.12em;
+    font-weight: 500;
+  }
+  :global(:root[data-service='night']) .disclosure__tag {
+    background: rgb(0 0 0 / 0.32);
+  }
+
+  .disclosure__body {
+    margin: 0;
+    max-width: none;
+    font-size: var(--t-small);
+    line-height: 1.4;
+    opacity: 0.92;
+  }
+
+  .disclosure__link {
+    margin-left: auto;
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    text-decoration-color: currentColor;
+  }
+
+  @media (max-width: 720px) {
+    .disclosure__link {
+      margin-left: 0;
+    }
+  }
+</style>

@@ -1,0 +1,92 @@
+---
+import Mark from './Mark.astro';
+import { translator } from '../../lib/i18n.ts';
+import { alternate, href, upper, type Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+  path: string;
+}
+const { locale, path } = Astro.props;
+const tt = translator(locale);
+
+const NAV = [
+  { key: 'nav.journey', to: '/' },
+  { key: 'nav.map', to: '/harita' },
+  { key: 'nav.dig', to: '/kazi' },
+  { key: 'nav.plan', to: '/sefer' },
+  { key: 'nav.fares', to: '/ucret' },
+  { key: 'nav.access', to: '/erisilebilirlik' },
+];
+
+const isCurrent = (to: string) => path === to || (to !== '/' && path.startsWith(to));
+---
+
+<header class="head">
+  <div class="head__inner">
+    <a class="head__brand" href={href('/', locale)}>
+      <Mark size={30} />
+      <span class="head__word">
+        <b>{tt('site.name')}</b>
+        <em class="mono">MARMARAY</em>
+      </span>
+    </a>
+
+    <nav class="head__nav" aria-label={tt('nav.journey')}>
+      {
+        NAV.map((n) => (
+          <a
+            href={href(n.to, locale)}
+            class="head__link"
+            aria-current={isCurrent(n.to) ? 'page' : undefined}
+          >
+            {tt(n.key)}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="head__ctl">
+      <!--
+        Plan view. Named as a view rather than as an accessibility option,
+        because it is a legitimate way to read the site and plenty of people
+        will simply prefer a list to a journey.
+      -->
+      <button class="ctl" type="button" data-view-toggle aria-pressed="false">
+        <span class="ctl__ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="13" height="13">
+            <rect x="1" y="2" width="14" height="2" rx="1" fill="currentColor"></rect>
+            <rect x="1" y="7" width="14" height="2" rx="1" fill="currentColor"></rect>
+            <rect x="1" y="12" width="14" height="2" rx="1" fill="currentColor"></rect>
+          </svg>
+        </span>
+        <span class="ctl__txt">{tt('ctl.planview')}</span>
+      </button>
+
+      <!-- Day / night is service hours, so the icon is a clock, not a moon. -->
+      <button class="ctl" type="button" data-service-toggle aria-pressed="false">
+        <span class="ctl__ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="13" height="13">
+            <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"
+            ></circle>
+            <path
+              d="M8 4.4 V8 L10.4 9.6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"></path>
+          </svg>
+        </span>
+        <span class="ctl__txt">{tt('ctl.service')}</span>
+      </button>
+
+      <a
+        class="ctl ctl--lang mono"
+        href={alternate(path, locale)}
+        hreflang={locale === 'tr' ? 'en' : 'tr'}
+      >
+        {upper(tt('ctl.lang'), locale === 'tr' ? 'en' : 'tr')}
+      </a>
+    </div>
+  </div>
+</header>

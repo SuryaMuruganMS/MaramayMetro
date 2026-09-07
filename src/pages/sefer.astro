@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import Body from '../components/plan/PlannerPage.astro';
+import { translator } from '../lib/i18n.ts';
+import type { Locale } from '../lib/locale.ts';
+
+const locale: Locale = 'tr';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/sefer"
+  title={tt('plan.title') + ' — ' + tt('site.full')}
+  description={tt('plan.lede')}
+>
+  <Body locale={locale} />
+</Base>

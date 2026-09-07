@@ -1,0 +1,58 @@
+---
+import Base from '../layouts/Base.astro';
+import Girih from '../components/ui/Girih.astro';
+import { translator } from '../lib/i18n.ts';
+import { href, type Locale } from '../lib/locale.ts';
+
+/**
+ * One 404 for both languages. A reader who lands here has no page, so there is
+ * no page to have a language: both are offered rather than guessed at.
+ */
+const tr: Locale = 'tr';
+const en: Locale = 'en';
+const ttr = translator(tr);
+const ten = translator(en);
+---
+
+<Base locale={tr} path="/404" title={`${ttr('x.notFound')} — ${ttr('site.full')}`}>
+  <section class="nf">
+    <Girih size={150} />
+    <div class="nf__inner shell">
+      <p class="label">404</p>
+      <h1>{ttr('x.notFound')}</h1>
+      <p class="lede">{ttr('x.notFound.body')}</p>
+      <p class="lede nf__en">{ten('x.notFound.body')}</p>
+      <div class="nf__acts">
+        <a class="tile" href={href('/', tr)}>{ttr('x.home')}</a>
+        <a class="tile tile--ghost" href={href('/', en)}>{ten('x.home')}</a>
+        <a class="tile tile--ghost" href={href('/harita', tr)}>{ttr('map.title')}</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    position: relative;
+    overflow: hidden;
+    padding-block: var(--sp-vast);
+  }
+  .nf__inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-base);
+  }
+  .nf h1 {
+    font-size: var(--t-h1);
+  }
+  .nf__en {
+    color: var(--ink-3);
+  }
+  .nf__acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-tight);
+    margin-top: var(--sp-snug);
+  }
+</style>

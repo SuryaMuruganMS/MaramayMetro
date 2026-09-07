@@ -1,0 +1,155 @@
+---
+import '../styles/fonts.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/journey.css';
+import '../styles/panels.css';
+import '../styles/chrome.css';
+import '../styles/dig.css';
+// Last on purpose: it undoes the horizontal track and must beat every rule above.
+import '../styles/plan-view.css';
+import Header from '../components/chrome/Header.astro';
+import Disclosure from '../components/chrome/Disclosure.astro';
+import Foot from '../components/chrome/Foot.astro';
+import { translator } from '../lib/i18n.ts';
+import { alternate, type Locale } from '../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description?: string;
+  /** The locale-neutral path, e.g. '/harita'. Used for the language switch. */
+  path: string;
+  /** The crossing runs its own chrome; ordinary pages get the standard shell. */
+  bare?: boolean;
+}
+
+const { locale, title, description, path, bare = false } = Astro.props;
+const tt = translator(locale);
+const desc = description ?? tt('site.description');
+---
+
+<!doctype html>
+<html lang={locale} data-band="surface" data-continent="EU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={desc} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <link
+      rel="alternate"
+      hreflang={locale === 'tr' ? 'en' : 'tr'}
+      href={alternate(path, locale)}
+    />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#c4362f" />
+
+    <!--
+      Service and view, resolved before the first paint.
+
+      Two things are decided here. First, whether it is day or night service -
+      and the default is not a media query, it is the actual clock in İstanbul,
+      because Marmaray genuinely stops running. Second, whether the reader has
+      asked for plan view, which must be known before layout or the horizontal
+      track flashes into existence and then collapses.
+    -->
+    <script is:inline>
+      (function () {
+        const r = document.documentElement;
+        try {
+          let svc = localStorage.getItem('marmaray-service');
+          if (!svc) {
+            // İstanbul is UTC+3 year round; no daylight saving since 2016.
+            const h = new Date(Date.now() + 3 * 3600 * 1000).getUTCHours();
+            svc = h >= 6 && h < 24 ? 'day' : 'night';
+          }
+          r.setAttribute('data-service', svc);
+        } catch {
+          r.setAttribute('data-service', 'day');
+        }
+        try {
+          if (localStorage.getItem('marmaray-view') === 'plan') {
+            r.setAttribute('data-view', 'plan');
+          }
+        } catch {
+          /* storage blocked; section view is the default and works fine */
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">{tt('nav.skip')}</a>
+
+    <!--
+      The concept label. Permanent, in normal flow, above everything.
+
+      Not a dismissible banner and not a corner badge. A fixed corner element
+      covers different content at every scroll position - the lesson from
+      Kestrel, where exactly that pattern hid copy at sixty combinations before
+      a gate caught it. A bar in the flow can never cover anything.
+    -->
+    <Disclosure locale={locale} />
+    <Header locale={locale} path={path} />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    {!bare && <Foot locale={locale} />}
+
+    <script>
+      /**
+       * Service and view switching.
+       *
+       * Both write through to localStorage so a choice survives navigation, and
+       * both are plain attribute flips - no class juggling, no re-render. The
+       * engine watches data-view and reconfigures itself when it changes.
+       */
+      const root = document.documentElement;
+
+      function setService(next: string) {
+        root.setAttribute('data-service', next);
+        try {
+          localStorage.setItem('marmaray-service', next);
+        } catch {
+          /* nothing to do; the attribute still applies for this page */
+        }
+        document.querySelectorAll<HTMLButtonElement>('[data-service-toggle]').forEach((b) => {
+          b.setAttribute('aria-pressed', String(next === 'night'));
+        });
+      }
+
+      function setView(next: string) {
+        if (next === 'plan') root.setAttribute('data-view', 'plan');
+        else root.removeAttribute('data-view');
+        try {
+          localStorage.setItem('marmaray-view', next);
+        } catch {
+          /* as above */
+        }
+        document.querySelectorAll<HTMLButtonElement>('[data-view-toggle]').forEach((b) => {
+          b.setAttribute('aria-pressed', String(next === 'plan'));
+        });
+      }
+
+      document.querySelectorAll<HTMLButtonElement>('[data-service-toggle]').forEach((b) => {
+        b.setAttribute('aria-pressed', String(root.getAttribute('data-service') === 'night'));
+        b.addEventListener('click', () => {
+          setService(root.getAttribute('data-service') === 'night' ? 'day' : 'night');
+        });
+      });
+
+      document.querySelectorAll<HTMLButtonElement>('[data-view-toggle]').forEach((b) => {
+        b.setAttribute('aria-pressed', String(root.getAttribute('data-view') === 'plan'));
+        b.addEventListener('click', () => {
+          setView(root.getAttribute('data-view') === 'plan' ? 'section' : 'plan');
+        });
+      });
+    </script>
+  </body>
+</html>

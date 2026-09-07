@@ -1,0 +1,27 @@
+{
+  // ---------------------------------------------------------------------
+  // The Crossing — Workers Static Assets
+  //
+  // Astro static export: every route is prerendered and nothing reads a
+  // request, so there is no `main` and no Worker script. Cloudflare serves
+  // the files from its edge, which costs nothing against the request quota
+  // and has no cold start.
+  //
+  // The name must match the Worker created in the dashboard, or a deploy
+  // creates a second one beside it.
+  // ---------------------------------------------------------------------
+  "name": "marmaray-crossing",
+  "compatibility_date": "2025-09-01",
+
+  "assets": {
+    "directory": "./dist",
+
+    // astro.config sets `trailingSlash: 'always'`, so the build emits
+    // /harita/index.html rather than /harita.html. This makes a request for
+    // /harita redirect and resolve instead of 404ing.
+    "html_handling": "auto-trailing-slash",
+
+    // Astro builds src/pages/404.astro to dist/404.html.
+    "not_found_handling": "404-page"
+  }
+}

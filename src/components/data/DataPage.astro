@@ -1,0 +1,102 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import { translator } from '../../lib/i18n.ts';
+import { href, type Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+/**
+ * The datasets are emitted as real static JSON at build time by
+ * `src/pages/veri/*.json.ts`, so these links resolve to files rather than to a
+ * page describing files. A publishing an open-data page that links to nothing
+ * is worse than not having one.
+ */
+const SETS = [
+  { file: '/veri/ag.json', k: 'data.graph', b: 'data.graphBody' },
+  { file: '/veri/hat.json', k: 'data.alignment', b: 'data.alignmentBody' },
+  { file: '/veri/kazi.json', k: 'data.strata', b: 'data.strataBody' },
+];
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.data')}
+      title={tt('data.title')}
+      lede={tt('data.lede')}
+    />
+
+    <ul class="sets">
+      {
+        SETS.map((s) => (
+          <li class="set">
+            <div class="set__body">
+              <h2>{tt(s.k)}</h2>
+              <p>{tt(s.b)}</p>
+            </div>
+            <a class="tile tile--ghost" href={s.file} download>
+              {tt('data.download')}
+              <span aria-hidden="true">↓</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="lic">
+      <h2>{tt('data.licence')}</h2>
+      <p>{tt('data.licenceBody')}</p>
+      <p>
+        <a href={href('/kaynaklar', locale)}>{tt('src.title')}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+  }
+  .set {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-base);
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-panel);
+  }
+  .set__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+  .set__body h2 {
+    font-size: var(--t-h3);
+  }
+  .set__body p {
+    color: var(--ink-3);
+    font-size: var(--t-small);
+  }
+  .lic {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    padding-top: var(--sp-roomy);
+    border-top: 1px solid var(--rule);
+    max-width: 68rem;
+  }
+</style>

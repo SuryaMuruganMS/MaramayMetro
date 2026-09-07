@@ -1,0 +1,277 @@
+/* ==========================================================================
+   The horizontal track
+
+   THE MECHANISM
+   A tall spacer provides the scroll distance. Inside it a sticky pin holds the
+   viewport still while a scroll-driven animation slides the track left. The
+   browser owns the scrolling completely: no wheel listener, no preventDefault,
+   no synthetic easing. The native scrollbar, keyboard paging, Home/End, spacebar
+   and find-in-page all keep working, because nothing has been taken from them.
+
+   WHY NOT SCROLL-HIJACK
+   Converting wheel deltas into horizontal movement in JavaScript is the usual
+   way this effect is built and it breaks keyboard users, assistive technology
+   and the scrollbar itself. Scroll-driven animations became cross-browser this
+   year, so the honest version is finally the easy one.
+
+   PLAN VIEW
+   Below 1024px, at 400% zoom, under reduced-motion, or with the switch on, the
+   whole thing lays out as an ordinary vertical page. Same DOM, same order, same
+   content. WCAG 1.4.10 forbids requiring two-dimensional scrolling, so the
+   sideways version has to be a presentation of something linear rather than the
+   only way to read it.
+   ========================================================================== */
+
+.journey {
+  position: relative;
+  /* --scrub-vw and --track-vw are written by the template from PANELS, so the
+     layout and the chainage mapping cannot disagree. */
+  height: calc(100vh + var(--scrub-vw) * 1vw);
+  view-timeline-name: --journey;
+  view-timeline-axis: block;
+}
+
+.journey__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* The strata ground shows through between panels. */
+  background: var(--ground);
+  transition: background-color 180ms linear;
+}
+
+/*
+   WHY EACH PANEL MOVES ITSELF RATHER THAN RIDING ONE WIDE TRACK
+
+   The obvious build is a single flex row 1155vw wide, translated left. It is
+   also broken: an animated transform promotes that row to its own compositor
+   layer, and at a 1280px viewport the row is 14,784 CSS px - 18,480 device
+   pixels at a 1.25 ratio. GPU texture limits are typically 16,384. The layer
+   silently fails to rasterize and the page renders as a flat expanse of ground
+   colour, with every element still present, laid out and hit-testable. It looks
+   like a paint bug and it is a texture-size bug.
+
+   So the track stays viewport-sized and each panel is absolutely positioned at
+   its own offset and animated individually. Identical motion, identical
+   timeline, but the widest layer is the crossing at 200vw instead of 1155vw -
+   comfortably inside the limit at any sane viewport - and the browser can cull
+   the panels that are off-screen.
+*/
+.journey__track {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--left) * 1vw);
+  width: calc(var(--vw) * 1vw);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(var(--head-h) + var(--sp-roomy)) var(--margin)
+    calc(var(--rail-h) + var(--sp-roomy));
+  /* Fixed chrome sits above and below; this padding is the reason nothing can
+     ever be covered by it. Reserved space beats z-index games. */
+}
+
+@supports (animation-timeline: scroll()) {
+  .panel {
+    animation: travel linear both;
+    animation-timeline: --journey;
+    /* `contain` on a subject taller than the scrollport runs exactly from the
+       moment it fills the viewport to the moment it stops doing so - which is
+       precisely the sticky pin's travel. */
+    animation-range: contain;
+  }
+}
+
+@keyframes travel {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(var(--scrub-vw) * -1vw), 0, 0);
+  }
+}
+
+/* Browsers without scroll timelines get the same movement from the engine,
+   which writes --fallback-x. Roughly 8-16% of traffic in 2026. */
+.journey[data-fallback='1'] .panel {
+  animation: none;
+  transform: translate3d(var(--fallback-x, 0px), 0, 0);
+}
+
+.panel--stop {
+  justify-content: flex-end;
+}
+
+/* Plan view - every override that undoes this track - lives in plan-view.css,
+   which loads last so no later file can win on source order. */
+
+/* ==========================================================================
+   THE SECTION RAIL — the second scrollbar
+
+   A real overflow-x scroller, so the browser draws a real horizontal scrollbar
+   that can be dragged, clicked, arrowed and paged. Its content is the long-
+   section of the tunnel, which means dragging the scrollbar is dragging the
+   train along the line. That is the site's signature interaction, and it works
+   because it is not a simulation of a scrollbar.
+   ========================================================================== */
+.rail {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  height: var(--rail-h);
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  border-top: 1px solid var(--rule);
+  backdrop-filter: blur(10px) saturate(1.1);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+.rail::-webkit-scrollbar {
+  height: 11px;
+}
+.rail::-webkit-scrollbar-track {
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.rail::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: var(--r-capsule);
+}
+
+.rail__inner {
+  /* Wider than the rail, which is what gives it a real scroll range. */
+  width: 300%;
+  min-width: 1400px;
+  height: calc(var(--rail-h) - 13px);
+  position: relative;
+}
+.rail__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/*
+   THE VIEWPORT WINDOW
+
+   Not a point. A line marker at 50% of the screen and a chainage measured at
+   the viewport's left edge describe two different places, and the reader has no
+   way to know which one the readout means. A screenful of a 13.6 km tunnel is a
+   RANGE, so the marker is the range - the same thing a scrollbar thumb is.
+
+   It lives inside the scrolled content, so it tracks the line rather than the
+   screen, and its width is honest: 100vw of a 1155vw track is 8.7% of the line.
+*/
+.rail__window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--win-left, 0) * 1%);
+  width: calc(var(--win-width, 8) * 1%);
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--accent) 13%, transparent);
+  box-shadow:
+    inset 1px 0 0 var(--accent),
+    inset -1px 0 0 var(--accent);
+  pointer-events: none;
+}
+/* The leading edge is where the readout's chainage is measured, so it is drawn
+   heavier than the trailing one. */
+.rail__window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--accent);
+}
+.rail__window::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  translate: -50% 0;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-capsule);
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* ==========================================================================
+   THE READOUT — chainage, depth, and what is over your head
+   ========================================================================== */
+.readout {
+  position: fixed;
+  right: var(--margin);
+  top: calc(var(--head-h) + var(--sp-snug));
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: var(--r-panel);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  border: 1px solid var(--rule);
+  backdrop-filter: blur(8px);
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-micro);
+  color: var(--ink-2);
+  min-width: 172px;
+  pointer-events: none;
+}
+.readout__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-snug);
+}
+.readout__k {
+  color: var(--ink-4);
+  letter-spacing: 0.08em;
+}
+.readout__v {
+  color: var(--ink);
+  font-weight: 500;
+}
+.readout__v--deep {
+  color: var(--accent);
+}
+
+/* Overburden bar: rock and water stacked, so sixty metres is a thing you watch
+   accumulate rather than a number you are told. */
+.readout__bar {
+  display: flex;
+  height: 5px;
+  margin-top: 5px;
+  border-radius: var(--r-capsule);
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 12%, transparent);
+}
+.readout__ground {
+  background: var(--gold);
+  transition: width 120ms linear;
+}
+.readout__water {
+  background: var(--turquoise);
+  transition: width 120ms linear;
+}
+
+@media (max-width: 1023px) {
+  .readout {
+    display: none;
+  }
+}

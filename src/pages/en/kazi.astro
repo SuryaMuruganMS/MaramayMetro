@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import Dig from '../../components/dig/Dig.astro';
+import { translator } from '../../lib/i18n.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+const locale: Locale = 'en';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/kazi"
+  title={`${tt('dig.title')} — ${tt('site.full')}`}
+  description={tt('dig.lede')}
+>
+  <Dig locale={locale} />
+</Base>

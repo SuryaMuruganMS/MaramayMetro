@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import Body from '../../components/build/BuildPage.astro';
+import { translator } from '../../lib/i18n.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+const locale: Locale = 'en';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/insaat"
+  title={tt('build.title') + ' — ' + tt('site.full')}
+  description={tt('build.lede')}
+>
+  <Body locale={locale} />
+</Base>

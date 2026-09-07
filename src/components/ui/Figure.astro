@@ -1,0 +1,63 @@
+---
+import { SOURCES, type SourceKey } from '../../data/sources.ts';
+import { translator } from '../../lib/i18n.ts';
+import { upper, type Locale } from '../../lib/locale.ts';
+
+/**
+ * A published number, wearing its provenance.
+ *
+ * This site looks like a government transit authority, which means a reader has
+ * every reason to believe any figure on it. So a measured figure and one scaled
+ * off a drawing must not look the same: measured prints plainly, derived prints
+ * with an approximation sign, and indicative prints greyed with a dotted rule
+ * and an asterisk that explains itself on hover and on focus.
+ *
+ * The distinction is typographic rather than a footnote, because a footnote is
+ * something a reader has to go and look for.
+ */
+interface Props {
+  locale: Locale;
+  k: string;
+  v: string;
+  source: SourceKey;
+}
+const { locale, k, v, source } = Astro.props;
+const tt = translator(locale);
+const meta = SOURCES[source];
+const note =
+  meta.confidence === 'indicative'
+    ? `${tt('x.indicative')} — ${tt('x.indicative.long')}`
+    : `${tt('x.source')}: ${meta.label}`;
+---
+
+<div class="figure">
+  <dt class="label">{upper(k, locale)}</dt>
+  <dd class={`fig fig--${meta.confidence}`} title={note}>
+    {v}
+    <span class="visually-hidden">. {note}</span>
+  </dd>
+</div>
+
+<style>
+  .figure {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .figure dd {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  /* The indicative treatment overrides the display weight: an uncertain figure
+     should not be shouted at the same volume as a measured one. */
+  .figure dd.fig--indicative {
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+</style>

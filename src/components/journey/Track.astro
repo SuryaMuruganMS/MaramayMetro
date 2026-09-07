@@ -1,0 +1,239 @@
+---
+import { PANELS, PANEL_OFFSETS, PANEL_ANCHORS, TRACK_VW, SCRUB_VW } from '../../lib/panels.ts';
+import { STOPS, DIVIDE_CH, IMMERSED_START, IMMERSED_END } from '../../data/alignment.ts';
+import { journeyCopy } from '../../data/journey-copy.ts';
+import { translator } from '../../lib/i18n.ts';
+import { href, lower, upper, type Locale } from '../../lib/locale.ts';
+import Nameplate from './Nameplate.astro';
+import Girih from '../ui/Girih.astro';
+import PosterFrame from '../ui/PosterFrame.astro';
+import ServiceBoard from '../widgets/ServiceBoard.svelte';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+const copy = journeyCopy(locale);
+
+const stopById = new Map(STOPS.map((s) => [s.id, s]));
+
+/**
+ * Snap points.
+ *
+ * `scroll-snap-align` on markers positioned at each platform's scroll offset,
+ * with `proximity` snapping on the scroller. The train settles at stations
+ * without ever trapping the reader between them - which is what `mandatory`
+ * would do, and why it is not used. The dwell is real scrolling, not an
+ * animation played at the reader.
+ */
+const snaps = PANEL_ANCHORS;
+---
+
+<div class="journey" id="journey" style={`--track-vw:${TRACK_VW}; --scrub-vw:${SCRUB_VW};`}>
+  {
+    snaps.map((s) => (
+      <span
+        class="snap"
+        style={`top: calc(${(s.t * 100).toFixed(3)}% - 50vh)`}
+        aria-hidden="true"
+      />
+    ))
+  }
+
+  <div class="journey__pin">
+    <div class="journey__track" id="track">
+      {
+        PANELS.map((p, pi) => {
+          // ---------------------------------------------------------- STOP
+          if (p.kind === 'stop') {
+            const stop = stopById.get(p.stop!)!;
+            const c = copy.stops[p.stop!]!;
+            return (
+              <section
+                class="panel panel--stop"
+                style={`--vw:${p.vw}; --left:${PANEL_OFFSETS[pi]}`}
+                id={`istasyon-${stop.id}`}
+                aria-labelledby={`h-${stop.id}`}
+                data-panel={p.id}
+              >
+                <Nameplate name={stop.name} level={stop.level} locale={locale} />
+                <div class="stop__cols">
+                  <div class="stop__body">
+                    <h2 class="stop__head" id={`h-${stop.id}`}>
+                      {c.head}
+                    </h2>
+                    <p class="stop__text">{c.body}</p>
+                    <dl class="stop__facts">
+                      {c.facts.map((f) => (
+                        <div class="stop__fact">
+                          <dt class="label">{upper(f.k, locale)}</dt>
+                          <dd class="mono">{f.v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <div class="stop__meta">
+                      {stop.interchange.map((i) => (
+                        <span class="chip">
+                          <span
+                            class="chip__dot"
+                            style={`--line: var(--line-${lower(i, 'en')}, var(--ink-3))`}
+                          />
+                          {i}
+                        </span>
+                      ))}
+                      {stop.stepFree && (
+                        <span class="chip chip--ok">
+                          <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                            <path
+                              d="M3 8.6 6.2 12 13 4.6"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2.2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                          {tt('j.stepFree')}
+                        </span>
+                      )}
+                    </div>
+                    {c.link && (
+                      <a class="tile tile--sm" href={href(c.link.to, locale)}>
+                        {c.link.label}
+                        <span aria-hidden="true">→</span>
+                      </a>
+                    )}
+                  </div>
+
+                  <PosterFrame
+                    src={stop.photo}
+                    alt={
+                      locale === 'tr'
+                        ? `${stop.name} istasyonu, peron seviyesi`
+                        : `${stop.name} station, platform level`
+                    }
+                    caption={`${stop.name} · ${locale === 'tr' ? 'peron' : 'platform'}`}
+                    ratio="4 / 3"
+                    tint={stop.continent === 'EU' ? 'cobalt' : 'turquoise'}
+                  />
+                </div>
+              </section>
+            );
+          }
+
+          // ----------------------------------------------------------- RUN
+          if (p.kind === 'run') {
+            const c = copy.runs[p.id]!;
+            return (
+              <section
+                class="panel panel--run"
+                style={`--vw:${p.vw}; --left:${PANEL_OFFSETS[pi]}`}
+                data-panel={p.id}
+              >
+                <p class="run__line">{c.line}</p>
+                {c.note && <p class="run__note mono">{c.note}</p>}
+              </section>
+            );
+          }
+
+          // ------------------------------------------------------- ARRIVAL
+          if (p.kind === 'arrival') {
+            return (
+              <section
+                class="panel panel--arrival"
+                style={`--vw:${p.vw}; --left:${PANEL_OFFSETS[pi]}`}
+                aria-labelledby="h-arrival"
+                data-panel={p.id}
+              >
+                <Girih />
+                <div class="arrival__body">
+                  <h2 id="h-arrival">{copy.arrival.head}</h2>
+                  <p class="lede">{copy.arrival.body}</p>
+                  <ServiceBoard
+                    client:visible
+                    labels={{
+                      'svc.checking': tt('svc.checking'),
+                      'svc.running': tt('svc.running'),
+                      'svc.shut': tt('svc.shut'),
+                      'svc.istanbul': tt('svc.istanbul'),
+                      'svc.first': tt('svc.first'),
+                      'svc.modelled': tt('svc.modelled'),
+                      'x.min': tt('x.min'),
+                    }}
+                  />
+                  <div class="arrival__acts">
+                    <a class="tile" href={href('/harita', locale)}>
+                      {tt('nav.map')}
+                    </a>
+                    <a class="tile tile--ghost" href={href('/kazi', locale)}>
+                      {tt('nav.dig')}
+                    </a>
+                    <a class="tile tile--ghost" href="?ch=0">
+                      {copy.arrival.again}
+                    </a>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          // ------------------------------------------------------ CROSSING
+          return (
+            <section
+              class="panel panel--crossing"
+              style={`--vw:${p.vw}; --left:${PANEL_OFFSETS[pi]}`}
+              aria-labelledby="h-crossing"
+              data-panel={p.id}
+            >
+              {/* The sea, above the track. Drawn, not photographed, so it can
+                  be themed and costs nothing to load. */}
+              <div class="sea" aria-hidden="true">
+                <div class="sea__surface" />
+                <div class="sea__ship sea__ship--a" />
+                <div class="sea__ship sea__ship--b" />
+              </div>
+
+              <div class="crossing__grid">
+                <p class="crossing__approach mono">{copy.crossing.approach}</p>
+
+                <div class="crossing__mid">
+                  <h2 id="h-crossing" class="crossing__head">
+                    {copy.crossing.head}
+                  </h2>
+                  <p class="crossing__text">{copy.crossing.body}</p>
+
+                  {/* The eleven elements, as eleven marks. A count you can see
+                      rather than a number you are told. */}
+                  <ol class="elements" aria-label={copy.crossing.elements}>
+                    {Array.from({ length: 11 }, (_, i) => (
+                      <li class="elements__e" data-e={i + 1}>
+                        <span class="visually-hidden">
+                          {copy.crossing.elements} {i + 1}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                  <p class="crossing__scale mono">
+                    {IMMERSED_END - IMMERSED_START} m · 11 × {copy.crossing.elements}
+                  </p>
+                </div>
+
+                <p class="crossing__after mono">{copy.crossing.after}</p>
+              </div>
+
+              {/* The divide, at the real midpoint of the strait. */}
+              <div class="divide" aria-hidden="true">
+                <span class="divide__rule" />
+                <span class="divide__tag mono">{copy.crossing.divide}</span>
+                <span class="divide__eu mono">{tt('j.europe')}</span>
+                <span class="divide__as mono">{tt('j.asia')}</span>
+                <span class="divide__ch mono">CH {DIVIDE_CH}</span>
+              </div>
+            </section>
+          );
+        })
+      }
+    </div>
+  </div>
+</div>

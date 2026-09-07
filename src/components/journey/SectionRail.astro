@@ -1,0 +1,223 @@
+---
+import {
+  CH_END,
+  DIVIDE_CH,
+  IMMERSED_END,
+  IMMERSED_START,
+  PROFILE,
+  STOPS,
+  STRAIT,
+} from '../../data/alignment.ts';
+import { translator } from '../../lib/i18n.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+/**
+ * The second scrollbar.
+ *
+ * This is a real overflow-x container, so the browser draws a real horizontal
+ * scrollbar underneath it - draggable, clickable, arrow-key operable, and
+ * page-able with shift+wheel. What it contains is the long-section of the
+ * tunnel, which means dragging that scrollbar is dragging the train along the
+ * line.
+ *
+ * That is the site's signature interaction, and it only works because nothing
+ * here is a simulation. A div styled to look like a scrollbar would have to
+ * reimplement every one of those behaviours, and would get most of them wrong.
+ *
+ * Drawn from the same PROFILE array the engine reads, so the picture and the
+ * numbers cannot disagree.
+ */
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const W = 1400;
+const H = 61;
+const TOP_E = 12;
+const BOT_E = -66;
+
+const x = (ch: number) => (ch / CH_END) * W;
+const y = (e: number) => 4 + ((TOP_E - e) / (TOP_E - BOT_E)) * (H - 10);
+
+const line = PROFILE.map((p) => `${x(p.ch).toFixed(1)},${y(p.level).toFixed(1)}`).join(' ');
+
+const seaY = y(0);
+// Indicative bathymetry, matching the engine's own model of the strait.
+const seabed: string[] = [];
+for (let i = 0; i <= 24; i++) {
+  const ch = STRAIT.from + ((STRAIT.to - STRAIT.from) * i) / 24;
+  const dip = Math.sin(Math.PI * (i / 24));
+  const lvl = -12 + (STRAIT.seabedLevel + 12) * dip;
+  seabed.push(`${x(ch).toFixed(1)},${y(lvl).toFixed(1)}`);
+}
+
+const tickEvery = 1000;
+const ticks: number[] = [];
+for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
+---
+
+<div
+  class="rail"
+  id="rail"
+  role="scrollbar"
+  aria-controls="journey"
+  aria-orientation="horizontal"
+  aria-label={locale === 'tr'
+    ? 'Hat boyunca konum — sürükleyerek ilerleyin'
+    : 'Position along the line — drag to travel'}
+  tabindex="0"
+>
+  <div class="rail__inner">
+    <svg class="rail__svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      <!-- the water column over the strait -->
+      <path
+        d={`M${x(STRAIT.from)},${seaY} L${x(STRAIT.to)},${seaY} L${seabed
+          .slice()
+          .reverse()
+          .join(' L')} Z`}
+        fill="var(--turquoise)"
+        opacity="0.22"></path>
+      <line
+        x1={x(STRAIT.from)}
+        y1={seaY}
+        x2={x(STRAIT.to)}
+        y2={seaY}
+        stroke="var(--turquoise)"
+        stroke-width="1.5"></line>
+
+      <!-- the ground below, so the tunnel reads as being inside something -->
+      <polyline points={seabed.join(' ')} fill="none" stroke="var(--rule-strong)" stroke-width="1"
+      ></polyline>
+
+      <!-- chainage ticks, every kilometre -->
+      {
+        ticks.map((ch) => (
+          <line
+            x1={x(ch)}
+            y1={H - 5}
+            x2={x(ch)}
+            y2={H - 1}
+            stroke="var(--ink-4)"
+            stroke-width="1"
+          />
+        ))
+      }
+
+      <!-- the immersed tube, drawn heavier because it is a different object -->
+      <line
+        x1={x(IMMERSED_START)}
+        y1={y(-52)}
+        x2={x(IMMERSED_END)}
+        y2={y(-52)}
+        stroke="var(--gold)"
+        stroke-width="4"
+        stroke-linecap="round"
+        opacity="0.75"></line>
+
+      <!-- the continental divide -->
+      <line
+        x1={x(DIVIDE_CH)}
+        y1="2"
+        x2={x(DIVIDE_CH)}
+        y2={H - 6}
+        stroke="var(--accent)"
+        stroke-width="1"
+        stroke-dasharray="3 3"
+        opacity="0.7"></line>
+
+      <!-- the alignment -->
+      <polyline
+        points={line}
+        fill="none"
+        stroke="var(--accent)"
+        stroke-width="2.4"
+        stroke-linejoin="round"
+        stroke-linecap="round"></polyline>
+
+      <!-- Continent labels, either side of the divide. In the drawing rather
+           than floating above it: they annotate the section, and a second
+           fixed element is a second thing the footer has to dodge. -->
+      <text
+        x={x(DIVIDE_CH) - 14}
+        y="12"
+        text-anchor="end"
+        fill="var(--ink-4)"
+        font-family="var(--f-mono)"
+        font-size="7"
+        letter-spacing="1.6">{tt('j.europe')}</text>
+      <text
+        x={x(DIVIDE_CH) + 14}
+        y="12"
+        fill="var(--ink-4)"
+        font-family="var(--f-mono)"
+        font-size="7"
+        letter-spacing="1.6">{tt('j.asia')}</text>
+
+      <!-- stations -->
+      {
+        STOPS.map((s) => (
+          <circle
+            cx={x(s.ch)}
+            cy={y(s.level)}
+            r="3.6"
+            fill="var(--surface)"
+            stroke="var(--accent)"
+            stroke-width="2"
+          />
+        ))
+      }
+    </svg>
+
+    <span class="rail__window" id="rail-window" aria-hidden="true"></span>
+
+    <!--
+      The stations again, as real links. The SVG is decoration for sighted
+      readers; this is how the rail is used with a keyboard or a screen reader,
+      and how a station is reached without dragging anything.
+    -->
+    <ul class="rail__stops">
+      {
+        STOPS.map((s) => (
+          <li style={`left:${(s.ch / CH_END) * 100}%`}>
+            <a href={`?ch=${s.ch}`} class="rail__stop">
+              <span class="visually-hidden">{s.name}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</div>
+
+
+<style>
+  .rail__stops {
+    position: absolute;
+    inset: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .rail__stops li {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+  }
+  .rail__stop {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    translate: -50% -50%;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r-capsule);
+  }
+  .rail__stop:hover {
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+
+  @media (max-width: 1023px) {
+  </style>

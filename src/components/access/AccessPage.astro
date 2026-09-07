@@ -1,0 +1,119 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import { translator } from '../../lib/i18n.ts';
+import { NODES } from '../../data/network.ts';
+import { href, type Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const noStepFree = NODES.filter((n) => !n.stepFree);
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.access')}
+      title={tt('acc.title')}
+      lede={tt('acc.lede')}
+    />
+
+    <div class="prose">
+      <h2>{tt('acc.stations')}</h2>
+      <p>{tt('acc.stationsBody')}</p>
+
+      <div class="tw">
+        <table>
+          <caption>{tt('map.tableCaption')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{tt('map.station')}</th>
+              <th scope="col">{tt('map.lines')}</th>
+              <th scope="col">{tt('map.access')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              NODES.map((n) => (
+                <tr>
+                  <th scope="row">{n.name}</th>
+                  <td>{n.lines.join(', ')}</td>
+                  <td>
+                    <span class={n.stepFree ? 'yn yn--y' : 'yn yn--n'}>
+                      {n.stepFree ? tt('map.yes') : tt('map.no')}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      {
+        noStepFree.length > 0 && (
+          <p class="note">
+            {locale === 'tr'
+              ? `Çizili ${NODES.length} istasyondan ${noStepFree.length} tanesinde engelsiz erişim yok.`
+              : `${noStepFree.length} of the ${NODES.length} drawn stations has no step-free access.`}
+          </p>
+        )
+      }
+
+      <h2>{tt('acc.site')}</h2>
+      <h3>{tt('acc.conformance')}</h3>
+      <p>{tt('acc.conformanceBody')}</p>
+
+      <h3>{tt('acc.known')}</h3>
+      <p>{tt('acc.knownBody')}</p>
+
+      <h3>{tt('acc.contact')}</h3>
+      <p>{tt('acc.contactBody')}</p>
+
+      <p>
+        <a class="tile tile--ghost" href={href('/harita', locale)}>{tt('map.title')}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .prose {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    max-width: 72rem;
+  }
+  .prose h2 {
+    margin-top: var(--sp-roomy);
+  }
+  .prose h3 {
+    margin-top: var(--sp-base);
+  }
+  .yn {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: var(--r-capsule);
+    font-family: var(--f-mono);
+    font-size: var(--t-micro);
+  }
+  .yn--y {
+    background: color-mix(in oklab, var(--ok) 15%, transparent);
+    color: var(--ok);
+  }
+  .yn--n {
+    background: color-mix(in oklab, var(--warn) 18%, transparent);
+    color: var(--warn);
+  }
+  .note {
+    padding: var(--sp-snug) var(--sp-base);
+    border-left: 3px solid var(--warn);
+    background: var(--surface);
+    font-size: var(--t-small);
+  }
+</style>

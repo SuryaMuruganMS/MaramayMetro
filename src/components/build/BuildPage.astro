@@ -1,0 +1,147 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import Figure from '../ui/Figure.astro';
+import PosterFrame from '../ui/PosterFrame.astro';
+import { translator } from '../../lib/i18n.ts';
+import { CORRIDOR } from '../../data/alignment.ts';
+import { href, num, type Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+/**
+ * Three construction methods, in the order the tunnel uses them going east.
+ * The order is the point: a reader travelling the line meets them this way.
+ */
+const METHODS = [
+  { id: 'cut', k: 'build.cut', b: 'build.cutBody', tint: 'gold' as const },
+  { id: 'bored', k: 'build.bored', b: 'build.boredBody', tint: 'cobalt' as const },
+  { id: 'immersed', k: 'build.immersed', b: 'build.immersedBody', tint: 'turquoise' as const },
+];
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.build')}
+      title={tt('build.title')}
+      lede={tt('build.lede')}
+    />
+
+    <dl class="figs">
+      <Figure
+        locale={locale}
+        k={locale === 'tr' ? 'Batırma tüp' : 'Immersed tube'}
+        v={`${num(CORRIDOR.immersedM.value, locale)} m`}
+        source={CORRIDOR.immersedM.source}
+      />
+      <Figure
+        locale={locale}
+        k={locale === 'tr' ? 'Eleman' : 'Elements'}
+        v={String(CORRIDOR.immersedElements.value)}
+        source={CORRIDOR.immersedElements.source}
+      />
+      <Figure
+        locale={locale}
+        k={locale === 'tr' ? 'Eleman genişliği' : 'Element width'}
+        v={`${CORRIDOR.elementWidthM.value} m`}
+        source={CORRIDOR.elementWidthM.source}
+      />
+      <Figure
+        locale={locale}
+        k={locale === 'tr' ? 'Açılış' : 'Opened'}
+        v={String(CORRIDOR.opened.value)}
+        source={CORRIDOR.opened.source}
+      />
+    </dl>
+
+    <ol class="methods">
+      {
+        METHODS.map((m, i) => (
+          <li class="method">
+            <div class="method__body">
+              <p class="method__n mono">{String(i + 1).padStart(2, '0')}</p>
+              <h2>{tt(m.k)}</h2>
+              <p>{tt(m.b)}</p>
+            </div>
+            <PosterFrame
+              alt={tt(m.k)}
+              caption={tt(m.k)}
+              ratio="3 / 2"
+              tint={m.tint}
+              src={`/img/build-${m.id}.webp`}
+            />
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="why">
+      <h2>{tt('build.why')}</h2>
+      <p>{tt('build.whyBody')}</p>
+
+      <h2>{tt('build.delay')}</h2>
+      <p>{tt('build.delayBody')}</p>
+      <p>
+        <a class="tile tile--ghost" href={href('/kazi', locale)}>{tt('dig.title')}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .figs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--sp-base);
+    margin: 0;
+    padding-top: var(--sp-base);
+    border-top: 1px solid var(--rule);
+    max-width: 62rem;
+  }
+  .methods {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-loose);
+  }
+  .method {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: var(--sp-roomy);
+    align-items: start;
+    padding-top: var(--sp-roomy);
+    border-top: 1px solid var(--rule);
+  }
+  @media (max-width: 900px) {
+    .method {
+      grid-template-columns: 1fr;
+    }
+  }
+  .method__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+  }
+  .method__n {
+    font-size: var(--t-micro);
+    letter-spacing: 0.16em;
+    color: var(--accent);
+  }
+  .why {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    padding-top: var(--sp-roomy);
+    border-top: 1px solid var(--rule);
+  }
+  .why h2 {
+    margin-top: var(--sp-base);
+  }
+</style>

@@ -1,0 +1,37 @@
+---
+import { upper, type Locale } from '../../lib/locale.ts';
+
+/**
+ * The standard opening for a content page: eyebrow, title, standfirst.
+ *
+ * One component so every page opens at the same rhythm. A public body's site
+ * gets read by people looking for one fact, and a consistent opening is what
+ * lets them skip it reliably.
+ */
+interface Props {
+  locale: Locale;
+  eyebrow: string;
+  title: string;
+  lede?: string;
+}
+const { locale, eyebrow, title, lede } = Astro.props;
+---
+
+<header class="pagehead">
+  <p class="label">{upper(eyebrow, locale)}</p>
+  <h1>{title}</h1>
+  {lede && <p class="lede">{lede}</p>}
+</header>
+
+<style>
+  .pagehead {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    max-width: 62rem;
+  }
+  .pagehead h1 {
+    font-size: var(--t-h1);
+    max-width: 20ch;
+  }
+</style>

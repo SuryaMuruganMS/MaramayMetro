@@ -1,0 +1,50 @@
+---
+import Planner from './Planner.svelte';
+import PageHead from '../ui/PageHead.astro';
+import { translator } from '../../lib/i18n.ts';
+import { href, type Locale } from '../../lib/locale.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const KEYS = [
+  'plan.from',
+  'plan.to',
+  'plan.swap',
+  'plan.duration',
+  'plan.changes',
+  'plan.deepest',
+  'plan.same',
+  'plan.none',
+  'plan.stepFreeOk',
+  'plan.stepFreeNo',
+  'plan.indicative',
+  'x.min',
+];
+const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.plan')}
+      title={tt('plan.title')}
+      lede={tt('plan.lede')}
+    />
+
+    <Planner client:load locale={locale} labels={labels} />
+
+    <!-- Without scripting the planner cannot run, so say what to do instead
+         rather than rendering an inert set of dropdowns. -->
+    <noscript>
+      <p class="panel">
+        {tt('plan.noJs')}
+        <a href={href('/harita', locale)}>{tt('map.title')}</a>
+      </p>
+    </noscript>
+  </div>
+</section>

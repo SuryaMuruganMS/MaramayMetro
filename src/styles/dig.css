@@ -1,0 +1,202 @@
+/* ==========================================================================
+   The dig — a vertical section, where down is also backwards in time
+   ========================================================================== */
+
+.dig__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-base);
+  padding-block: var(--sp-vast) var(--sp-loose);
+}
+.dig__head h1 {
+  font-size: var(--t-h1);
+  max-width: 18ch;
+}
+.dig__figs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-base);
+  margin: 0;
+  padding-top: var(--sp-base);
+  border-top: 1px solid var(--rule);
+  max-width: 60rem;
+}
+.dig__cue {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-tight);
+  font-size: var(--t-micro);
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+.dig__cue-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-capsule);
+  background: var(--gold);
+  color: var(--ink-on-pigment);
+  font-size: 12px;
+}
+
+/* -------------------------------------------------------------- the strata
+   Band heights are proportional to real excavated depth, so the Byzantine
+   harbour is visibly the thickest thing in the ground - which it is. */
+.strata {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stratum {
+  position: relative;
+  /* --h is the layer's share of the total depth. 26vh per unit gives the
+     section enough height to scroll through without inventing filler. */
+  min-height: calc(var(--h) * 0.26vh * 40);
+  padding: var(--sp-loose) 0;
+  border-top: 1px solid var(--rule);
+}
+
+/* Each layer paints its own ground. Stepped, like the depth bands on the
+   crossing - you can see every boundary you cross. */
+.stratum[data-tone='fill'] {
+  background: color-mix(in oklab, var(--ink) 4%, var(--ground));
+}
+.stratum[data-tone='ottoman'] {
+  background: color-mix(in oklab, var(--gold) 11%, var(--ground));
+}
+.stratum[data-tone='byzantine'] {
+  background: color-mix(in oklab, var(--bole) 13%, var(--ground));
+}
+.stratum[data-tone='roman'] {
+  background: color-mix(in oklab, var(--turquoise) 12%, var(--ground));
+}
+.stratum[data-tone='neolithic'] {
+  background: color-mix(in oklab, var(--cobalt) 16%, var(--ground));
+}
+
+.stratum__rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px var(--margin) 0;
+  pointer-events: none;
+}
+.stratum__depth {
+  font-size: var(--t-micro);
+  letter-spacing: 0.1em;
+  color: var(--ink-4);
+}
+
+.stratum__body {
+  width: min(100% - var(--margin) * 2, var(--shell));
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-snug);
+  max-width: min(100% - var(--margin) * 2, 60rem);
+}
+.stratum__period {
+  font-size: var(--t-micro);
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+.stratum__name {
+  font-size: clamp(1.7rem, 4.4vw, 3rem);
+  letter-spacing: -0.03em;
+}
+.stratum__text {
+  font-size: var(--t-lede);
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 54ch;
+}
+
+/* ------------------------------------------------------------------ hulls
+   Catalogued the way an archive would: reference, type, date, note. Not a
+   gallery. These were working ships and then they were evidence. */
+.hulls {
+  list-style: none;
+  margin: var(--sp-base) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  max-width: 60rem;
+}
+.hull {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) 62px;
+  gap: 4px var(--sp-snug);
+  align-items: baseline;
+  padding: 11px var(--sp-base);
+  background: var(--surface);
+  font-size: var(--t-small);
+}
+.hull__ref {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  color: var(--bole);
+  font-weight: 500;
+}
+.hull__type {
+  font-weight: 600;
+}
+.hull__c {
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  text-align: right;
+}
+.hull__note {
+  grid-column: 2 / -1;
+  color: var(--ink-3);
+  font-size: var(--t-small);
+}
+.hull--rest {
+  display: block;
+  font-size: var(--t-micro);
+  letter-spacing: 0.06em;
+  color: var(--ink-4);
+}
+@media (max-width: 620px) {
+  .hull {
+    grid-template-columns: 1fr auto;
+  }
+  .hull__note {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ------------------------------------------------------------------- why */
+.dig__why {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-base);
+  padding-block: var(--sp-vast);
+  border-top: 1px solid var(--rule);
+}
+.dig__respect {
+  padding-left: var(--sp-base);
+  border-left: 2px solid var(--rule-strong);
+  color: var(--ink-3);
+  font-size: var(--t-small);
+}
+.dig__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-tight);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dig__cue-arrow {
+    animation: none;
+  }
+}

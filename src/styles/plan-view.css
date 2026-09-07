@@ -1,0 +1,197 @@
+/* ==========================================================================
+   PLAN VIEW — the linear, reflow-safe layout
+
+   WHY THIS IS ITS OWN FILE, LOADED LAST
+
+   These overrides were originally spread across journey.css and panels.css,
+   next to the rules they undo. That reads well and is wrong: `.panel--arrival`
+   in panels.css re-declares `position` at the same specificity as `.panel` in
+   journey.css's media query, and panels.css loads second, so the modifier won
+   and one panel stayed absolutely positioned. The page then scrolled sideways
+   at 1023px - a WCAG 1.4.10 failure produced entirely by file order.
+
+   Everything that undoes the horizontal track now lives here, after every file
+   that could fight it. Specificity is matched or beaten deliberately rather
+   than by accident.
+
+   THREE WAYS IN, ONE SET OF RULES
+     - viewport under 1024px
+     - prefers-reduced-motion
+     - the reader pressing "Plan view"
+
+   The 320px reflow width and 400% browser zoom both land in the first of
+   those, which is what makes the horizontal presentation legal: the content
+   underneath it is a plain vertical document, and this is how it gets one.
+   ========================================================================== */
+
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .journey {
+    height: auto;
+    view-timeline-name: none;
+  }
+  .journey__pin {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+  .journey__track {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .panel,
+  .panel--stop,
+  .panel--run,
+  .panel--crossing,
+  .panel--arrival {
+    position: static;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: var(--sp-vast) var(--margin);
+    border-bottom: 1px solid var(--rule-soft);
+    animation: none !important;
+    transform: none !important;
+  }
+  .snap {
+    display: none;
+  }
+  /* The rail is a horizontal scrollbar for a horizontal track. Without the
+     track it is a picture of one, so it goes entirely. */
+  .rail,
+  .readout {
+    display: none !important;
+  }
+
+  .crossing__grid {
+    grid-template-columns: 1fr;
+    height: auto;
+    padding: 0;
+    gap: var(--sp-base);
+  }
+  .crossing__after {
+    justify-self: start;
+    text-align: left;
+  }
+  .crossing__mid {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .sea {
+    position: relative;
+    height: 90px;
+    margin-bottom: var(--sp-base);
+    border-radius: var(--r-panel);
+  }
+  .divide {
+    position: relative;
+    inset: auto;
+    left: 0;
+    width: auto;
+    margin: var(--sp-base) 0;
+    padding-left: var(--sp-base);
+    border-left: 2px dashed var(--accent);
+  }
+  .divide__rule {
+    display: none;
+  }
+  .divide__tag,
+  .divide__eu,
+  .divide__as,
+  .divide__ch {
+    position: static;
+    translate: none;
+    display: inline-block;
+    margin-right: var(--sp-tight);
+  }
+  .run__line {
+    text-shadow: none;
+  }
+  .stop__cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The switch. Same declarations, reached deliberately rather than by viewport. */
+:root[data-view='plan'] .journey {
+  height: auto;
+  view-timeline-name: none;
+}
+:root[data-view='plan'] .journey__pin {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+:root[data-view='plan'] .journey__track {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+:root[data-view='plan'] .panel,
+:root[data-view='plan'] .panel--stop,
+:root[data-view='plan'] .panel--run,
+:root[data-view='plan'] .panel--crossing,
+:root[data-view='plan'] .panel--arrival {
+  position: static;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: var(--sp-vast) var(--margin);
+  border-bottom: 1px solid var(--rule-soft);
+  animation: none !important;
+  transform: none !important;
+}
+:root[data-view='plan'] .snap {
+  display: none;
+}
+:root[data-view='plan'] .rail,
+:root[data-view='plan'] .readout {
+  display: none !important;
+}
+:root[data-view='plan'] .crossing__grid {
+  grid-template-columns: 1fr;
+  height: auto;
+  padding: 0;
+  gap: var(--sp-base);
+}
+:root[data-view='plan'] .crossing__after {
+  justify-self: start;
+  text-align: left;
+}
+:root[data-view='plan'] .crossing__mid {
+  align-items: flex-start;
+  text-align: left;
+}
+:root[data-view='plan'] .sea {
+  position: relative;
+  height: 90px;
+  margin-bottom: var(--sp-base);
+  border-radius: var(--r-panel);
+}
+:root[data-view='plan'] .divide {
+  position: relative;
+  inset: auto;
+  left: 0;
+  width: auto;
+  margin: var(--sp-base) 0;
+  padding-left: var(--sp-base);
+  border-left: 2px dashed var(--accent);
+}
+:root[data-view='plan'] .divide__rule {
+  display: none;
+}
+:root[data-view='plan'] .divide__tag,
+:root[data-view='plan'] .divide__eu,
+:root[data-view='plan'] .divide__as,
+:root[data-view='plan'] .divide__ch {
+  position: static;
+  translate: none;
+  display: inline-block;
+  margin-right: var(--sp-tight);
+}
+:root[data-view='plan'] .run__line {
+  text-shadow: none;
+}
+:root[data-view='plan'] .stop__cols {
+  grid-template-columns: minmax(0, 1fr);
+}
