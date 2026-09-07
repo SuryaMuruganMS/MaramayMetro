@@ -96,7 +96,7 @@
   .digax {
     position: fixed;
     right: var(--margin);
-    top: calc(var(--head-h) + var(--sp-snug));
+    top: calc(var(--chrome-h) + var(--sp-snug));
     z-index: 55;
     display: flex;
     flex-direction: column;

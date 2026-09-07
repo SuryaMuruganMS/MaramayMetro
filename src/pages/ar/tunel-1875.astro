@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import Body from '../../components/tunel/TunelPage.astro';
+import { translator } from '../../i18n/index.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+const locale: Locale = 'ar';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/tunel-1875"
+  title={tt('tunel.title') + ' \u2014 ' + tt('site.full')}
+  description={tt('tunel.lede')}
+>
+  <Body locale={locale} />
+</Base>

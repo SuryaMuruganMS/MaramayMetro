@@ -1,0 +1,154 @@
+---
+import Girih from './Girih.astro';
+
+/**
+ * An image that has a day version and a night version.
+ *
+ * BOTH ARE IN THE DOM, ONE IS PAINTED
+ * Swapping `src` from JavaScript on a theme change means a blank frame while
+ * the other file downloads, and on first paint it means whichever one the
+ * markup happened to name. Both are emitted and CSS picks — so the correct one
+ * is already decoded when the reader flips the switch, and there is no flash.
+ *
+ * The cost is one extra request per image. `loading="lazy"` on the pair keeps
+ * that off the critical path, and the budget gate holds each file under 200 KB.
+ *
+ * With neither file present the frame falls back to an İznik tile panel, so a
+ * page is never broken by an asset that has not arrived yet.
+ */
+interface Props {
+  /** Path stem. `/img/cab` loads /img/cab-day.webp and /img/cab-night.webp. */
+  src?: string;
+  alt: string;
+  caption?: string;
+  ratio?: string;
+  tint?: 'cobalt' | 'turquoise' | 'bole' | 'gold';
+  eager?: boolean;
+}
+const { src, alt, caption, ratio = '3 / 2', tint = 'cobalt', eager = false } = Astro.props;
+---
+
+<figure class="mimg" style={`--ratio:${ratio}; --tint: var(--${tint})`}>
+  <div class="mimg__frame">
+    {
+      src ? (
+        <>
+          <img
+            class="mimg__i mimg__i--day"
+            src={`${src}-day.webp`}
+            alt={alt}
+            loading={eager ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+          <img
+            class="mimg__i mimg__i--night"
+            src={`${src}-night.webp`}
+            alt=""
+            aria-hidden="true"
+            loading={eager ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        </>
+      ) : (
+        <div class="mimg__tile" role="img" aria-label={alt}>
+          <Girih size={112} opacity={0.34} />
+          <span class="mimg__glaze" />
+        </div>
+      )
+    }
+    <span class="mimg__rim" aria-hidden="true"></span>
+  </div>
+  {caption && <figcaption class="mimg__cap mono">{caption}</figcaption>}
+</figure>
+
+<style>
+  .mimg {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+    min-width: 0;
+  }
+  .mimg__frame {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    overflow: hidden;
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    box-shadow:
+      inset 0 0 0 1px var(--rule-strong),
+      inset 0 0 0 7px var(--surface),
+      inset 0 0 0 8px color-mix(in oklab, var(--ink) 14%, transparent);
+  }
+  .mimg__i {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Day is the default; night takes over under either route to night service.
+     Declared as three rules rather than one so an explicit day choice beats a
+     dark operating system, which a single media query cannot do. */
+  .mimg__i--night {
+    opacity: 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-service='day'])) .mimg__i--day {
+      opacity: 0;
+    }
+    :global(:root:not([data-service='day'])) .mimg__i--night {
+      opacity: 1;
+    }
+  }
+  :global(:root[data-service='night']) .mimg__i--day {
+    opacity: 0;
+  }
+  :global(:root[data-service='night']) .mimg__i--night {
+    opacity: 1;
+  }
+  :global(:root[data-service='day']) .mimg__i--day {
+    opacity: 1;
+  }
+  :global(:root[data-service='day']) .mimg__i--night {
+    opacity: 0;
+  }
+
+  .mimg__tile {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    color: var(--tint);
+    background:
+      radial-gradient(
+        120% 90% at 22% 8%,
+        color-mix(in oklab, var(--tint) 34%, transparent),
+        transparent 66%
+      ),
+      color-mix(in oklab, var(--tint) 20%, var(--surface));
+  }
+  .mimg__glaze {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      142deg,
+      color-mix(in oklab, #fff 30%, transparent) 0%,
+      transparent 34%
+    );
+    pointer-events: none;
+  }
+  .mimg__rim {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--r-panel);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 34%, transparent);
+    pointer-events: none;
+  }
+  .mimg__cap {
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    color: var(--ink-4);
+    max-width: 46ch;
+  }
+</style>

@@ -1,0 +1,206 @@
+---
+import PageHead from '../ui/PageHead.astro';
+import ModeImage from '../ui/ModeImage.astro';
+import TrainDiagram from './TrainDiagram.astro';
+import { translator } from '../../i18n/index.ts';
+import { href, upper, type Locale } from '../../lib/locale.ts';
+import { modeAsset } from '../../lib/assets.ts';
+
+/**
+ * How to actually use the railway.
+ *
+ * Most transit sites bury this under "customer information" and write it in the
+ * passive voice. It is the single most useful page on the site for someone who
+ * has never been here, so it goes in the main navigation and says what to do in
+ * the order you have to do it.
+ */
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const RULES = [
+  'travel.rule1',
+  'travel.rule2',
+  'travel.rule3',
+  'travel.rule4',
+  'travel.rule5',
+  'travel.rule6',
+];
+---
+
+<section class="section">
+  <div class="shell stack stack--loose">
+    <PageHead
+      locale={locale}
+      eyebrow={tt('nav.travel')}
+      title={tt('travel.title')}
+      lede={tt('travel.lede')}
+    />
+
+    <!-- 01 Making a journey -->
+    <article class="tsec">
+      <div class="tsec__body">
+        <p class="tsec__n mono">01</p>
+        <h2>{tt('travel.how')}</h2>
+        <p>{tt('travel.howBody')}</p>
+      </div>
+      <ModeImage
+        src={modeAsset('/img/travel-gate')}
+        alt={tt('travel.how')}
+        caption={tt('travel.how')}
+        ratio="3 / 2"
+        tint="cobalt"
+      />
+    </article>
+
+    <!-- 02 Safety -->
+    <article class="tsec tsec--flip">
+      <div class="tsec__body">
+        <p class="tsec__n mono">02</p>
+        <h2>{tt('travel.safety')}</h2>
+        <p>{tt('travel.safetyBody')}</p>
+      </div>
+      <ModeImage
+        src={modeAsset('/img/travel-safety')}
+        alt={tt('travel.safety')}
+        caption={tt('travel.safety')}
+        ratio="3 / 2"
+        tint="bole"
+      />
+    </article>
+
+    <!-- 03 Parts of the train — the diagram is drawn, not photographed, so it
+         labels itself in whichever of the four languages is loaded. -->
+    <article class="tsec tsec--wide">
+      <div class="tsec__body">
+        <p class="tsec__n mono">03</p>
+        <h2>{tt('travel.parts')}</h2>
+        <p>{tt('travel.partsBody')}</p>
+      </div>
+      <TrainDiagram locale={locale} />
+    </article>
+
+    <article class="tsec tsec--flip">
+      <div class="tsec__body">
+        <p class="tsec__n mono">04</p>
+        <h2>{tt('travel.cab')}</h2>
+        <p>{tt('travel.cabBody')}</p>
+      </div>
+      <ModeImage
+        src={modeAsset('/img/travel-cab')}
+        alt={tt('travel.cabAlt')}
+        caption={tt('travel.cab')}
+        ratio="3 / 2"
+        tint="turquoise"
+      />
+    </article>
+
+    <!-- 05 Rules -->
+    <div class="rules">
+      <h2>{upper(tt('travel.rules'), locale)}</h2>
+      <ol class="rules__list">
+        {
+          RULES.map((k, i) => (
+            <li class="rule">
+              <span class="rule__n mono">{String(i + 1).padStart(2, '0')}</span>
+              <span class="rule__t">{tt(k)}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="rules__more">
+        <a href={href('/erisilebilirlik', locale)}>{tt('acc.title')}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={href('/ucret', locale)}>{tt('fare.title')}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tsec {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: var(--sp-roomy);
+    align-items: start;
+    padding-top: var(--sp-roomy);
+    border-top: 1px solid var(--rule);
+  }
+  .tsec--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Alternating sides, so a column of four sections does not read as a list of
+     identical rows. */
+  .tsec--flip .tsec__body {
+    order: 2;
+  }
+  @media (max-width: 900px) {
+    .tsec,
+    .tsec--flip {
+      grid-template-columns: 1fr;
+    }
+    .tsec--flip .tsec__body {
+      order: 0;
+    }
+  }
+  .tsec__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+  }
+  .tsec__n {
+    font-size: var(--t-micro);
+    letter-spacing: 0.16em;
+    color: var(--accent);
+  }
+  .tsec__body p {
+    font-size: var(--t-lede);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .rules {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-base);
+    padding-top: var(--sp-roomy);
+    border-top: 1px solid var(--rule);
+  }
+  .rules__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+    max-width: none;
+  }
+  .rule {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-snug);
+    padding: 14px var(--sp-base);
+    background: var(--surface);
+    margin: 0;
+  }
+  .rule__n {
+    flex: none;
+    font-size: var(--t-micro);
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+  .rule__t {
+    font-size: var(--t-small);
+    line-height: 1.5;
+  }
+  .rules__more {
+    font-size: var(--t-small);
+    color: var(--ink-3);
+  }
+</style>

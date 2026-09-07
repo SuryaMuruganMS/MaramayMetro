@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import Body from '../../components/journey/Crossing.astro';
+import { translator } from '../../i18n/index.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+const locale: Locale = 'ar';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/"
+  title={tt('site.full') + ' \u2014 ' + tt('site.tagline')}
+  description={tt('site.description')}
+>
+  <Body locale={locale} />
+</Base>

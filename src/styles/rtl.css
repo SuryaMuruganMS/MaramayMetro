@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Right to left
+
+   Arabic flips the document. Most of the site handles that for free because it
+   is laid out with flex, grid and logical properties, which mirror themselves.
+   Three things must NOT mirror, and they are the reason this file exists.
+
+   1. THE CROSSING RUNS WEST TO EAST
+      Because the railway does. Kazlıçeşme is on the European shore and
+      Söğütlüçeşme is on the Asian one, and no writing system changes which
+      side of the Bosphorus a station is on. Mirroring the track would put Asia
+      on the left and make the section drawing wrong. A compass bearing is not
+      a text direction.
+
+   2. THE SECTION RAIL IS A DRAWING OF THAT SAME GEOGRAPHY
+      It has to agree with the track, so it is pinned the same way. Its
+      scrollbar therefore also stays left-to-right, which is correct: the
+      reader is dragging a train along a line, not reading a sentence.
+
+   3. THE NETWORK MAP IS A MAP
+      East is to the right of west on it, in every language.
+
+   Inside all three, the prose is switched back to RTL so the words still read
+   correctly. Only the geometry is pinned.
+   ========================================================================== */
+
+[dir='rtl'] .journey__track,
+[dir='rtl'] .rail,
+[dir='rtl'] .rail__inner,
+[dir='rtl'] .netmap__frame,
+[dir='rtl'] .tdiag__frame,
+[dir='rtl'] .profile {
+  direction: ltr;
+}
+
+/* ...but the writing inside them is still Arabic. */
+[dir='rtl'] .panel,
+[dir='rtl'] .netmap__frame figcaption,
+[dir='rtl'] .tdiag__cap {
+  direction: rtl;
+}
+
+/* The chainage ruler and the depth readout are columns of figures with Latin
+   units. Numerals stay LTR inside an RTL line or the minus sign migrates. */
+[dir='rtl'] .readout,
+[dir='rtl'] .digax,
+[dir='rtl'] .fig,
+[dir='rtl'] .mono {
+  direction: ltr;
+  text-align: start;
+}
+
+/* Arrows and chevrons point at a direction, so they mirror with the text. */
+[dir='rtl'] .tile [aria-hidden='true'],
+[dir='rtl'] .rules__more [aria-hidden='true'] {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+/* The downward cue does not: down is down. */
+[dir='rtl'] .open__arrow,
+[dir='rtl'] .dig__cue-arrow {
+  transform: none;
+}
+
+/*
+  Arabic sits differently on the line than Latin does: taller ascenders, deeper
+  descenders, and no case. It needs a little more leading and no letter-spacing
+  at all — spacing an Arabic word breaks the joins between letters and renders
+  it as disconnected shapes.
+*/
+[lang='ar'] body,
+[dir='rtl'] {
+  line-height: 1.8;
+}
+[dir='rtl'] .label,
+[dir='rtl'] .chip,
+[dir='rtl'] .roundel,
+[dir='rtl'] .seg__btn {
+  letter-spacing: 0;
+}
+[dir='rtl'] h1,
+[dir='rtl'] h2,
+[dir='rtl'] h3 {
+  letter-spacing: 0;
+  line-height: 1.35;
+}

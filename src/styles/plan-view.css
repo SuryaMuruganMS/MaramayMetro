@@ -107,9 +107,6 @@
   .run__line {
     text-shadow: none;
   }
-  .stop__cols {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* The switch. Same declarations, reached deliberately rather than by viewport. */
@@ -191,7 +188,4 @@
 }
 :root[data-view='plan'] .run__line {
   text-shadow: none;
-}
-:root[data-view='plan'] .stop__cols {
-  grid-template-columns: minmax(0, 1fr);
 }

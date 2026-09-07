@@ -30,6 +30,16 @@ import {
  * put you back at the start of it.
  */
 
+/**
+ * The axis bounds, re-exported.
+ *
+ * They live in the data file, but this module IS the axis, so callers should
+ * not have to know that. Importing `CH_END` from here silently yielded
+ * `undefined` before this existed, which turned every position into NaN and
+ * made the train-formation readout report the leading cab everywhere.
+ */
+export { CH_START, CH_END } from '../data/alignment.ts';
+
 export const clampCh = (ch: number): number => Math.min(CH_END, Math.max(CH_START, ch));
 
 /** 0 at Kazlıçeşme, 1 at Söğütlüçeşme. The scroll progress. */

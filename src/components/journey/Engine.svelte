@@ -15,6 +15,7 @@
     overburden,
   } from '../../lib/chainage.ts';
   import { CH_END } from '../../data/alignment.ts';
+  import { partAt, FORMATION } from '../../lib/formation.ts';
 
   interface Props {
     labels: Record<string, string>;
@@ -39,6 +40,15 @@
   let ch = $state(0);
   let vel = $state(0);
   let planView = $state(false);
+  /**
+   * Whether the sticky pin is actually engaged.
+   *
+   * The readout and the car bar describe a position on the crossing. Above the
+   * journey, on the opening screen, there is no position to describe — and
+   * showing them there put a fixed panel over the hero image and claimed you
+   * were in the driving cab before you had boarded.
+   */
+  let inJourney = $state(false);
 
   const lvl = $derived(elevation(ch));
   const dep = $derived(depth(ch));
@@ -46,6 +56,13 @@
   const near = $derived(nearestStop(ch));
   const el = $derived(element(ch));
   const grad = $derived(gradient(ch));
+
+  /**
+   * The same scroll walks you through the train as well as through the tunnel:
+   * leading cab at Kazlıçeşme, trailing cab at Söğütlüçeşme. The bar at the
+   * bottom names where you are standing.
+   */
+  const where = $derived(partAt(ch));
 
   // Bar proportions, against the deepest overburden anywhere on the line so the
   // bar is comparable at every chainage rather than rescaling as you move.
@@ -86,9 +103,12 @@
 
     /** Scroll progress across the sticky pin's travel. Matches `animation-range: contain`. */
     function progress(): number {
+      const rect = journey!.getBoundingClientRect();
+      // Engaged once the pin has reached the top and until the section leaves.
+      inJourney = rect.top <= 1 && rect.bottom > window.innerHeight * 0.5;
       const scrubPx = journey!.offsetHeight - window.innerHeight;
       if (scrubPx <= 0) return 0;
-      const travelled = Math.min(scrubPx, Math.max(0, -journey!.getBoundingClientRect().top));
+      const travelled = Math.min(scrubPx, Math.max(0, -rect.top));
       return travelled / scrubPx;
     }
 
@@ -243,7 +263,7 @@
   });
 </script>
 
-{#if !planView}
+{#if !planView && inJourney}
   <!--
     A live region would announce on every frame, which is unusable. The readout
     is decorative duplication of information that is also in the panel headings,
@@ -280,6 +300,29 @@
       <span class="readout__k">{near.stop.name}</span>
       <span class="readout__v">{Math.abs(Math.round(near.delta))} m</span>
     </div>
+  </aside>
+
+  <!--
+    Which part of the train you are in, live.
+
+    Hidden from assistive technology: it duplicates nothing a screen reader
+    needs and would announce on every frame. It is atmosphere for people
+    watching the film, and the panel headings carry the actual content.
+  -->
+  <aside class="carbar" aria-hidden="true">
+    <span class="carbar__k">{labels.car}</span>
+    <span class="carbar__v">{labels[where.part.key] ?? where.part.key}</span>
+    <span class="carbar__form">
+      {#each FORMATION as p, i (i)}
+        <span
+          class="carbar__seg"
+          class:is-here={i === where.index}
+          class:is-cab={p.id === 'cab'}
+          style={`--w:${p.weight}`}
+        ></span>
+      {/each}
+    </span>
+    <span class="carbar__car mono">{where.part.car} / 5</span>
   </aside>
 {/if}
 

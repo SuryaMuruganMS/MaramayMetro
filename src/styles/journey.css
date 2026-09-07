@@ -74,10 +74,17 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: calc(var(--head-h) + var(--sp-roomy)) var(--margin)
-    calc(var(--rail-h) + var(--sp-roomy));
-  /* Fixed chrome sits above and below; this padding is the reason nothing can
-     ever be covered by it. Reserved space beats z-index games. */
+  padding: calc(var(--chrome-h) + var(--sp-snug)) calc(var(--margin) + var(--readout-w))
+    calc(var(--rail-h) + var(--carbar-h) + var(--sp-base)) var(--margin);
+  /*
+     Fixed chrome sits above, below AND to the right. Reserving its space is why
+     nothing can be covered by it - z-index only decides who wins a collision,
+     it does not prevent one.
+
+     The right gutter is the readout. Without it a long station name like
+     SÖĞÜTLÜÇEŞME runs straight under the depth panel at exactly the scroll
+     positions where both are on screen.
+  */
 }
 
 @supports (animation-timeline: scroll()) {
@@ -217,7 +224,7 @@
 .readout {
   position: fixed;
   right: var(--margin);
-  top: calc(var(--head-h) + var(--sp-snug));
+  top: calc(var(--chrome-h) + var(--sp-snug));
   z-index: 55;
   display: flex;
   flex-direction: column;
@@ -272,6 +279,84 @@
 
 @media (max-width: 1023px) {
   .readout {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   THE CAR BAR
+
+   Which part of the train you are standing in, and a miniature of the whole
+   formation with your position lit. It sits directly above the section rail, so
+   the two readouts stack: where you are in the tunnel, and where you are in the
+   train.
+
+   Its height is reserved by --rail-h + this, which is why the film band's lower
+   border and every panel's bottom padding are sized from both.
+   ========================================================================== */
+.carbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--rail-h);
+  z-index: 58;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-snug);
+  height: var(--carbar-h);
+  padding-inline: var(--margin);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  border-top: 1px solid var(--rule-soft);
+  backdrop-filter: blur(10px);
+  font-family: var(--f-mono);
+  font-size: var(--t-micro);
+  pointer-events: none;
+}
+.carbar__k {
+  letter-spacing: 0.14em;
+  color: var(--ink-4);
+  flex: none;
+}
+.carbar__v {
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The formation, to scale. Segment widths are the real part weights, so a
+   gangway is a sliver and a saloon is most of a car. */
+.carbar__form {
+  display: flex;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 420px;
+  margin-inline-start: auto;
+  height: 9px;
+  align-items: stretch;
+}
+.carbar__seg {
+  flex: var(--w) 1 0;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ink) 14%, transparent);
+  transition: background-color 140ms linear;
+}
+.carbar__seg.is-cab {
+  background: color-mix(in oklab, var(--ink) 26%, transparent);
+}
+.carbar__seg.is-here {
+  background: var(--accent);
+}
+.carbar__car {
+  flex: none;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1023px) {
+  .carbar {
     display: none;
   }
 }

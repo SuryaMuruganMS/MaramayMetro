@@ -1,0 +1,260 @@
+---
+import { translator } from '../../i18n/index.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+/**
+ * A Marmaray set, drawn to scale and labelled from the dictionary.
+ *
+ * Drawn rather than photographed for one specific reason: the labels have to be
+ * in whichever of the four languages is loaded, and a photograph's labels are
+ * baked in. A diagram whose text comes from the same dictionary as the rest of
+ * the page is correct in Arabic without anybody re-exporting anything.
+ *
+ * The parts are the real ones: bogies under the car ends, open gangways
+ * between, a pantograph on the roof, and a driving cab at each end so the train
+ * reverses without turning round.
+ */
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+
+const W = 1000;
+const H = 200;
+
+/** Five cars: cab, saloon, saloon, saloon, cab. */
+const CARS = 5;
+const GAP = 6;
+const MARGIN = 24;
+const CAR_W = (W - MARGIN * 2 - GAP * (CARS - 1)) / CARS;
+const BODY_Y = 62;
+const BODY_H = 62;
+
+const cars = Array.from({ length: CARS }, (_, i) => ({
+  i,
+  x: MARGIN + i * (CAR_W + GAP),
+  isCab: i === 0 || i === CARS - 1,
+}));
+
+const LABELS = [
+  { key: 'car.cab', at: 0.06 },
+  { key: 'car.gangway', at: 0.29 },
+  { key: 'car.saloon', at: 0.5 },
+  { key: 'car.bogie', at: 0.72 },
+  { key: 'car.pantograph', at: 0.93 },
+];
+---
+
+<figure class="tdiag">
+  <div class="tdiag__frame">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={tt('travel.partsAlt')}>
+      <!-- overhead line -->
+      <line x1="0" y1="18" x2={W} y2="18" stroke="var(--ink-4)" stroke-width="1.5"></line>
+
+      {
+        cars.map((c) => (
+          <g>
+            {/* body */}
+            <rect
+              x={c.x}
+              y={BODY_Y}
+              width={CAR_W}
+              height={BODY_H}
+              rx="9"
+              fill="var(--surface)"
+              stroke="var(--ink-2)"
+              stroke-width="2"
+            />
+            {/* windows */}
+            {Array.from({ length: 4 }, (_, k) => (
+              <rect
+                x={c.x + 14 + k * ((CAR_W - 28) / 4)}
+                y={BODY_Y + 12}
+                width={(CAR_W - 28) / 4 - 9}
+                height="20"
+                rx="3"
+                fill="color-mix(in oklab, var(--cobalt) 30%, transparent)"
+              />
+            ))}
+            {/* doors */}
+            <rect
+              x={c.x + CAR_W * 0.34}
+              y={BODY_Y + 12}
+              width="13"
+              height={BODY_H - 22}
+              rx="2"
+              fill="none"
+              stroke="var(--ink-3)"
+              stroke-width="1.4"
+            />
+            <rect
+              x={c.x + CAR_W * 0.6}
+              y={BODY_Y + 12}
+              width="13"
+              height={BODY_H - 22}
+              rx="2"
+              fill="none"
+              stroke="var(--ink-3)"
+              stroke-width="1.4"
+            />
+            {/* bogies, under each end */}
+            <rect
+              x={c.x + 14}
+              y={BODY_Y + BODY_H}
+              width="30"
+              height="13"
+              rx="4"
+              fill="var(--ink-3)"
+            />
+            <rect
+              x={c.x + CAR_W - 44}
+              y={BODY_Y + BODY_H}
+              width="30"
+              height="13"
+              rx="4"
+              fill="var(--ink-3)"
+            />
+            <circle cx={c.x + 21} cy={BODY_Y + BODY_H + 15} r="5" fill="var(--ink-2)" />
+            <circle cx={c.x + 37} cy={BODY_Y + BODY_H + 15} r="5" fill="var(--ink-2)" />
+            <circle cx={c.x + CAR_W - 37} cy={BODY_Y + BODY_H + 15} r="5" fill="var(--ink-2)" />
+            <circle cx={c.x + CAR_W - 21} cy={BODY_Y + BODY_H + 15} r="5" fill="var(--ink-2)" />
+            {/* cab windscreen, raked */}
+            {c.isCab && (
+              <path
+                d={
+                  c.i === 0
+                    ? `M${c.x + 6},${BODY_Y + 30} L${c.x + 6},${BODY_Y + 14} L${c.x + 22},${BODY_Y + 10} L${c.x + 22},${BODY_Y + 30} Z`
+                    : `M${c.x + CAR_W - 6},${BODY_Y + 30} L${c.x + CAR_W - 6},${BODY_Y + 14} L${c.x + CAR_W - 22},${BODY_Y + 10} L${c.x + CAR_W - 22},${BODY_Y + 30} Z`
+                }
+                fill="color-mix(in oklab, var(--accent) 34%, transparent)"
+                stroke="var(--accent)"
+                stroke-width="1.6"
+              />
+            )}
+          </g>
+        ))
+      }
+
+      <!-- gangways between cars -->
+      {
+        cars
+          .slice(0, -1)
+          .map((c) => (
+            <rect
+              x={c.x + CAR_W}
+              y={BODY_Y + 22}
+              width={GAP}
+              height={BODY_H - 40}
+              fill="var(--ink-3)"
+            />
+          ))
+      }
+
+      <!-- pantograph on the third car -->
+      <g stroke="var(--turquoise)" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path
+          d={`M${MARGIN + 2 * (CAR_W + GAP) + CAR_W * 0.36},${BODY_Y} L${MARGIN + 2 * (CAR_W + GAP) + CAR_W * 0.5},30 L${MARGIN + 2 * (CAR_W + GAP) + CAR_W * 0.64},${BODY_Y}`}
+        ></path>
+        <line
+          x1={MARGIN + 2 * (CAR_W + GAP) + CAR_W * 0.36}
+          y1="20"
+          x2={MARGIN + 2 * (CAR_W + GAP) + CAR_W * 0.64}
+          y2="20"></line>
+      </g>
+
+      <!-- rail -->
+      <line
+        x1="0"
+        y1={BODY_Y + BODY_H + 21}
+        x2={W}
+        y2={BODY_Y + BODY_H + 21}
+        stroke="var(--ink-2)"
+        stroke-width="2.5"></line>
+    </svg>
+
+    <!--
+      Labels as HTML, positioned by percentage over the drawing. Keeps them out
+      of the SVG's coordinate space, so they wrap, inherit the page font, and
+      read correctly right-to-left in Arabic without any transform.
+    -->
+    <ul class="tdiag__labels">
+      {
+        LABELS.map((l) => (
+          <li style={`left:${l.at * 100}%`}>
+            <span class="tdiag__tick" aria-hidden="true" />
+            <span class="tdiag__txt">{tt(l.key)}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+  <figcaption class="tdiag__cap mono">{tt('travel.diagram')}</figcaption>
+</figure>
+
+<style>
+  .tdiag {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+  }
+  .tdiag__frame {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-panel);
+    padding: var(--sp-base) var(--sp-base) calc(var(--sp-base) + 46px);
+    overflow-x: auto;
+  }
+  .tdiag__frame svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+  }
+  .tdiag__labels {
+    position: absolute;
+    left: var(--sp-base);
+    right: var(--sp-base);
+    bottom: var(--sp-tight);
+    height: 42px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tdiag__labels li {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 120px;
+    margin: 0;
+  }
+  .tdiag__tick {
+    width: 1px;
+    height: 12px;
+    background: var(--rule-strong);
+  }
+  .tdiag__txt {
+    font-family: var(--f-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.35;
+  }
+  .tdiag__cap {
+    font-size: var(--t-micro);
+    letter-spacing: 0.1em;
+    color: var(--ink-4);
+  }
+  @media (max-width: 700px) {
+    .tdiag__labels {
+      display: none;
+    }
+  }
+</style>

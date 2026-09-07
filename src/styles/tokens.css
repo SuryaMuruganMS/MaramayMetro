@@ -146,9 +146,26 @@
      scroll positions before a gate caught it. */
   --rail-h: 74px;
   --head-h: 60px;
+  /* Header PLUS the disclosure bar above it. The disclosure is in normal flow,
+     so at rest it pushes the sticky header down and anything positioned from
+     --head-h alone ends up behind it - which is what put the readout's first
+     row under the header. Measured for real in the layout script; this is the
+     fallback until that runs. */
+  --chrome-h: 104px;
+  /* The train-formation bar, stacked on top of the section rail. Panels and
+     the film band both reserve rail + carbar, never one of the two. */
+  --carbar-h: 30px;
+  /* The depth readout's footprint, reserved by every panel. Zero below the
+     breakpoint where the readout is hidden. */
   --readout-w: 0px;
 
   color-scheme: light;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --readout-w: 208px;
+  }
 }
 
 /* --------------------------------------------------------------------------

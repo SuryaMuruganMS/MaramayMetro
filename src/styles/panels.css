@@ -24,25 +24,6 @@
    left leaves half of it empty. The argument sits left, the platform sits
    right - which is also where the photographs go when they arrive.
    ========================================================================== */
-.stop__cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  align-items: start;
-  gap: var(--sp-loose);
-  width: 100%;
-  max-width: 92rem;
-  margin-top: var(--sp-base);
-}
-@media (max-width: 1240px) {
-  .stop__cols {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sp-roomy);
-    max-width: 46rem;
-  }
-  .stop__cols .poster {
-    display: none;
-  }
-}
 
 .stop__body {
   display: flex;
@@ -202,7 +183,7 @@
   gap: var(--sp-roomy);
   height: 100%;
   padding: calc(var(--head-h) + var(--sp-roomy)) var(--margin)
-    calc(var(--rail-h) + var(--sp-roomy));
+    calc(var(--rail-h) + var(--carbar-h) + var(--sp-base));
 }
 .crossing__approach,
 .crossing__after {
@@ -330,7 +311,7 @@
    rail's height has to be cleared explicitly or this label sits under it. */
 .divide__ch {
   position: absolute;
-  bottom: calc(var(--rail-h) + 18px);
+  bottom: calc(var(--rail-h) + var(--carbar-h) + 14px);
   left: 0;
   translate: -50% 0;
   font-size: 9px;

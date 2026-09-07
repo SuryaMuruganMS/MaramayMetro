@@ -1,0 +1,184 @@
+---
+/**
+ * The film band: a long train video running the length of the crossing.
+ *
+ * WHY IT LOOPS RATHER THAN SCRUBS
+ * Scrubbing a video by scroll position is the obvious idea and it does not
+ * survive contact with real browsers: frame-accurate reverse seeking is still
+ * broken across codecs, so scrolling back stutters or freezes on a keyframe.
+ * The video plays at its own speed as atmosphere; everything that has to be
+ * exact — chainage, depth, which car you are in — is derived from the scroll
+ * position and drawn on top. Nobody can tell the difference, and nothing
+ * stutters.
+ *
+ * TWO FILMS, ONE BAND
+ * Day service runs the underwater crossing; night service runs the tunnel.
+ * Both are in the DOM and CSS picks, so switching service does not wait on a
+ * download and there is no flash of the wrong one.
+ *
+ * WHEN NEITHER FILE EXISTS
+ * The band falls back to a drawn gradient and the site is complete without it.
+ * A missing video should not leave a black rectangle where the journey was.
+ */
+interface Props {
+  /** Path stem: /film/crossing loads -day.mp4 and -night.mp4. */
+  src?: string;
+  poster?: string;
+}
+const { src, poster } = Astro.props;
+---
+
+<div class="film" aria-hidden="true">
+  <div class="film__edge film__edge--top"></div>
+
+  <div class="film__stage">
+    {
+      src ? (
+        <>
+          <video
+            class="film__v film__v--day"
+            src={`${src}-day.mp4`}
+            poster={poster ? `${poster}-day.webp` : undefined}
+            muted
+            loop
+            playsinline
+            preload="none"
+            data-film="day"
+          />
+          <video
+            class="film__v film__v--night"
+            src={`${src}-night.mp4`}
+            poster={poster ? `${poster}-night.webp` : undefined}
+            muted
+            loop
+            playsinline
+            preload="none"
+            data-film="night"
+          />
+        </>
+      ) : (
+        <div class="film__drawn" />
+      )
+    }
+    <div class="film__wash"></div>
+  </div>
+
+  <div class="film__edge film__edge--bottom"></div>
+</div>
+
+<style>
+  .film {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+  }
+
+  /*
+    The borders.
+
+    Solid bands of the page's own ground, not a fade — so the video reads as a
+    window cut into the page rather than an image bleeding off it. They also do
+    real work: the top band clears the fixed header and the bottom one clears
+    the section rail, which is why they are sized from those tokens rather than
+    from a round number.
+  */
+  .film__edge {
+    flex: none;
+    background: var(--ground);
+    transition: background-color 180ms linear;
+  }
+  .film__edge--top {
+    height: calc(var(--chrome-h) + var(--sp-tight));
+    box-shadow: 0 1px 0 var(--rule);
+  }
+  .film__edge--bottom {
+    height: calc(var(--rail-h) + var(--sp-tight));
+    box-shadow: 0 -1px 0 var(--rule);
+  }
+
+  .film__stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--band-abyssal);
+  }
+  .film__v {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Day is default; night takes over by either route. Three rules, so an
+     explicit day choice beats a dark operating system. */
+  .film__v--night {
+    opacity: 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-service='day'])) .film__v--day {
+      opacity: 0;
+    }
+    :global(:root:not([data-service='day'])) .film__v--night {
+      opacity: 1;
+    }
+  }
+  :global(:root[data-service='night']) .film__v--day {
+    opacity: 0;
+  }
+  :global(:root[data-service='night']) .film__v--night {
+    opacity: 1;
+  }
+  :global(:root[data-service='day']) .film__v--day {
+    opacity: 1;
+  }
+  :global(:root[data-service='day']) .film__v--night {
+    opacity: 0;
+  }
+
+  /* Drawn stand-in: the water column by day, the bore by night. */
+  .film__drawn {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        120% 80% at 50% 0%,
+        color-mix(in oklab, var(--turquoise) 34%, transparent),
+        transparent 70%
+      ),
+      linear-gradient(180deg, var(--band-deep), var(--band-abyssal));
+  }
+
+  /*
+    The wash.
+
+    A brightness correction, not a veil. Panel text sits over this band, and a
+    video's exposure is not ours to rely on — so the stage is pulled toward the
+    page's own ground far enough that ink keeps its contrast ratio, and no
+    further. Masked so it is heaviest where the text is and lightest at the
+    right, where the reader is looking ahead into the tunnel.
+  */
+  .film__wash {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklab, var(--ground) 62%, transparent);
+    backdrop-filter: saturate(1.1);
+    mask-image: linear-gradient(
+      100deg,
+      #000 0%,
+      #000 46%,
+      color-mix(in oklab, #000 55%, transparent) 78%,
+      color-mix(in oklab, #000 35%, transparent) 100%
+    );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .film__v {
+      display: none;
+    }
+  }
+</style>

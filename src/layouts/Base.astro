@@ -8,11 +8,13 @@ import '../styles/chrome.css';
 import '../styles/dig.css';
 // Last on purpose: it undoes the horizontal track and must beat every rule above.
 import '../styles/plan-view.css';
+// After plan-view, because it corrects geometry that file also touches.
+import '../styles/rtl.css';
 import Header from '../components/chrome/Header.astro';
 import Disclosure from '../components/chrome/Disclosure.astro';
 import Foot from '../components/chrome/Foot.astro';
-import { translator } from '../lib/i18n.ts';
-import { alternate, type Locale } from '../lib/locale.ts';
+import { translator } from '../i18n/index.ts';
+import { BCP47, allHrefs, dirOf, type Locale } from '../lib/locale.ts';
 
 interface Props {
   locale: Locale;
@@ -30,7 +32,7 @@ const desc = description ?? tt('site.description');
 ---
 
 <!doctype html>
-<html lang={locale} data-band="surface" data-continent="EU">
+<html lang={BCP47[locale]} dir={dirOf(locale)} data-band="surface" data-continent="EU">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -38,10 +40,18 @@ const desc = description ?? tt('site.description');
     <meta name="description" content={desc} />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    {
+      /* Every language declares every other, including itself, plus an
+         x-default pointing at English. Search engines need the full set to
+         treat the four as one page rather than four competing ones. */
+      allHrefs(path).map((a) => (
+        <link rel="alternate" hreflang={a.locale} href={new URL(a.href, Astro.site)} />
+      ))
+    }
     <link
       rel="alternate"
-      hreflang={locale === 'tr' ? 'en' : 'tr'}
-      href={alternate(path, locale)}
+      hreflang="x-default"
+      href={new URL(allHrefs(path)[0]!.href, Astro.site)}
     />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={desc} />
@@ -111,6 +121,24 @@ const desc = description ?? tt('site.description');
        * engine watches data-view and reconfigures itself when it changes.
        */
       const root = document.documentElement;
+
+      /**
+       * How much fixed chrome sits at the top of the page.
+       *
+       * The disclosure bar is in normal flow and the header is sticky beneath
+       * it, so at rest the header's bottom edge is lower than --head-h. Fixed
+       * furniture positioned from --head-h alone lands behind it. Both the
+       * crossing readout and the dig axis did exactly that.
+       */
+      function measureChrome() {
+        const head = document.querySelector<HTMLElement>('.head');
+        if (!head) return;
+        const disclosure = document.querySelector<HTMLElement>('.disclosure');
+        const h = (disclosure ? disclosure.offsetHeight : 0) + head.offsetHeight;
+        root.style.setProperty('--chrome-h', h + 'px');
+      }
+      measureChrome();
+      window.addEventListener('resize', measureChrome);
 
       function setService(next: string) {
         root.setAttribute('data-service', next);

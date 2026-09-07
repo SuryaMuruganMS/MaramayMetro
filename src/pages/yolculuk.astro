@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import Body from '../components/travel/TravelPage.astro';
+import { translator } from '../i18n/index.ts';
+import type { Locale } from '../lib/locale.ts';
+
+const locale: Locale = 'en';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/yolculuk"
+  title={tt('travel.title') + ' \u2014 ' + tt('site.full')}
+  description={tt('travel.lede')}
+>
+  <Body locale={locale} />
+</Base>

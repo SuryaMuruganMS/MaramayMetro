@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import Body from '../../components/data/DataPage.astro';
+import { translator } from '../../i18n/index.ts';
+import type { Locale } from '../../lib/locale.ts';
+
+const locale: Locale = 'ru';
+const tt = translator(locale);
+---
+
+<Base
+  locale={locale}
+  path="/acik-veri"
+  title={tt('data.title') + ' \u2014 ' + tt('site.full')}
+  description={tt('data.lede')}
+>
+  <Body locale={locale} />
+</Base>

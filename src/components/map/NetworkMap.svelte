@@ -266,12 +266,8 @@
             />
             {#if n.lines.length > 1 || register === 'section' || focused === n.id}
               {@const l = label(n)}
-              <text
-                x={l.x}
-                y={l.y}
-                text-anchor={l.anchor}
-                class="stn__label"
-                font-size="1.7">{n.name}</text
+              <text x={l.x} y={l.y} text-anchor={l.anchor} class="stn__label" font-size="1.7"
+                >{n.name}</text
               >
             {/if}
           </g>

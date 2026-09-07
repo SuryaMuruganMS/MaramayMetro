@@ -2,11 +2,12 @@
 import { PANELS, PANEL_OFFSETS, PANEL_ANCHORS, TRACK_VW, SCRUB_VW } from '../../lib/panels.ts';
 import { STOPS, DIVIDE_CH, IMMERSED_START, IMMERSED_END } from '../../data/alignment.ts';
 import { journeyCopy } from '../../data/journey-copy.ts';
-import { translator } from '../../lib/i18n.ts';
+import { translator } from '../../i18n/index.ts';
 import { href, lower, upper, type Locale } from '../../lib/locale.ts';
 import Nameplate from './Nameplate.astro';
 import Girih from '../ui/Girih.astro';
-import PosterFrame from '../ui/PosterFrame.astro';
+import FilmBand from './FilmBand.astro';
+import { filmAsset, modeAsset } from '../../lib/assets.ts';
 import ServiceBoard from '../widgets/ServiceBoard.svelte';
 
 interface Props {
@@ -42,6 +43,9 @@ const snaps = PANEL_ANCHORS;
   }
 
   <div class="journey__pin">
+    <!-- The film runs the length of the crossing, behind everything. -->
+    <FilmBand src={filmAsset('/film/crossing')} poster={modeAsset('/img/film-poster')} />
+
     <div class="journey__track" id="track">
       {
         PANELS.map((p, pi) => {
@@ -58,65 +62,51 @@ const snaps = PANEL_ANCHORS;
                 data-panel={p.id}
               >
                 <Nameplate name={stop.name} level={stop.level} locale={locale} />
-                <div class="stop__cols">
-                  <div class="stop__body">
-                    <h2 class="stop__head" id={`h-${stop.id}`}>
-                      {c.head}
-                    </h2>
-                    <p class="stop__text">{c.body}</p>
-                    <dl class="stop__facts">
-                      {c.facts.map((f) => (
-                        <div class="stop__fact">
-                          <dt class="label">{upper(f.k, locale)}</dt>
-                          <dd class="mono">{f.v}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                    <div class="stop__meta">
-                      {stop.interchange.map((i) => (
-                        <span class="chip">
-                          <span
-                            class="chip__dot"
-                            style={`--line: var(--line-${lower(i, 'en')}, var(--ink-3))`}
+                <div class="stop__body">
+                  <h2 class="stop__head" id={`h-${stop.id}`}>
+                    {c.head}
+                  </h2>
+                  <p class="stop__text">{c.body}</p>
+                  <dl class="stop__facts">
+                    {c.facts.map((f) => (
+                      <div class="stop__fact">
+                        <dt class="label">{upper(f.k, locale)}</dt>
+                        <dd class="mono">{f.v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div class="stop__meta">
+                    {stop.interchange.map((i) => (
+                      <span class="chip">
+                        <span
+                          class="chip__dot"
+                          style={`--line: var(--line-${lower(i, 'en')}, var(--ink-3))`}
+                        />
+                        {i}
+                      </span>
+                    ))}
+                    {stop.stepFree && (
+                      <span class="chip chip--ok">
+                        <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                          <path
+                            d="M3 8.6 6.2 12 13 4.6"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                           />
-                          {i}
-                        </span>
-                      ))}
-                      {stop.stepFree && (
-                        <span class="chip chip--ok">
-                          <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
-                            <path
-                              d="M3 8.6 6.2 12 13 4.6"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2.2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-                          </svg>
-                          {tt('j.stepFree')}
-                        </span>
-                      )}
-                    </div>
-                    {c.link && (
-                      <a class="tile tile--sm" href={href(c.link.to, locale)}>
-                        {c.link.label}
-                        <span aria-hidden="true">→</span>
-                      </a>
+                        </svg>
+                        {tt('j.stepFree')}
+                      </span>
                     )}
                   </div>
-
-                  <PosterFrame
-                    src={stop.photo}
-                    alt={
-                      locale === 'tr'
-                        ? `${stop.name} istasyonu, peron seviyesi`
-                        : `${stop.name} station, platform level`
-                    }
-                    caption={`${stop.name} · ${locale === 'tr' ? 'peron' : 'platform'}`}
-                    ratio="4 / 3"
-                    tint={stop.continent === 'EU' ? 'cobalt' : 'turquoise'}
-                  />
+                  {c.link && (
+                    <a class="tile tile--sm" href={href(c.link.to, locale)}>
+                      {c.link.label}
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  )}
                 </div>
               </section>
             );

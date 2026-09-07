@@ -1,6 +1,6 @@
 ---
 import PageHead from '../ui/PageHead.astro';
-import { translator } from '../../lib/i18n.ts';
+import { translator } from '../../i18n/index.ts';
 import { LINES } from '../../data/network.ts';
 import { BAND_ORDER } from '../../lib/chainage.ts';
 import type { Locale } from '../../lib/locale.ts';
@@ -11,25 +11,9 @@ interface Props {
 const { locale } = Astro.props;
 const tt = translator(locale);
 
-const PIGMENTS = [
-  { id: 'cobalt', tr: 'Kobalt', en: 'Cobalt', use: { tr: 'Yapı', en: 'Structure' } },
-  { id: 'turquoise', tr: 'Turkuaz', en: 'Turquoise', use: { tr: 'Su', en: 'Water' } },
-  { id: 'bole', tr: 'Bolu kırmızısı', en: 'Bole red', use: { tr: 'Vurgu', en: 'Accent' } },
-  {
-    id: 'gold',
-    tr: 'Altın',
-    en: 'Gold',
-    use: { tr: 'Mühendislik kaydı', en: 'Engineering record' },
-  },
-];
-
-const BAND_LABEL: Record<string, { tr: string; en: string }> = {
-  surface: { tr: 'Yüzey', en: 'Surface' },
-  shallow: { tr: 'Sığ', en: 'Shallow' },
-  deep: { tr: 'Derin', en: 'Deep' },
-  seabed: { tr: 'Deniz tabanı', en: 'Seabed' },
-  abyssal: { tr: 'En derin', en: 'Abyssal' },
-};
+/* Names and roles come from the dictionary. They were an inline two-language
+   map, which stopped compiling the moment there were four. */
+const PIGMENTS = ['cobalt', 'turquoise', 'bole', 'gold'] as const;
 ---
 
 <section class="section">
@@ -53,9 +37,9 @@ const BAND_LABEL: Record<string, { tr: string; en: string }> = {
         {
           PIGMENTS.map((p) => (
             <li class="sw">
-              <span class="sw__chip" style={`background: var(--${p.id})`} />
-              <span class="sw__name">{locale === 'tr' ? p.tr : p.en}</span>
-              <span class="sw__use mono">{locale === 'tr' ? p.use.tr : p.use.en}</span>
+              <span class="sw__chip" style={`background: var(--${p})`} />
+              <span class="sw__name">{tt(`pig.${p}`)}</span>
+              <span class="sw__use mono">{tt(`pig.use.${p}`)}</span>
             </li>
           ))
         }
@@ -72,7 +56,7 @@ const BAND_LABEL: Record<string, { tr: string; en: string }> = {
           BAND_ORDER.map((b) => (
             <li class="band">
               <span class="band__chip" style={`background: var(--band-${b})`} />
-              <span class="band__name mono">{BAND_LABEL[b]![locale]}</span>
+              <span class="band__name mono">{tt(`band.${b}`)}</span>
             </li>
           ))
         }
@@ -80,7 +64,7 @@ const BAND_LABEL: Record<string, { tr: string; en: string }> = {
     </div>
 
     <div class="block">
-      <h2>{locale === 'tr' ? 'Hat renkleri' : 'Line colours'}</h2>
+      <h2>{tt('col.lines')}</h2>
       <ul class="swatches">
         {
           LINES.map((l) => (

@@ -20,11 +20,20 @@ export default defineConfig({
   integrations: [svelte()],
 
   i18n: {
-    // Türkçe is the default and carries no prefix; English sits under /en/.
-    // A transit site in İstanbul that defaults to English would be telling on
-    // itself about who it thinks the user is.
-    defaultLocale: 'tr',
-    locales: ['tr', 'en'],
+    /*
+     * English is the default and carries no prefix.
+     *
+     * It was Turkish, on the principle that a site about İstanbul should open
+     * in the city's own language. In practice visitors arrived with browser
+     * translation switched on and read a machine rendering of the Turkish -
+     * one that turned KOT, the surveying abbreviation for elevation, into
+     * "JEANS". Shipping real translations in four languages serves that reader
+     * far better than a principle they never saw.
+     *
+     * Place names stay Turkish in every one of them.
+     */
+    defaultLocale: 'en',
+    locales: ['en', 'tr', 'ar', 'ru'],
     routing: { prefixDefaultLocale: false },
   },
 

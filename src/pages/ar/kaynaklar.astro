@@ -1,17 +1,17 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Body from '../../components/sources/SourcesPage.astro';
-import { translator } from '../../lib/i18n.ts';
+import { translator } from '../../i18n/index.ts';
 import type { Locale } from '../../lib/locale.ts';
 
-const locale: Locale = 'en';
+const locale: Locale = 'ar';
 const tt = translator(locale);
 ---
 
 <Base
   locale={locale}
   path="/kaynaklar"
-  title={tt('src.title') + ' — ' + tt('site.full')}
+  title={tt('src.title') + ' \u2014 ' + tt('site.full')}
   description={tt('src.lede')}
 >
   <Body locale={locale} />

@@ -1,13 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
-import Crossing from '../components/journey/Crossing.astro';
-import { translator } from '../lib/i18n.ts';
+import Body from '../components/journey/Crossing.astro';
+import { translator } from '../i18n/index.ts';
 import type { Locale } from '../lib/locale.ts';
 
-const locale: Locale = 'tr';
+const locale: Locale = 'en';
 const tt = translator(locale);
 ---
 
-<Base locale={locale} path="/" title={tt('site.full') + ' — ' + tt('site.tagline')}>
-  <Crossing locale={locale} />
+<Base
+  locale={locale}
+  path="/"
+  title={tt('site.full') + ' \u2014 ' + tt('site.tagline')}
+  description={tt('site.description')}
+>
+  <Body locale={locale} />
 </Base>

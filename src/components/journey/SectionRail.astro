@@ -8,7 +8,7 @@ import {
   STOPS,
   STRAIT,
 } from '../../data/alignment.ts';
-import { translator } from '../../lib/i18n.ts';
+import { translator } from '../../i18n/index.ts';
 import type { Locale } from '../../lib/locale.ts';
 
 /**
@@ -69,7 +69,7 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
     : 'Position along the line — drag to travel'}
   tabindex="0"
 >
-  <div class="rail__inner">
+  <div class="rail__inner" style={`--divide-pct:${((DIVIDE_CH / CH_END) * 100).toFixed(2)}%`}>
     <svg class="rail__svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
       <!-- the water column over the strait -->
       <path
@@ -136,25 +136,6 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
         stroke-linejoin="round"
         stroke-linecap="round"></polyline>
 
-      <!-- Continent labels, either side of the divide. In the drawing rather
-           than floating above it: they annotate the section, and a second
-           fixed element is a second thing the footer has to dodge. -->
-      <text
-        x={x(DIVIDE_CH) - 14}
-        y="12"
-        text-anchor="end"
-        fill="var(--ink-4)"
-        font-family="var(--f-mono)"
-        font-size="7"
-        letter-spacing="1.6">{tt('j.europe')}</text>
-      <text
-        x={x(DIVIDE_CH) + 14}
-        y="12"
-        fill="var(--ink-4)"
-        font-family="var(--f-mono)"
-        font-size="7"
-        letter-spacing="1.6">{tt('j.asia')}</text>
-
       <!-- stations -->
       {
         STOPS.map((s) => (
@@ -169,6 +150,18 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
         ))
       }
     </svg>
+
+    <!--
+      Continent labels as HTML, not SVG text.
+
+      The rail's viewBox is stretched with preserveAspectRatio="none" so the
+      long-section fills the width whatever the screen. That distortion applies
+      to glyphs too, and the labels came out smeared horizontally across the
+      water. HTML positioned by percentage sits in the same place and is not
+      scaled at all.
+    -->
+    <span class="rail__side rail__side--eu" aria-hidden="true">{tt('j.europe')}</span>
+    <span class="rail__side rail__side--as" aria-hidden="true">{tt('j.asia')}</span>
 
     <span class="rail__window" id="rail-window" aria-hidden="true"></span>
 
@@ -193,6 +186,27 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
 
 
 <style>
+  .rail__side {
+    position: absolute;
+    top: 3px;
+    font-family: var(--f-mono);
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    color: var(--ink-4);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .rail__side--eu {
+    right: calc(100% - var(--divide-pct) + 0.6%);
+  }
+  .rail__side--as {
+    left: calc(var(--divide-pct) + 0.6%);
+  }
+  :global(:root[data-continent='EU']) .rail__side--eu,
+  :global(:root[data-continent='AS']) .rail__side--as {
+    color: var(--accent);
+  }
+
   .rail__stops {
     position: absolute;
     inset: 0;

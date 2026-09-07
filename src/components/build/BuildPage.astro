@@ -1,10 +1,11 @@
 ---
 import PageHead from '../ui/PageHead.astro';
 import Figure from '../ui/Figure.astro';
-import PosterFrame from '../ui/PosterFrame.astro';
-import { translator } from '../../lib/i18n.ts';
+import ModeImage from '../ui/ModeImage.astro';
+import { translator } from '../../i18n/index.ts';
 import { CORRIDOR } from '../../data/alignment.ts';
 import { href, num, type Locale } from '../../lib/locale.ts';
+import { modeAsset } from '../../lib/assets.ts';
 
 interface Props {
   locale: Locale;
@@ -68,12 +69,12 @@ const METHODS = [
               <h2>{tt(m.k)}</h2>
               <p>{tt(m.b)}</p>
             </div>
-            <PosterFrame
+            <ModeImage
               alt={tt(m.k)}
               caption={tt(m.k)}
               ratio="3 / 2"
               tint={m.tint}
-              src={`/img/build-${m.id}.webp`}
+              src={modeAsset(`/img/build-${m.id}`)}
             />
           </li>
         ))
