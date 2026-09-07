@@ -158,6 +158,11 @@
   /* The depth readout's footprint, reserved by every panel. Zero below the
      breakpoint where the readout is hidden. */
   --readout-w: 0px;
+  /* The dig axis's footprint, reserved by every stratum, for exactly the same
+     reason: it is fixed furniture, and z-index only decides who wins a
+     collision — it does not prevent one. Zero below 900px, where the axis is
+     hidden. */
+  --digax-w: 0px;
 
   color-scheme: light;
 }
@@ -165,6 +170,13 @@
 @media (min-width: 1024px) {
   :root {
     --readout-w: 208px;
+  }
+}
+
+/* The dig axis appears at 901px, not 1024px, so it needs its own breakpoint. */
+@media (min-width: 901px) {
+  :root {
+    --digax-w: 216px;
   }
 }
 

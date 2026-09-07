@@ -292,10 +292,12 @@ for (const service of ['day', 'night']) {
         }
       }
 
-      // The crossing is the only route with a scroll-position dimension; every
-      // other page is audited top and bottom.
-      const isCrossing = route.path === '/' || route.path === '/en/';
-      const positions = isCrossing ? SCROLLS : [0, 1];
+      // Pages with a horizontal track have a scroll-position dimension: their
+      // arrangement is different at every point along it, so top and bottom
+      // would miss almost all of it. The dig joined this list when its finds
+      // rail landed. Everything else is audited top and bottom.
+      const TRACKED = ['/', '/en/', '/kazi/', '/en/kazi/'];
+      const positions = TRACKED.includes(route.path) ? SCROLLS : [0, 1];
 
       for (const p of positions) {
         await page.evaluate((frac) => {

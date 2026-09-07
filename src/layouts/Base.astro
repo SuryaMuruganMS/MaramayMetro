@@ -6,6 +6,7 @@ import '../styles/journey.css';
 import '../styles/panels.css';
 import '../styles/chrome.css';
 import '../styles/dig.css';
+import '../styles/finds.css';
 // Last on purpose: it undoes the horizontal track and must beat every rule above.
 import '../styles/plan-view.css';
 // After plan-view, because it corrects geometry that file also touches.
@@ -178,6 +179,77 @@ const desc = description ?? tt('site.description');
           setView(root.getAttribute('data-view') === 'plan' ? 'section' : 'plan');
         });
       });
+
+      /**
+       * Two-mode video: play exactly the one clip that is worth playing.
+       *
+       * Every mode video ships as a day file and a night file, both in the DOM
+       * so switching service never waits on a download. That leaves three ways
+       * to waste a reader's bandwidth and battery, and this closes all three:
+       * the hidden mode never plays, a clip off-screen never plays, and under
+       * `prefers-reduced-motion` nothing plays at all — the poster stands in,
+       * which is a still frame of the same footage rather than a blank box.
+       *
+       * `preload="none"` in the markup means none of these files is fetched
+       * until this decides it is time, so the dig's twelve clips cost nothing
+       * to a reader who stops at the third panel.
+       */
+      const stillOnly = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      function wantedMode(): string {
+        const svc = root.getAttribute('data-service');
+        if (svc === 'night' || svc === 'day') return svc;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
+      }
+
+      const onScreen = new Set<HTMLVideoElement>();
+
+      function syncVideos() {
+        const want = wantedMode();
+        document.querySelectorAll<HTMLVideoElement>('[data-mode-video]').forEach((v) => {
+          const shouldRun =
+            !stillOnly.matches && onScreen.has(v) && v.dataset.modeVideo === want;
+          if (shouldRun) {
+            if (v.preload === 'none') v.preload = 'auto';
+            // A rejected play() is normal - a background tab, a power-saving
+            // policy - and is not worth reporting to anybody.
+            void v.play().catch(() => {});
+          } else if (!v.paused) {
+            v.pause();
+          }
+        });
+      }
+
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              const v = e.target as HTMLVideoElement;
+              if (e.isIntersecting) onScreen.add(v);
+              else onScreen.delete(v);
+            }
+            syncVideos();
+          },
+          { rootMargin: '200px' },
+        );
+        document
+          .querySelectorAll<HTMLVideoElement>('[data-mode-video]')
+          .forEach((v) => io.observe(v));
+      } else {
+        document
+          .querySelectorAll<HTMLVideoElement>('[data-mode-video]')
+          .forEach((v) => onScreen.add(v));
+        syncVideos();
+      }
+
+      // A change of service changes which of the pair should be running, and
+      // the attribute is the single source of that truth for CSS as well.
+      new MutationObserver(syncVideos).observe(root, {
+        attributes: true,
+        attributeFilter: ['data-service'],
+      });
+      stillOnly.addEventListener('change', syncVideos);
+      document.addEventListener('visibilitychange', syncVideos);
     </script>
   </body>
 </html>

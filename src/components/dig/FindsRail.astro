@@ -1,0 +1,138 @@
+---
+import ModeImage from '../ui/ModeImage.astro';
+import ModeVideo from '../ui/ModeVideo.astro';
+import {
+  FINDS,
+  FIND_VW,
+  FINDS_LEAD,
+  FINDS_TRACK_VW,
+  FINDS_SCRUB_VW,
+  findOffset,
+  findProgress,
+} from '../../data/finds.ts';
+import { modeAsset, filmAsset } from '../../lib/assets.ts';
+import { digCopy } from '../../data/strata.ts';
+import { translator } from '../../i18n/index.ts';
+import { LAYERS } from '../../data/strata.ts';
+import { num, type Locale } from '../../lib/locale.ts';
+
+/**
+ * The excavation, read sideways.
+ *
+ * Same mechanism as the crossing and for the same reasons: a tall spacer
+ * provides the scroll distance, a sticky pin holds the frame still, and a
+ * scroll-driven animation slides each panel left. No wheel listener, no
+ * preventDefault — the native scrollbar, keyboard paging, Home and End and
+ * find-in-page all keep working because nothing has been taken from them.
+ *
+ * EACH PANEL MOVES ITSELF, as on the crossing, and for the same hard-won
+ * reason: one wide flex row becomes one compositor layer, and past roughly
+ * 16,384 device pixels the GPU silently declines to rasterise it — the whole
+ * section paints as a flat colour with every element still present and
+ * hit-testable. This track is shorter than the crossing's, but the rule is not
+ * "stay under the limit", it is "never depend on being under it".
+ *
+ * Below 1024px, at 400% zoom or under reduced motion it lays out as an ordinary
+ * vertical gallery: same DOM, same order, same content. WCAG 1.4.10 forbids
+ * requiring two-dimensional scrolling, so the sideways reading has to be a
+ * presentation of something linear rather than the only way to get at it.
+ */
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const tt = translator(locale);
+const { layerOf } = digCopy(locale);
+
+const layerName = (id: string) => {
+  const l = LAYERS.find((x) => x.id === id);
+  return l ? layerOf(l).name : id;
+};
+
+const panels = FINDS.map((f, i) => ({
+  find: f,
+  i,
+  left: findOffset(i),
+  at: findProgress(i),
+  /** Undefined unless both mode files are actually on disk. */
+  src: f.media === 'video' ? filmAsset(f.stem) : modeAsset(f.stem),
+}));
+---
+
+<section
+  class="finds"
+  aria-label={tt('find.title')}
+  style={`--find-vw:${FIND_VW}; --finds-track-vw:${FINDS_TRACK_VW}; --finds-scrub-vw:${FINDS_SCRUB_VW}; --finds-lead:${FINDS_LEAD}`}
+>
+  <div class="finds__intro shell">
+    <h2>{tt('find.title')}</h2>
+    <p class="lede">{tt('find.lede')}</p>
+    <p class="finds__cue mono">
+      <span class="finds__cue-arrow" aria-hidden="true">→</span>
+      {tt('find.cue')}
+    </p>
+  </div>
+
+  <div class="finds__runway">
+    <div class="finds__pin">
+      <div class="finds__track">
+        {
+          panels.map(({ find, i, left, src }) => (
+            <article
+              class="find"
+              data-find={find.id}
+              style={`--left:${left}`}
+              aria-labelledby={`find-${find.id}`}
+            >
+              <div class="find__media">
+                {find.media === 'video' ? (
+                  <ModeVideo
+                    src={src}
+                    poster={src}
+                    alt={tt(`${find.key}.title`)}
+                    ratio="4 / 3"
+                    tint={i % 2 === 0 ? 'turquoise' : 'cobalt'}
+                  />
+                ) : (
+                  <ModeImage
+                    src={src}
+                    alt={tt(`${find.key}.title`)}
+                    ratio="4 / 3"
+                    tint={i % 2 === 0 ? 'cobalt' : 'gold'}
+                  />
+                )}
+              </div>
+
+              <div class="find__text">
+                <p class="find__index mono">
+                  {num(i + 1, locale)} {tt('find.of')} {num(FINDS.length, locale)}
+                </p>
+                <p class="find__period mono">{tt(`${find.key}.period`)}</p>
+                <h3 class="find__title" id={`find-${find.id}`}>
+                  {tt(`${find.key}.title`)}
+                </h3>
+                <p class="find__body">{tt(`${find.key}.body`)}</p>
+
+                {/* The figure is the thing a reader takes away from a panel
+                    they only glanced at, so it is set at display size and the
+                    unit is spelled out underneath rather than abbreviated. */}
+                <p class="find__stat">
+                  <span class="find__fig">{num(find.figure, locale)}</span>
+                  <span class="find__statlabel">{tt(`${find.key}.stat`)}</span>
+                </p>
+
+                {/* Ties the panel back to the section above it, so the two
+                    readings of the same dig are one thing and not two. */}
+                <p class="find__layer mono">
+                  {tt('find.layer')} <span>{layerName(find.layer)}</span>
+                </p>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <p class="finds__note shell mono">{tt('find.imagery')}</p>
+</section>

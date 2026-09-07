@@ -87,10 +87,71 @@ export const en = {
   'dig.lede':
     'Digging this station opened a section through eight and a half thousand years of the city.',
   'dig.scrollDown': 'Go down',
+  // ----------------------------------------------------------------- the finds
+  'find.title': 'What came out of the ground',
+  'find.lede':
+    'The strata above run downwards, because at Yenikapı depth is time. This runs across: not what was underneath, but what was carried out of it.',
+  'find.cue': 'Scroll on — the finds move past',
+  'find.of': 'of',
+  'find.layer': 'Layer:',
+  'find.imagery': 'Imagery generated for this concept build. The record it illustrates is not.',
+
+  'find.harbour.period': '4th – 12th century',
+  'find.harbour.title': 'The Theodosian Harbour',
+  'find.harbour.body':
+    'Constantinople’s grain port, cut into the shore south of the Lycus valley in the late fourth century. For eight hundred years the city ate through it. Then the river silted the basin faster than anyone could dredge it, the quays were abandoned, and the harbour became market gardens.',
+  'find.harbour.stat': 'years in use',
+
+  'find.hulls.period': '5th – 11th century',
+  'find.hulls.title': 'Thirty-seven ships',
+  'find.hulls.body':
+    'The largest group of medieval vessels ever excavated anywhere. Round-hulled merchantmen that carried grain and wine, sunk at their moorings or abandoned in the silt, each one a snapshot of how a shipwright worked in the century it was built.',
+  'find.hulls.stat': 'hulls recovered',
+
+  'find.galleys.period': '10th – 11th century',
+  'find.galleys.title': 'The war galleys',
+  'find.galleys.body':
+    'Among the merchantmen were long, narrow oared hulls — the first Byzantine warships ever found. Until they came out of this mud, the navy that held the city for a thousand years was known only from written accounts and pictures of it.',
+  'find.galleys.stat': 'galleys, the first ever found',
+
+  'find.mud.period': 'Sealed, undisturbed',
+  'find.mud.title': 'What the mud kept',
+  'find.mud.body':
+    'Harbour silt holds no oxygen, and without oxygen nothing rots. So the things that never survive survived: coils of rope, leather sandals with the stitching intact, wooden combs, baskets, a shipwright’s tools. Ordinary objects, which is exactly why almost none of them exist anywhere else.',
+  'find.mud.stat': 'artefacts, roughly',
+
+  'find.neolithic.period': 'c. 6500 BCE',
+  'find.neolithic.title': 'Below the harbour',
+  'find.neolithic.body':
+    'Under the Byzantine silt the diggers reached a shoreline older than the sea that covered it: post-holes, hearths, burials, and footprints pressed into wet ground by people who lived here four thousand years before the first walls of the city.',
+  'find.neolithic.stat': 'years of settlement',
+
+  'find.station.period': '2004 – 2013',
+  'find.station.title': 'The station above it',
+  'find.station.body':
+    'The excavation stopped the railway for about four years. Yenikapı opened as the interchange between Marmaray and two metro lines, with part of what was found displayed in the concourse — passengers walk over the harbour every morning.',
+  'find.station.stat': 'years of delay',
   'dig.scrollRight': 'Travel back — scroll to go deeper and further into the past',
   'dig.present': 'Today',
   'dig.ships': 'ships',
   'dig.artefacts': 'artefacts',
+  'dig.place': 'Yenikapı',
+  'dig.k.artefacts': 'Artefacts',
+  'dig.k.hulls': 'Hulls',
+  'dig.k.oldest': 'Oldest layer',
+  'dig.k.delay': 'Delay',
+  'dig.v.delay': '~4 years',
+  'dig.depthAxis': 'DEPTH',
+  'dig.periodAxis': 'PERIOD',
+  'dig.bce': '{n} BCE',
+  'dig.century': 'c.',
+  'dig.moreHulls': 'and {n} more hulls, not individually catalogued here',
+  'dig.why': 'Why the railway was late',
+  'dig.whyBody':
+    'The excavation delayed the project by about four years. On most infrastructure jobs that would be indefensible; here it bought a vertical section through eight and a half thousand years of the city and close to a hundred thousand artefacts. Publishing what the delay was for is more useful than burying it.',
+  'dig.respect':
+    'Human remains were recovered during the excavation. They are not illustrated on this page. They are recorded as a fact and left there.',
+  'dig.back': 'Back to the crossing',
 
   // ----------------------------------------------------------------------- map
   'reg.label': 'Map register',

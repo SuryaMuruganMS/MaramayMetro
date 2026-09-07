@@ -43,6 +43,10 @@ describe('translations', () => {
       'svc.istanbul',
       'nav.tunel',
       'x.km',
+      // A place name is what is painted on the platform. It does not change.
+      'dig.place',
+      // A range of years in Latin digits, identical in English and Turkish.
+      'find.station.period',
     ]);
     for (const loc of LOCALES) {
       if (loc === 'en') continue;

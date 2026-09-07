@@ -92,6 +92,19 @@
   color: var(--ink-4);
 }
 
+/*
+   Room for the axis.
+
+   The depth readout is fixed to the right of the viewport, so the strata have
+   to reserve its width the way the crossing's panels reserve the readout's. The
+   layout gate found the headings running underneath it — but only once /kazi/
+   was audited at several points along its scroll rather than top and bottom,
+   because at the top and the bottom of the page the axis is hidden.
+*/
+.stratum {
+  padding-inline-end: var(--digax-w);
+}
+
 .stratum__body {
   width: min(100% - var(--margin) * 2, var(--shell));
   margin-inline: auto;

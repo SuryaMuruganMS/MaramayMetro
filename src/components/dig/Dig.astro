@@ -5,17 +5,22 @@ import { translator } from '../../i18n/index.ts';
 import { href, num, upper, type Locale } from '../../lib/locale.ts';
 import Figure from '../ui/Figure.astro';
 import DigAxis from './DigAxis.svelte';
+import FindsRail from './FindsRail.astro';
 
 /**
- * The dig: the one place on this site where the vertical axis is time.
+ * The dig, read twice.
  *
- * Everywhere else, down means depth below sea level. Here, down means years
- * before now - because at Yenikapı those two things genuinely coincide. The
- * railway cut a section through eight and a half thousand years of the city,
- * and the layers are in the order the ground put them in.
+ * DOWN is the strata: the one place on this site where the vertical axis is
+ * time, because at Yenikapı depth and time genuinely coincide. The railway cut
+ * a section through eight and a half thousand years of the city and the layers
+ * are in the order the ground put them in.
  *
- * It is a separate axis rather than a continuation of the crossing's, so the
- * page turns ninety degrees: the journey pauses and you descend instead.
+ * ACROSS is the finds rail below it: not what was underneath, but what was
+ * carried out. A gallery is the shape of that question, and it is also how the
+ * material is shown at the station today.
+ *
+ * Two readings of one dig, and they are tied together — every panel on the rail
+ * names the layer it came out of.
  */
 interface Props {
   locale: Locale;
@@ -26,43 +31,40 @@ const { layerOf, hullOf } = digCopy(locale);
 
 const pct = (m: number) => (m / DIG_DEPTH) * 100;
 
+/** BCE years take a locale-specific frame, so the era marker is translatable. */
 const fmtYear = (y: number) =>
-  y < 0
-    ? locale === 'tr'
-      ? `MÖ ${num(Math.abs(y), locale)}`
-      : `${num(Math.abs(y), locale)} BCE`
-    : num(y, locale);
+  y < 0 ? tt('dig.bce').replace('{n}', num(Math.abs(y), locale)) : num(y, locale);
 ---
 
 <section class="dig">
   <header class="dig__head shell">
-    <p class="label">{upper(locale === 'tr' ? 'Yenikapı' : 'Yenikapı', locale)}</p>
+    <p class="label">{upper(tt('dig.place'), locale)}</p>
     <h1>{tt('dig.title')}</h1>
     <p class="lede">{tt('dig.lede')}</p>
 
     <dl class="dig__figs">
       <Figure
         locale={locale}
-        k={locale === 'tr' ? 'Buluntu' : 'Artefacts'}
+        k={tt('dig.k.artefacts')}
         v={`~${num(DIG.artefacts.value, locale)}`}
         source={DIG.artefacts.source}
       />
       <Figure
         locale={locale}
-        k={locale === 'tr' ? 'Gemi' : 'Hulls'}
+        k={tt('dig.k.hulls')}
         v={String(DIG.hulls.value)}
         source={DIG.hulls.source}
       />
       <Figure
         locale={locale}
-        k={locale === 'tr' ? 'En eski katman' : 'Oldest layer'}
+        k={tt('dig.k.oldest')}
         v={fmtYear(-DIG.oldestBCE.value)}
         source={DIG.oldestBCE.source}
       />
       <Figure
         locale={locale}
-        k={locale === 'tr' ? 'Gecikme' : 'Delay'}
-        v={locale === 'tr' ? '~4 yıl' : '~4 years'}
+        k={tt('dig.k.delay')}
+        v={tt('dig.v.delay')}
         source="yenikapi-excavation"
       />
     </dl>
@@ -78,10 +80,7 @@ const fmtYear = (y: number) =>
     <DigAxis
       client:load
       locale={locale}
-      labels={{
-        depth: locale === 'tr' ? 'DERİNLİK' : 'DEPTH',
-        year: locale === 'tr' ? 'DÖNEM' : 'PERIOD',
-      }}
+      labels={{ depth: tt('dig.depthAxis'), year: tt('dig.periodAxis') }}
     />
 
     <ol class="strata">
@@ -119,17 +118,17 @@ const fmtYear = (y: number) =>
                           <span class="hull__ref mono">{hl.ref}</span>
                           <span class="hull__type">{hc.type}</span>
                           <span class="hull__c mono">
-                            {hl.century}
-                            {locale === 'tr' ? ' yy' : ' c.'}
+                            {hl.century} {tt('dig.century')}
                           </span>
                           <span class="hull__note">{hc.note}</span>
                         </li>
                       );
                     })}
                     <li class="hull hull--rest mono">
-                      {locale === 'tr'
-                        ? `ve adı ayrıca kayda geçmemiş ${DIG.hulls.value - HULLS.length} tekne daha`
-                        : `and ${DIG.hulls.value - HULLS.length} more hulls, not individually catalogued here`}
+                      {tt('dig.moreHulls').replace(
+                        '{n}',
+                        num(DIG.hulls.value - HULLS.length, locale),
+                      )}
                     </li>
                   </ul>
                 )}
@@ -141,27 +140,16 @@ const fmtYear = (y: number) =>
     </ol>
   </div>
 
+  <!-- And the same dig, sideways. -->
+  <FindsRail locale={locale} />
+
   <!-- The honest part. A public body should say why its railway was late. -->
   <div class="dig__why shell">
-    <h2>{locale === 'tr' ? 'Demiryolu neden gecikti' : 'Why the railway was late'}</h2>
-    <p>
-      {
-        locale === 'tr'
-          ? 'Kazı, projeyi yaklaşık dört yıl geciktirdi. Bir altyapı işinin bu kadar uzaması normalde savunulacak bir şey değildir; burada karşılığında şehrin sekiz bin beş yüz yıllık kesiti ve yüz bine yakın buluntu çıktı. Gecikmeyi gizlemek yerine ne uğruna olduğunu yazmak, kamu kurumunun işidir.'
-          : 'The excavation delayed the project by about four years. On most infrastructure jobs that would be indefensible; here it bought a vertical section through eight and a half thousand years of the city and close to a hundred thousand artefacts. Publishing what the delay was for is more useful than burying it.'
-      }
-    </p>
-    <p class="dig__respect">
-      {
-        locale === 'tr'
-          ? 'Kazıda insan kalıntıları da bulundu. Bu sayfada görselleştirilmemiştir; kayda geçmiş bir gerçek olarak anılır, o kadar.'
-          : 'Human remains were recovered during the excavation. They are not illustrated on this page. They are recorded as a fact and left there.'
-      }
-    </p>
+    <h2>{tt('dig.why')}</h2>
+    <p>{tt('dig.whyBody')}</p>
+    <p class="dig__respect">{tt('dig.respect')}</p>
     <div class="dig__acts">
-      <a class="tile" href={href('/', locale)}>
-        {locale === 'tr' ? 'Geçişe dön' : 'Back to the crossing'}
-      </a>
+      <a class="tile" href={href('/', locale)}>{tt('dig.back')}</a>
       <a class="tile tile--ghost" href={href('/kaynaklar', locale)}>{tt('x.source')}</a>
     </div>
   </div>

@@ -1,0 +1,291 @@
+/* ==========================================================================
+   The finds rail
+
+   The dig's second reading. The strata section runs DOWN because at Yenikapı
+   depth is time; this runs ACROSS because a gallery is the shape of "what came
+   out", and because you move along a display case rather than through it.
+
+   MECHANISM
+   Identical to the crossing: tall spacer for the scroll distance, sticky pin to
+   hold the frame, one scroll-driven animation per panel. Nothing listens to the
+   wheel. See journey.css for the full argument, including why the panels move
+   individually rather than riding one wide track.
+   ========================================================================== */
+
+.finds {
+  position: relative;
+  margin-top: var(--sp-roomy);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--sp-loose);
+}
+
+.finds__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-snug);
+  padding-bottom: var(--sp-base);
+}
+.finds__intro h2 {
+  font-size: var(--t-h2);
+}
+.finds__cue {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-tight);
+  font-size: var(--t-micro);
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  margin: 0;
+}
+.finds__cue-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-capsule);
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  flex: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .finds__cue-arrow {
+    animation: findnudge 2.6s var(--ease-out) infinite;
+  }
+}
+@keyframes findnudge {
+  0%,
+  62%,
+  100% {
+    translate: 0 0;
+  }
+  74% {
+    translate: 4px 0;
+  }
+}
+
+/* The scroll distance. One viewport to pin, plus the track's travel. */
+.finds__runway {
+  position: relative;
+  height: calc(100vh + var(--finds-scrub-vw) * 1vw);
+  view-timeline-name: --finds;
+  view-timeline-axis: block;
+}
+
+.finds__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* A trench wall, so the panels sit in the ground rather than on the page.
+     The hairlines are the point: bedded horizontally, close together, they read
+     as soil in section — which is what the reader has just scrolled down
+     through — without costing an image or a single byte of texture. */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 33px,
+      color-mix(in oklab, var(--ink) 6%, transparent) 33px 34px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--gold) 8%, var(--ground)),
+      color-mix(in oklab, var(--gold) 20%, color-mix(in oklab, var(--ink) 12%, var(--ground)))
+    );
+}
+
+.finds__track {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.find {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--left) * 1vw);
+  width: calc(var(--find-vw) * 1vw);
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-loose);
+  padding: calc(var(--chrome-h) + var(--sp-base)) var(--sp-loose) var(--sp-loose);
+}
+
+/* A hairline at the start edge of every panel. A display case has dividers, and
+   without one the previous panel's picture sits against the next panel's text
+   with nothing to say they are two exhibits rather than one. */
+.find::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 22%;
+  bottom: 22%;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--ink) 22%, transparent) 22%,
+    color-mix(in oklab, var(--ink) 22%, transparent) 78%,
+    transparent
+  );
+}
+
+/*
+   The media is sized from the VIEWPORT, not from its column.
+
+   Left to its own aspect ratio inside a 58vw panel the picture came out about
+   250px tall in a 900px frame, and the rail read as a caption with a stamp next
+   to it. Fixing the height instead makes every panel the same size whatever its
+   picture's proportions, which is what makes a row of them read as a set.
+*/
+.find__media .mimg__frame,
+.find__media .mvid__frame {
+  aspect-ratio: auto;
+  height: min(58vh, 34rem);
+}
+
+@supports (animation-timeline: scroll()) {
+  .find {
+    animation: findtravel linear both;
+    animation-timeline: --finds;
+    /* `contain` on a subject taller than the scrollport runs from the moment it
+       fills the viewport to the moment it stops — exactly the pin's travel. */
+    animation-range: contain;
+  }
+}
+
+@keyframes findtravel {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(var(--finds-scrub-vw) * -1vw), 0, 0);
+  }
+}
+
+.find__media {
+  min-width: 0;
+}
+.find__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-tight);
+  min-width: 0;
+}
+.find__index {
+  margin: 0;
+  font-size: var(--t-micro);
+  letter-spacing: 0.16em;
+  color: var(--ink-4);
+}
+.find__period {
+  margin: 0;
+  font-size: var(--t-micro);
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+.find__title {
+  margin: 0;
+  font-size: var(--t-h3);
+  line-height: 1.1;
+}
+.find__body {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  max-width: 44ch;
+}
+
+.find__stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-tight);
+  flex-wrap: wrap;
+  margin: var(--sp-tight) 0 0;
+  padding-top: var(--sp-snug);
+  border-top: 1px solid var(--rule);
+}
+.find__fig {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+.find__statlabel {
+  font-size: var(--t-micro);
+  font-family: var(--f-mono);
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+.find__layer {
+  margin: 0;
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  color: var(--ink-4);
+}
+.find__layer span {
+  color: var(--ink-2);
+}
+
+.finds__note {
+  padding-top: var(--sp-base);
+  font-size: var(--t-micro);
+  letter-spacing: 0.06em;
+  color: var(--ink-4);
+  max-width: none;
+}
+
+/* --------------------------------------------------------------------------
+   The vertical reading
+
+   Below 1024px, at 400% zoom, under reduced motion, or with plan view on. Same
+   DOM in the same order: the rail is a presentation, never the only way in.
+   -------------------------------------------------------------------------- */
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .finds__runway {
+    height: auto;
+    view-timeline-name: none;
+  }
+  .finds__pin {
+    position: static;
+    height: auto;
+    overflow: visible;
+    background: none;
+  }
+  .finds__track {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-loose);
+    height: auto;
+    width: auto;
+    padding: var(--sp-base) 0;
+  }
+  .find {
+    position: static;
+    width: auto;
+    grid-template-columns: 1fr;
+    gap: var(--sp-base);
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-panel);
+    animation: none;
+    transform: none;
+  }
+  .finds__cue-arrow {
+    rotate: 90deg;
+    animation: none;
+  }
+  .finds__intro,
+  .finds__note,
+  .finds__track {
+    width: min(100% - var(--margin) * 2, var(--shell));
+    margin-inline: auto;
+  }
+}

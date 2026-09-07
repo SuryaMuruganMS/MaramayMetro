@@ -71,10 +71,72 @@ export const tr: Record<Keys, string> = {
   'dig.lede':
     'Bu istasyonu kazmak, şehrin sekiz bin beş yüz yılını bir kesit hâlinde ortaya çıkardı.',
   'dig.scrollDown': 'Aşağı inin',
+  // ----------------------------------------------------------------- the finds
+  'find.title': 'Topraktan çıkanlar',
+  'find.lede':
+    'Yukarıdaki katmanlar aşağı doğru iner; çünkü Yenikapı’da derinlik zamandır. Bu bölüm yana doğru gider: altta ne olduğu değil, oradan ne çıkarıldığı.',
+  'find.cue': 'Kaydırmaya devam edin — buluntular geçiyor',
+  'find.of': '/',
+  'find.layer': 'Katman:',
+  'find.imagery':
+    'Görseller bu kavramsal çalışma için üretilmiştir. Anlattığı kayıt ise gerçektir.',
+
+  'find.harbour.period': '4. – 12. yüzyıl',
+  'find.harbour.title': 'Theodosius Limanı',
+  'find.harbour.body':
+    'Konstantinopolis’in tahıl limanı; 4. yüzyıl sonunda Lykos vadisinin güneyindeki kıyıya açıldı. Şehir sekiz yüz yıl boyunca buradan beslendi. Sonra dere, havzayı taranabileceğinden hızlı doldurdu; rıhtımlar terk edildi ve liman bostana dönüştü.',
+  'find.harbour.stat': 'yıl kullanımda',
+
+  'find.hulls.period': '5. – 11. yüzyıl',
+  'find.hulls.title': 'Otuz yedi gemi',
+  'find.hulls.body':
+    'Dünyada tek bir kazıda bulunmuş en büyük orta çağ gemi topluluğu. Tahıl ve şarap taşıyan yuvarlak gövdeli ticaret tekneleri; kimi bağlı olduğu yerde batmış, kimi çamura terk edilmiş. Her biri, yapıldığı yüzyılda tersanenin nasıl çalıştığının fotoğrafı.',
+  'find.hulls.stat': 'gemi çıkarıldı',
+
+  'find.galleys.period': '10. – 11. yüzyıl',
+  'find.galleys.title': 'Savaş kadırgaları',
+  'find.galleys.body':
+    'Ticaret tekneleri arasından uzun ve dar kürekli gövdeler çıktı: bugüne dek bulunmuş ilk Bizans savaş gemileri. Bu çamurdan çıkana kadar, şehri bin yıl koruyan donanma yalnızca yazılı kaynaklardan ve resimlerinden biliniyordu.',
+  'find.galleys.stat': 'kadırga, bir ilk',
+
+  'find.mud.period': 'Kapalı, bozulmamış',
+  'find.mud.title': 'Çamurun sakladıkları',
+  'find.mud.body':
+    'Liman çamurunda oksijen yoktur; oksijen yoksa hiçbir şey çürümez. Böylece asla kalmayan şeyler kaldı: halat yumakları, dikişi sağlam deri sandaletler, ahşap taraklar, sepetler, bir gemi ustasının aletleri. Sıradan nesneler — başka hiçbir yerde bulunmamalarının nedeni de tam olarak bu.',
+  'find.mud.stat': 'kadar buluntu',
+
+  'find.neolithic.period': 'MÖ ~6500',
+  'find.neolithic.title': 'Limanın altında',
+  'find.neolithic.body':
+    'Bizans siltinin altında kazı, onu örten denizden daha eski bir kıyıya ulaştı: direk çukurları, ocaklar, mezarlar ve şehrin ilk surlarından dört bin yıl önce burada yaşayan insanların ıslak zemine bastığı ayak izleri.',
+  'find.neolithic.stat': 'yıllık yerleşim',
+
+  'find.station.period': '2004 – 2013',
+  'find.station.title': 'Üstündeki istasyon',
+  'find.station.body':
+    'Kazı, demiryolunu yaklaşık dört yıl durdurdu. Yenikapı, Marmaray ile iki metro hattının aktarma noktası olarak açıldı; bulunanların bir bölümü dağıtım katında sergileniyor. Yolcular her sabah limanın üzerinden geçiyor.',
+  'find.station.stat': 'yıl gecikme',
   'dig.scrollRight': 'Geriye gidin — kaydırdıkça daha derine ve daha eskiye',
   'dig.present': 'Bugün',
   'dig.ships': 'gemi',
   'dig.artefacts': 'buluntu',
+  'dig.place': 'Yenikapı',
+  'dig.k.artefacts': 'Buluntu',
+  'dig.k.hulls': 'Gemi',
+  'dig.k.oldest': 'En eski katman',
+  'dig.k.delay': 'Gecikme',
+  'dig.v.delay': '~4 yıl',
+  'dig.depthAxis': 'DERİNLİK',
+  'dig.periodAxis': 'DÖNEM',
+  'dig.bce': 'MÖ {n}',
+  'dig.century': 'yy',
+  'dig.moreHulls': 've adı ayrıca kayda geçmemiş {n} tekne daha',
+  'dig.why': 'Demiryolu neden gecikti',
+  'dig.whyBody':
+    'Kazı, projeyi yaklaşık dört yıl geciktirdi. Bir altyapı işinin bu kadar uzaması normalde savunulacak bir şey değildir; burada karşılığında şehrin sekiz bin beş yüz yıllık kesiti ve yüz bine yakın buluntu çıktı. Gecikmeyi gizlemek yerine ne uğruna olduğunu yazmak, kamu kurumunun işidir.',
+  'dig.respect':
+    'Kazıda insan kalıntıları da bulundu. Bu sayfada görselleştirilmemiştir; kayda geçmiş bir gerçek olarak anılır, o kadar.',
+  'dig.back': 'Geçişe dön',
 
   'reg.label': 'Harita türü',
   'reg.diagram': 'Şema',
