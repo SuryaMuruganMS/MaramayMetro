@@ -1,30 +1,72 @@
 ---
 import PageHead from '../ui/PageHead.astro';
+import InfoNote from '../ui/InfoNote.astro';
+import FareTable from './FareTable.svelte';
 import { translator } from '../../i18n/index.ts';
-import { href, type Locale } from '../../lib/locale.ts';
+import { href, lira, num, type Locale } from '../../lib/locale.ts';
+import {
+  PASSENGERS,
+  PAYING,
+  FREE_PASSES,
+  BANDS,
+  TRANSFER_RATE,
+  FLAT_KURUS,
+  MR_BOARD_KURUS,
+  MR_PER_KM_KURUS,
+  MR_CAP_KURUS,
+  toLira,
+} from '../../data/fares.ts';
 
+/**
+ * The fares page.
+ *
+ * Its job is not to publish prices — a concept build cannot keep prices
+ * current, and a stale fare is worse than no fare. Its job is to explain the
+ * SHAPE of the tariff, which does not go stale: flat where the network is flat,
+ * by distance on Marmaray, cheaper when you change trains, free for three kinds
+ * of pass. The amounts are invented, and every one of them sits next to an (i)
+ * that says so.
+ */
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
 const tt = translator(locale);
 
-/**
- * Illustrative fares.
- *
- * Real İstanbulkart fares change often and are set by the authority. Publishing
- * a number here that someone might rely on and be wrong about at a gate is the
- * exact failure this site is built to avoid, so every amount is marked and the
- * page points at the official source for the real one.
- *
- * The transfer rule is real; the amounts are not. That distinction is stated
- * rather than left for the reader to work out.
- */
-const ROWS = [
-  { k: { tr: 'Tam', en: 'Full' }, first: '₺X', transfer: '₺Y' },
-  { k: { tr: 'Öğrenci', en: 'Student' }, first: '₺X', transfer: '₺Y' },
-  { k: { tr: 'Aylık abonman', en: 'Monthly pass' }, first: '₺Z', transfer: '—' },
+const money = (kurus: number) => lira(toLira(kurus), locale);
+const pct = (n: number) => num(n / 100, locale, { style: 'percent', maximumFractionDigits: 0 });
+
+/** Keys the interactive table needs, resolved here so the island ships strings. */
+const KEYS = [
+  'fare.origin',
+  'fare.to',
+  'fare.changesCol',
+  'fare.pickOrigin',
+  'fare.fictional',
+  'fare.table',
+  'fare.band',
+  'fare.noRoute',
+  'plan.fareBreak',
+  'x.km',
+  ...PASSENGERS.map((p) => p.key),
+  ...BANDS.map((b) => b.key),
 ];
+const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
+
+/** The four amounts the whole tariff is built from. */
+const TARIFF = [
+  { key: 'fare.flat', value: money(FLAT_KURUS) },
+  { key: 'fare.boarding', value: money(MR_BOARD_KURUS) },
+  { key: 'fare.perKm', value: money(MR_PER_KM_KURUS) },
+  { key: 'fare.cap', value: money(MR_CAP_KURUS) },
+];
+
+const LADDER = TRANSFER_RATE.map((rate, i) => ({
+  key: `fare.change${i + 1}`,
+  rate,
+}));
+
+const OFFICIAL = 'https://www.metro.istanbul/';
 ---
 
 <section class="section">
@@ -36,60 +78,198 @@ const ROWS = [
       lede={tt('fare.lede')}
     />
 
+    <!-- The warning, stated once at full length. Everywhere else on the page it
+         is the (i), so the reader meets it beside the numbers rather than only
+         at the top where it is easy to scroll past. -->
     <div class="warn">
-      <p>
-        {
-          locale === 'tr'
-            ? 'Aşağıdaki tablodaki tutarlar yer tutucudur ve kasıtlı olarak gerçek değildir. Bir tarife sayfası, güncel olmadığında yanlış bilgi verir; kavramsal bir çalışmanın güncel tarife yayımlaması mümkün değil, o yüzden hiç yayımlamıyor.'
-            : 'The amounts in the table below are placeholders and deliberately not real. A fares page misinforms the moment it goes stale, and a concept build cannot keep fares current — so it does not publish them at all.'
-        }
-      </p>
-      <a
-        class="tile tile--sm"
-        href="https://www.metro.istanbul/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <p class="warn__title">{tt('fare.fictional')}</p>
+      <p class="warn__body">{tt('fare.fictionalBody')}</p>
+      <a class="tile tile--sm" href={OFFICIAL} target="_blank" rel="noopener noreferrer">
         {tt('disclosure.link')}
         <span aria-hidden="true">↗</span>
       </a>
     </div>
 
-    <div class="tw">
-      <table>
-        <caption>{tt('fare.notReal')}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{locale === 'tr' ? 'Tarife' : 'Fare type'}</th>
-            <th scope="col">{locale === 'tr' ? 'İlk biniş' : 'First tap'}</th>
-            <th scope="col">{tt('fare.transfer')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            ROWS.map((r) => (
-              <tr>
-                <th scope="row">{locale === 'tr' ? r.k.tr : r.k.en}</th>
-                <td>
-                  <span class="fig fig--indicative">{r.first}</span>
-                </td>
-                <td>
-                  <span class="fig fig--indicative">{r.transfer}</span>
-                </td>
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
+    <!-- ------------------------------------------------- how it is worked out -->
+    <div class="stack stack--snug">
+      <h2>{tt('fare.works')}</h2>
+      <div class="rules">
+        <article class="rule">
+          <h3>{tt('fare.flat')}</h3>
+          <p>{tt('fare.flatBody')}</p>
+        </article>
+        <article class="rule rule--mr">
+          <h3>{tt('fare.distance')}</h3>
+          <p>{tt('fare.distanceBody')}</p>
+        </article>
+        <article class="rule">
+          <h3>{tt('fare.tapOut')}</h3>
+          <p>{tt('fare.tapOutBody')}</p>
+        </article>
+        <article class="rule">
+          <h3>{tt('fare.transfer')}</h3>
+          <p>{tt('fare.transferBody')}</p>
+        </article>
+      </div>
     </div>
 
-    <div class="block">
-      <h2>{tt('fare.transfer')}</h2>
-      <p>{tt('fare.transferBody')}</p>
+    <!-- ------------------------------------------------------------ the tariff -->
+    <div class="stack stack--snug">
+      <div class="withinfo">
+        <h2>{tt('fare.tariff')}</h2>
+        <InfoNote
+          label={tt('fare.info')}
+          title={tt('fare.fictional')}
+          body={tt('fare.fictionalBody')}
+          linkHref={OFFICIAL}
+          linkText={tt('disclosure.link')}
+        />
+      </div>
 
+      <dl class="tariff">
+        {
+          TARIFF.map((row) => (
+            <div class="tariff__cell">
+              <dt class="label">{tt(row.key)}</dt>
+              <dd class="fig">{row.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="note">{tt('fare.capNote')}</p>
+    </div>
+
+    <!-- --------------------------------------------------------- who pays what -->
+    <div class="stack stack--snug">
+      <h2>{tt('fare.passengers')}</h2>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{tt('fare.passengers')}</th>
+              <th scope="col" class="ta-end">{tt('fare.rate')}</th>
+              <th scope="col" class="ta-end">{tt('fare.flat')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              PASSENGERS.map((p) => (
+                <tr class:list={[p.free && 'is-free']}>
+                  <th scope="row">{tt(p.key)}</th>
+                  <td class="num">{p.free ? '—' : pct(p.rate)}</td>
+                  <td class="num">
+                    {p.free ? (
+                      <span class="freechip">{tt('fare.free')}</span>
+                    ) : (
+                      money(Math.round((FLAT_KURUS * p.rate) / 100))
+                    )}
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="free">
+        <h3>{tt('fare.freeTitle')}</h3>
+        <p>{tt('fare.freeBody')}</p>
+        <ul class="free__list">
+          {FREE_PASSES.map((p) => <li class="chip">{tt(p.key)}</li>)}
+        </ul>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------- transfer ladder -->
+    <div class="stack stack--snug">
+      <h2>{tt('fare.ladder')}</h2>
+      <p class="note">{tt('fare.window')}</p>
+      <ol class="ladder">
+        {
+          LADDER.map((step) => (
+            <li class="ladder__step" style={`--h:${step.rate}`}>
+              <span class="ladder__bar" aria-hidden="true" />
+              <span class="ladder__pct fig">{pct(step.rate)}</span>
+              <span class="ladder__name">{tt(step.key)}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <!-- --------------------------------------------------------------- bands -->
+    <div class="stack stack--snug">
+      <h2>{tt('fare.band')}</h2>
+      <div class="tw">
+        <table>
+          <caption>{tt('fare.bandsNote')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{tt('fare.band')}</th>
+              <th scope="col" class="ta-end">{tt('x.km')}</th>
+              {
+                PAYING.map((p) => (
+                  <th scope="col" class="ta-end">
+                    {tt(p.key)}
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          <tbody>
+            {
+              BANDS.map((b) => {
+                // The fare at the top of the band, which is what a reader wants
+                // to know: the most this kind of journey can cost.
+                const km = b.to === Infinity ? 76.6 : b.to;
+                const base = Math.min(
+                  MR_CAP_KURUS,
+                  MR_BOARD_KURUS + Math.round(km * MR_PER_KM_KURUS),
+                );
+                return (
+                  <tr>
+                    <th scope="row">{tt(b.key)}</th>
+                    <td class="num">
+                      {b.to === Infinity
+                        ? `${num(b.from, locale)}+`
+                        : `${num(b.from, locale)}–${num(b.to, locale)}`}
+                    </td>
+                    {PAYING.map((p) => (
+                      <td class="num">{money(Math.round((base * p.rate) / 100))}</td>
+                    ))}
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- --------------------------------------------------- every station, live -->
+    <div class="stack stack--snug">
+      <div class="withinfo">
+        <h2>{tt('fare.perStation')}</h2>
+        <InfoNote
+          label={tt('fare.info')}
+          title={tt('fare.fictional')}
+          body={tt('fare.fictionalBody')}
+          linkHref={OFFICIAL}
+          linkText={tt('disclosure.link')}
+        />
+      </div>
+      <FareTable client:load locale={locale} labels={labels} />
+      <noscript>
+        <p class="panel">
+          {tt('plan.noJs')}
+        </p>
+      </noscript>
+    </div>
+
+    <!-- ------------------------------------------------------------ the card -->
+    <div class="block">
       <h2>{tt('fare.card')}</h2>
       <p>{tt('fare.cardBody')}</p>
-
       <p>
         <a href={href('/sefer', locale)}>{tt('plan.title')}</a>
       </p>
@@ -98,29 +278,212 @@ const ROWS = [
 </section>
 
 <style>
+  /* -------------------------------------------------------------- the warning */
   .warn {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--sp-base);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-snug);
     padding: var(--sp-base);
     background: var(--surface);
-    border: 1px solid var(--warn);
-    border-left-width: 3px;
+    border: 1px solid var(--gold);
+    border-inline-start-width: 3px;
     border-radius: var(--r-panel);
+    /* Held to the reading measure. Stretched to the full shell the text ran to
+       half the box and left the other half empty, which reads as a mistake. */
+    max-width: 62rem;
   }
-  .warn p {
-    flex: 1 1 320px;
+  .warn__title {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .warn__body {
     margin: 0;
     font-size: var(--t-small);
+    color: var(--ink-2);
   }
+
+  /* A heading with an (i) after it. A div wrapping the h2 rather than the note
+     inside the h2, because <details> is flow content and an open heading is
+     closed at its start tag — which put the circle on a line of its own. */
+  .withinfo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-tight);
+    flex-wrap: wrap;
+  }
+
+  /* ------------------------------------------------------------------- rules */
+  .rules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: var(--sp-base);
+  }
+  .rule {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-tight);
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: var(--border-hair);
+    border-radius: var(--r-panel);
+  }
+  /* Only the distance rule is lifted, because it is the one thing about this
+     railway's tariff that is different from every other line in the city. */
+  .rule--mr {
+    border-color: var(--turquoise);
+    border-top-width: 3px;
+  }
+  .rule h3 {
+    font-size: var(--t-h3);
+  }
+  .rule p {
+    margin: 0;
+    font-size: var(--t-small);
+    color: var(--ink-2);
+  }
+
+  /* ------------------------------------------------------------------ tariff */
+  .tariff {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px;
+    margin: 0;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+  }
+  .tariff__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--sp-base);
+    background: var(--surface);
+  }
+  .tariff__cell dd {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .note {
+    max-width: 62rem;
+    font-size: var(--t-small);
+    color: var(--ink-3);
+  }
+
+  /* --------------------------------------------------------------- free passes */
+  .free {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-snug);
+    padding: var(--sp-base);
+    background: color-mix(in oklab, var(--ok) 8%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--ok) 45%, transparent);
+    border-radius: var(--r-panel);
+  }
+  .free h3 {
+    font-size: var(--t-h3);
+    color: var(--ok);
+  }
+  .free p {
+    margin: 0;
+    font-size: var(--t-small);
+    color: var(--ink-2);
+  }
+  .free__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-tight);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .freechip {
+    font-family: var(--f-mono);
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    color: var(--ok);
+  }
+  tr.is-free th {
+    color: var(--ink-2);
+  }
+
+  /* ------------------------------------------------------------------ ladder
+     Drawn as bars because the point of the ladder is its shape: each change
+     costs less than the last, and a column of bare percentages makes the reader
+     do that comparison in their head.
+
+     The bars run ACROSS, not up. The first cut drew them as columns whose
+     height carried the share, which put 35% and 10% eleven pixels apart inside
+     a card — a difference you have to measure rather than see. Length is the
+     one visual channel people read accurately without a scale beside it, so the
+     share became width and the descent became obvious. */
+  .ladder {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--sp-base);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ladder__step {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: var(--border-hair);
+    border-radius: var(--r-panel);
+  }
+  /* Track and bar in one element. A separate track underneath would have to be
+     overlaid with a negative margin that silently breaks the moment the gap
+     changes; a two-stop gradient cannot fall out of register with itself. The
+     share is unitless so it can be a length here — `calc(35 * 1%)` is 35%. */
+  .ladder__bar {
+    display: block;
+    width: 100%;
+    height: 9px;
+    border-radius: var(--r-capsule);
+    background: linear-gradient(
+      to right,
+      var(--accent) 0 calc(var(--h) * 1%),
+      color-mix(in oklab, var(--ink) 9%, transparent) calc(var(--h) * 1%) 100%
+    );
+  }
+  /* A bar fills from the side the reader starts on. Unlike the crossing, this
+     is not a compass bearing — it is a quantity, and quantities grow forwards. */
+  :global([dir='rtl']) .ladder__bar {
+    transform: scaleX(-1);
+  }
+  .ladder__pct {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .ladder__name {
+    font-size: var(--t-micro);
+    font-family: var(--f-mono);
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+  }
+
+  .ta-end {
+    text-align: end;
+  }
+  td.num {
+    text-align: end;
+  }
+
   .block {
     display: flex;
     flex-direction: column;
     gap: var(--sp-snug);
     max-width: 68rem;
-  }
-  .block h2 {
-    margin-top: var(--sp-base);
   }
 </style>

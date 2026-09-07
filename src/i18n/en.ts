@@ -148,6 +148,11 @@ export const en = {
   'plan.zones': 'Zones crossed',
   'plan.firstTap': 'First tap',
   'plan.transfers': 'Transfers',
+  'plan.travelsFree': 'This pass travels free. The full fare is shown for comparison.',
+  'plan.fareBreak': 'How the fare is made up',
+  'plan.ride': 'Ride',
+  'plan.fareNote': 'Fictional fare.',
+  'plan.fullFare': 'At full fare',
 
   // --------------------------------------------------------------------- fares
   'fare.title': 'Fares',
@@ -176,6 +181,44 @@ export const en = {
   'fare.free': 'Free',
   'fare.table': 'Fare table',
   'fare.pickOrigin': 'Fares from',
+  'fare.works': 'How the fare is worked out',
+  'fare.flat': 'Flat fare',
+  'fare.flatBody':
+    'One price for a metro, tram or funicular ride, however far you go. Tap once, at the gate on the way in.',
+  'fare.distance': 'Distance fare',
+  'fare.distanceBody':
+    'Marmaray charges by how far you travel: a boarding charge, then an amount for each kilometre, up to a ceiling set at the price of the whole railway end to end.',
+  'fare.tapOut': 'Tap out as well as in',
+  'fare.tapOutBody':
+    'This is why the Marmaray gates read your card twice and the metro gates read it once. A gate cannot know what to charge until it knows where you got off.',
+  'fare.freeTitle': 'Three passes travel free',
+  'fare.freeBody':
+    'Over-65s, children under seven and holders of a disabled pass travel without paying. This is not a discount applied to a fare — there is no fare to apply it to.',
+  'fare.boarding': 'Boarding charge',
+  'fare.perKm': 'Each kilometre',
+  'fare.cap': 'Most you can pay',
+  'fare.capNote':
+    'The ceiling is the price of the full Halkalı–Gebze run, so nobody pays more than the whole railway costs.',
+  'fare.rate': 'Share of full fare',
+  'fare.ladder': 'Transfer ladder',
+  'fare.change1': 'First change',
+  'fare.change2': 'Second change',
+  'fare.change3': 'Third change',
+  'fare.change4': 'Fourth change onward',
+  'fare.window': 'Within 120 minutes of the first tap',
+  'fare.to': 'To',
+  'fare.origin': 'Fares from this station',
+  'fare.noRoute': 'no route',
+  'fare.changesCol': 'Changes',
+  'fare.tariff': 'The tariff',
+  'fare.passengers': 'Passenger types',
+  'fare.bandsNote':
+    'The tariff is continuous, not banded. These names describe a journey in words; they do not change what it costs.',
+  'fare.band1': 'Local',
+  'fare.band2': 'Short',
+  'fare.band3': 'Medium',
+  'fare.band4': 'Long',
+  'fare.band5': 'End to end',
 
   // ----------------------------------------------------------------- travelling
   'travel.title': 'Travelling on the metro',

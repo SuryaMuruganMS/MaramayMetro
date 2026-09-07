@@ -1,0 +1,132 @@
+---
+/**
+ * The small (i) that sits next to a price.
+ *
+ * A warning is only useful where the thing it warns about is. A banner at the
+ * top of the page is read once and then scrolled past; by the time a reader is
+ * comparing two amounts in a table they are no longer thinking about whether
+ * the amounts are real. So this goes NEXT TO THE NUMBERS, and there is one at
+ * every place on the site where money is printed.
+ *
+ * It is a `<details>` rather than a scripted popover, which buys three things:
+ * it works before hydration and without JavaScript at all, the browser gives it
+ * correct keyboard and screen-reader behaviour for free, and it cannot end up
+ * as an overlay that covers what the reader was reading. Open, it pushes the
+ * page down; closed, it is a 22-pixel circle.
+ */
+interface Props {
+  /** Short label, announced to screen readers in place of the bare "i". */
+  label: string;
+  title: string;
+  body: string;
+  /** Optional link out to the real thing. */
+  linkHref?: string;
+  linkText?: string;
+}
+const { label, title, body, linkHref, linkText } = Astro.props;
+---
+
+<details class="info">
+  <summary class="info__btn" title={label}>
+    <span aria-hidden="true">i</span>
+    <span class="visually-hidden">{label}</span>
+  </summary>
+  <div class="info__panel">
+    <p class="info__title">{title}</p>
+    <p class="info__body">{body}</p>
+    {
+      linkHref && (
+        <a class="tile tile--sm" href={linkHref} target="_blank" rel="noopener noreferrer">
+          {linkText}
+          <span aria-hidden="true">↗</span>
+        </a>
+      )
+    }
+  </div>
+</details>
+
+<style>
+  .info {
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+  }
+  .info__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--r-capsule);
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    background: transparent;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+  }
+  /* Safari still paints the disclosure triangle without this. */
+  .info__btn::-webkit-details-marker {
+    display: none;
+  }
+  .info__btn:hover,
+  .info[open] .info__btn {
+    background: var(--gold);
+    color: var(--ink-on-pigment);
+  }
+  .info__btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Held to the reading measure and clamped to the viewport so it can open
+     against the right-hand edge of a table without pushing the page sideways. */
+  .info__panel {
+    position: absolute;
+    z-index: 40;
+    inset-inline-start: 0;
+    top: calc(100% + 8px);
+    width: min(34rem, calc(100vw - 2 * var(--sp-base)));
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    border-radius: var(--r-panel);
+    box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.35);
+  }
+  .info__title {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .info__body {
+    margin: 0;
+    font-size: var(--t-small);
+    color: var(--ink-2);
+    max-width: none;
+  }
+  .info a {
+    align-self: flex-start;
+  }
+
+  /* Near the right edge of a narrow screen there is nowhere to hang a panel, so
+     it stops floating and takes its space in the flow instead. */
+  @media (max-width: 560px) {
+    .info {
+      display: block;
+    }
+    .info__panel {
+      position: static;
+      width: auto;
+      margin-top: 8px;
+      box-shadow: none;
+    }
+  }
+</style>

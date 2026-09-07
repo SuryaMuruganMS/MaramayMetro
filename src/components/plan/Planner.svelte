@@ -1,19 +1,29 @@
 <script lang="ts">
-  import { GRAPH, NODES, nodeById, lineById } from '../../data/network.ts';
+  import { NODES, nodeById, lineById } from '../../data/network.ts';
   import { STOPS } from '../../data/alignment.ts';
   import { formatLevel } from '../../lib/chainage.ts';
-  import type { Locale } from '../../lib/locale.ts';
+  import { findRoute } from '../../lib/route.ts';
+  import {
+    fareFor,
+    PASSENGERS,
+    passengerById,
+    toLira,
+    type PassengerId,
+  } from '../../data/fares.ts';
+  import { lira, num, type Locale } from '../../lib/locale.ts';
 
   /**
-   * A real shortest path over the real graph.
+   * A real shortest path over the real graph, priced for the person taking it.
    *
-   * Dijkstra, with an interchange penalty - because changing trains costs a
-   * passenger far more than the four minutes a timetable admits to, and a
-   * planner that ignores it will happily route you through three changes to
-   * save two minutes. Five minutes per change is the usual working figure.
+   * The search itself lives in `lib/route.ts` — the fares page needs the same
+   * answer, and two implementations of "how do you get there" would eventually
+   * quote two different fares for one journey.
    *
-   * It reports the deepest point on the route, which no other planner does and
-   * this one can, because the alignment data is right there.
+   * What is here is the presentation, and one decision worth naming: the
+   * passenger type sits in the FORM, next to from and to, not off in a settings
+   * panel. Who you are changes the answer as much as where you are going, and a
+   * planner that quotes one price to everybody is quoting the wrong price to
+   * most people.
    */
   interface Props {
     locale: Locale;
@@ -21,86 +31,17 @@
   }
   const { locale, labels }: Props = $props();
 
-  const CHANGE_PENALTY = 5;
-
   // Turkish collates ç, ğ, ı, i, ö, ş, ü in its own order, so the station list
   // is sorted in the reader's locale rather than in a fixed one.
   const sorted = [...NODES].sort((a, b) => a.name.localeCompare(b.name, locale));
 
   let from = $state('yenikapi');
   let to = $state('uskudar');
+  let passenger = $state<PassengerId>('full');
 
-  interface Hop {
-    node: string;
-    line: string;
-    minutes: number;
-  }
-
-  function plan(a: string, b: string): { hops: Hop[]; minutes: number } | null {
-    if (a === b) return null;
-    // State is (node, arriving-line), so a change can be priced.
-    const key = (n: string, l: string) => `${n}|${l}`;
-    /* eslint-disable svelte/prefer-svelte-reactivity --
-       These are local scratch inside a pure function, not reactive state.
-       A SvelteMap here would add proxy overhead to a hot search loop for a
-       reactivity nobody reads. */
-    const dist = new Map<string, number>();
-    const prev = new Map<string, { k: string; hop: Hop }>();
-    /* eslint-enable svelte/prefer-svelte-reactivity */
-    const start = key(a, '');
-    dist.set(start, 0);
-    const queue: Array<{ k: string; node: string; line: string; d: number }> = [
-      { k: start, node: a, line: '', d: 0 },
-    ];
-
-    let bestEnd: string | null = null;
-    let bestD = Infinity;
-
-    while (queue.length) {
-      queue.sort((x, y) => x.d - y.d);
-      const cur = queue.shift()!;
-      if (cur.d > (dist.get(cur.k) ?? Infinity)) continue;
-      if (cur.node === b && cur.d < bestD) {
-        bestD = cur.d;
-        bestEnd = cur.k;
-        continue;
-      }
-      for (const e of GRAPH.get(cur.node) ?? []) {
-        const change = cur.line !== '' && e.line !== cur.line ? CHANGE_PENALTY : 0;
-        const nd = cur.d + e.minutes + change;
-        const nk = key(e.to, e.line);
-        if (nd < (dist.get(nk) ?? Infinity)) {
-          dist.set(nk, nd);
-          prev.set(nk, { k: cur.k, hop: { node: e.to, line: e.line, minutes: e.minutes } });
-          queue.push({ k: nk, node: e.to, line: e.line, d: nd });
-        }
-      }
-    }
-
-    if (!bestEnd) return null;
-    // Walk the predecessor chain back to the start. The annotation on `step` is
-    // required: without it TypeScript infers its type from `k`, which is being
-    // assigned from `step` on the next line, and gives up with a circularity.
-    const hops: Hop[] = [];
-    let k: string | undefined = bestEnd;
-    while (k !== undefined && prev.has(k)) {
-      const step: { k: string; hop: Hop } = prev.get(k)!;
-      hops.unshift(step.hop);
-      k = step.k;
-    }
-    return { hops, minutes: bestD };
-  }
-
-  const result = $derived(plan(from, to));
-
-  const changes = $derived(
-    result
-      ? result.hops.reduce(
-          (n, h, i) => (i > 0 && h.line !== result.hops[i - 1]!.line ? n + 1 : n),
-          0,
-        )
-      : 0,
-  );
+  const result = $derived(findRoute(from, to));
+  const fare = $derived(result ? fareFor(result, passenger) : null);
+  const pass = $derived(passengerById.get(passenger) ?? PASSENGERS[0]!);
 
   /** The deepest station on the route, where we know a level for it. */
   const deepest = $derived.by(() => {
@@ -129,6 +70,8 @@
 
   const lineName = (id: string) => lineById.get(id)?.name ?? id;
   const lineColour = (id: string) => lineById.get(id)?.colour ?? 'var(--accent)';
+  const money = (kurus: number) => lira(toLira(kurus), locale);
+  const km = (v: number) => num(v, locale, { maximumFractionDigits: 1 });
 </script>
 
 <div class="planner">
@@ -151,6 +94,13 @@
         {#each sorted as n (n.id)}<option value={n.id}>{n.name}</option>{/each}
       </select>
     </p>
+
+    <p class="planner__field planner__field--who">
+      <label class="label" for="pl-who">{labels['plan.passenger']}</label>
+      <select id="pl-who" bind:value={passenger}>
+        {#each PASSENGERS as p (p.id)}<option value={p.id}>{labels[p.key]}</option>{/each}
+      </select>
+    </p>
   </div>
 
   <!-- Results update as the selects change, so there is no button to press and
@@ -169,7 +119,11 @@
         </div>
         <div>
           <dt class="label">{labels['plan.changes']}</dt>
-          <dd class="mono">{changes}</dd>
+          <dd class="mono">{result.changes}</dd>
+        </div>
+        <div>
+          <dt class="label">{labels['x.km']}</dt>
+          <dd class="mono">{km(result.km)}</dd>
         </div>
         {#if deepest}
           <div>
@@ -178,6 +132,54 @@
           </div>
         {/if}
       </dl>
+
+      <!-- The fare, and how it was arrived at.
+
+           Free passes still get the breakdown, with the full fare shown beside
+           it. "Free" on its own tells a pass holder nothing about the journey;
+           what they usually want to know is what it would have cost, and that
+           the entitlement is an entitlement rather than a short trip. -->
+      {#if fare}
+        <div class="fare">
+          <div class="fare__head">
+            <p class="label">{labels['plan.fare']}</p>
+            <p class="fare__total" class:is-free={fare.free}>
+              {fare.free ? labels['fare.free'] : money(fare.kurus)}
+            </p>
+            <p class="fare__note mono">{labels['plan.fareNote']}</p>
+          </div>
+
+          {#if fare.free}
+            <p class="fare__free">
+              {labels['plan.travelsFree']}
+              <span class="mono">{labels['plan.fullFare']} {money(fare.fullKurus)}</span>
+            </p>
+          {/if}
+
+          <ol class="fare__legs">
+            {#each fare.legs as l, i (i)}
+              <li>
+                <span class="roundel" style={`--line:${lineColour(l.line)}`}
+                  >{lineName(l.line)}</span
+                >
+                <span class="fare__legkm mono">{km(l.km)} {labels['x.km']}</span>
+                <span class="fare__tag mono">
+                  {l.isTransfer
+                    ? `${labels['fare.transfer']} · ${l.rate}%`
+                    : labels['plan.firstTap']}
+                </span>
+                <span class="fare__legfare mono"
+                  >{fare.free ? money(l.fullKurus) : money(l.kurus)}</span
+                >
+              </li>
+            {/each}
+          </ol>
+          <p class="fare__band mono">
+            {labels['fare.band']}: {labels[fare.band.key]} · {labels['fare.rate']}
+            {pass.free ? '—' : `${pass.rate}%`}
+          </p>
+        </div>
+      {/if}
 
       <p class="planner__access" class:is-warn={!allStepFree}>
         {allStepFree ? labels['plan.stepFreeOk'] : labels['plan.stepFreeNo']}
@@ -220,6 +222,12 @@
     align-items: end;
     gap: var(--sp-snug);
     max-width: 46rem;
+  }
+  /* The passenger select spans the row beneath from/to rather than squeezing
+     into it. It is a different kind of question and reads better as one. */
+  .planner__field--who {
+    grid-column: 1 / -1;
+    max-width: 22rem;
   }
   .planner__field {
     display: flex;
@@ -295,6 +303,83 @@
   .planner__access.is-warn {
     color: var(--warn);
     font-weight: 600;
+  }
+
+  /* ------------------------------------------------------------------- fare */
+  .fare {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    padding: var(--sp-base);
+    background: var(--surface);
+    border: var(--border-hair);
+    border-inline-start: 3px solid var(--gold);
+    border-radius: var(--r-panel);
+  }
+  .fare__head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--sp-snug);
+  }
+  .fare__head .label {
+    margin: 0;
+  }
+  .fare__total {
+    margin: 0;
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .fare__total.is-free {
+    color: var(--ok);
+  }
+  .fare__note {
+    margin: 0;
+    margin-inline-start: auto;
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    color: var(--gold);
+  }
+  .fare__free {
+    margin: 0;
+    font-size: var(--t-small);
+    color: var(--ink-2);
+  }
+  .fare__legs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .fare__legs li {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-snug);
+    flex-wrap: wrap;
+  }
+  .fare__legkm,
+  .fare__tag {
+    font-size: var(--t-micro);
+    color: var(--ink-3);
+  }
+  .fare__tag {
+    letter-spacing: 0.06em;
+  }
+  .fare__legfare {
+    margin-inline-start: auto;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .fare__band {
+    margin: 0;
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    color: var(--ink-4);
   }
 
   .route {

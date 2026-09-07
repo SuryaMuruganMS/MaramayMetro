@@ -52,6 +52,12 @@
   margin-left: var(--sp-tight);
   overflow-x: auto;
   scrollbar-width: none;
+  /* A flex item will not shrink below its content unless told to. Without this
+     the nav refuses to narrow, overflows its row and lands on top of the
+     controls at the right - which is exactly what happened when the Travelling
+     tab became the seventh link. `overflow-x: auto` cannot save a box that is
+     never allowed to get smaller than what is inside it. */
+  min-width: 0;
 }
 .head__nav::-webkit-scrollbar {
   display: none;
@@ -193,7 +199,13 @@
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 900px) {
+/* One breakpoint, shared with plan view.
+   Below 1024px the crossing is already presented as a stack rather than a
+   horizontal track, so the header stops behaving like a wide-screen bar at the
+   same width instead of at one of its own. Seven links plus three controls do
+   not fit on one row at 1023px, and a second breakpoint here would mean two
+   different answers to the question of what counts as a narrow screen. */
+@media (max-width: 1023px) {
   /* Two rows of chrome pinned to the top of a 640px screen is most of the
      screen. It scrolls away here, which also removes any question of an anchor
      landing behind it. */

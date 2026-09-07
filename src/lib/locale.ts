@@ -96,10 +96,19 @@ export const allHrefs = (path: string): Array<{ locale: Locale; href: string }> 
 export const num = (n: number, locale: Locale, opts: Intl.NumberFormatOptions = {}): string =>
   new Intl.NumberFormat(BCP47[locale], opts).format(n);
 
-/** Currency, for the fare tables. */
+/**
+ * Currency, for the fare tables.
+ *
+ * `narrowSymbol` is not optional here. The default display for TRY outside
+ * Turkish locales is the three-letter code, so an English reader was being
+ * shown "TRY 22.35" where the sign painted on the ticket machine says ₺22.35.
+ * The lira sign is the same glyph in all four languages; only its position and
+ * the decimal separator move, which is exactly what Intl is for.
+ */
 export const lira = (n: number, locale: Locale): string =>
   new Intl.NumberFormat(BCP47[locale], {
     style: 'currency',
     currency: 'TRY',
+    currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
   }).format(n);

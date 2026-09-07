@@ -1,8 +1,10 @@
 ---
 import Planner from './Planner.svelte';
 import PageHead from '../ui/PageHead.astro';
+import InfoNote from '../ui/InfoNote.astro';
 import { translator } from '../../i18n/index.ts';
 import { href, type Locale } from '../../lib/locale.ts';
+import { PASSENGERS, BANDS } from '../../data/fares.ts';
 
 interface Props {
   locale: Locale;
@@ -10,6 +12,11 @@ interface Props {
 const { locale } = Astro.props;
 const tt = translator(locale);
 
+/**
+ * The planner is an island, so every string it can render has to be resolved
+ * here and handed over. Listing them explicitly rather than shipping the whole
+ * dictionary keeps the payload to what this page actually says.
+ */
 const KEYS = [
   'plan.from',
   'plan.to',
@@ -22,7 +29,21 @@ const KEYS = [
   'plan.stepFreeOk',
   'plan.stepFreeNo',
   'plan.indicative',
+  'plan.passenger',
+  'plan.fare',
+  'plan.fareNote',
+  'plan.fareBreak',
+  'plan.travelsFree',
+  'plan.fullFare',
+  'plan.firstTap',
+  'fare.free',
+  'fare.transfer',
+  'fare.band',
+  'fare.rate',
   'x.min',
+  'x.km',
+  ...PASSENGERS.map((p) => p.key),
+  ...BANDS.map((b) => b.key),
 ];
 const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
 ---
@@ -36,6 +57,25 @@ const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
       lede={tt('plan.lede')}
     />
 
+    <!-- The planner quotes money, so the same warning that guards the fares
+         table guards this one, in the same shape, immediately above it.
+
+         A div, not a p: <details> is flow content and the parser closes an open
+         paragraph at its start tag, which dropped the note onto its own line
+         with the text stranded below it. -->
+    <div class="pricewarn">
+      <InfoNote
+        label={tt('fare.info')}
+        title={tt('fare.fictional')}
+        body={tt('fare.fictionalBody')}
+        linkHref="https://www.metro.istanbul/"
+        linkText={tt('disclosure.link')}
+      />
+      <span
+        >{tt('fare.fictional')} — <a href={href('/ucret', locale)}>{tt('fare.title')}</a></span
+      >
+    </div>
+
     <Planner client:load locale={locale} labels={labels} />
 
     <!-- Without scripting the planner cannot run, so say what to do instead
@@ -48,3 +88,20 @@ const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
     </noscript>
   </div>
 </section>
+
+<style>
+  .pricewarn {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-tight);
+    margin: 0;
+    font-size: var(--t-small);
+    color: var(--ink-3);
+  }
+  @media (max-width: 560px) {
+    /* The note goes block at this width so its panel can take flow space. */
+    .pricewarn {
+      display: block;
+    }
+  }
+</style>

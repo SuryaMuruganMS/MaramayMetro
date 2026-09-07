@@ -131,6 +131,12 @@ export const tr: Record<Keys, string> = {
   'plan.zones': 'Geçilen bölge',
   'plan.firstTap': 'İlk biniş',
   'plan.transfers': 'Aktarmalar',
+  'plan.travelsFree':
+    'Bu kart ücretsiz seyahat eder. Tam ücret karşılaştırma için gösterilmiştir.',
+  'plan.fareBreak': 'Ücret neyden oluşuyor',
+  'plan.ride': 'Biniş',
+  'plan.fareNote': 'Kurgusal ücret.',
+  'plan.fullFare': 'Tam ücretle',
 
   'fare.title': 'Ücretler',
   'fare.lede':
@@ -158,6 +164,44 @@ export const tr: Record<Keys, string> = {
   'fare.free': 'Ücretsiz',
   'fare.table': 'Ücret tablosu',
   'fare.pickOrigin': 'Şuradan ücretler',
+  'fare.works': 'Ücret nasıl hesaplanır',
+  'fare.flat': 'Sabit ücret',
+  'fare.flatBody':
+    'Metro, tramvay ve füniküler yolculukları ne kadar uzun olursa olsun tek fiyat. Girişte turnikeye bir kez basılır.',
+  'fare.distance': 'Mesafeli ücret',
+  'fare.distanceBody':
+    'Marmaray gidilen mesafeye göre ücretlendirir: bir biniş bedeli, ardından her kilometre için bir tutar; tavan ise hattın uçtan uca fiyatıdır.',
+  'fare.tapOut': 'Girişte de çıkışta da basın',
+  'fare.tapOutBody':
+    'Marmaray turnikelerinin kartı iki kez, metro turnikelerinin bir kez okumasının nedeni budur. Turnike, nerede indiğinizi bilmeden ne yazacağını bilemez.',
+  'fare.freeTitle': 'Üç kart ücretsiz seyahat eder',
+  'fare.freeBody':
+    '65 yaş üstü yolcular, yedi yaşından küçük çocuklar ve engelli kart sahipleri ücret ödemez. Bu, bir ücrete uygulanan indirim değildir — uygulanacak bir ücret yoktur.',
+  'fare.boarding': 'Biniş bedeli',
+  'fare.perKm': 'Kilometre başına',
+  'fare.cap': 'En yüksek tutar',
+  'fare.capNote':
+    'Tavan, Halkalı–Gebze tam hattının fiyatıdır; kimse hattın tamamından fazlasını ödemez.',
+  'fare.rate': 'Tam ücrete oranı',
+  'fare.ladder': 'Aktarma kademeleri',
+  'fare.change1': 'Birinci aktarma',
+  'fare.change2': 'İkinci aktarma',
+  'fare.change3': 'Üçüncü aktarma',
+  'fare.change4': 'Dördüncü ve sonrası',
+  'fare.window': 'İlk basıştan sonraki 120 dakika içinde',
+  'fare.to': 'Varış',
+  'fare.origin': 'Bu istasyondan ücretler',
+  'fare.noRoute': 'güzergâh yok',
+  'fare.changesCol': 'Aktarma',
+  'fare.tariff': 'Tarife',
+  'fare.passengers': 'Yolcu tipleri',
+  'fare.bandsNote':
+    'Tarife kademeli değil, süreklidir. Bu adlar yolculuğu sözle tanımlar; ücreti değiştirmez.',
+  'fare.band1': 'Yerel',
+  'fare.band2': 'Kısa',
+  'fare.band3': 'Orta',
+  'fare.band4': 'Uzun',
+  'fare.band5': 'Uçtan uca',
 
   'travel.title': 'Metroda yolculuk',
   'travel.lede':
