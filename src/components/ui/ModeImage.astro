@@ -24,11 +24,21 @@ interface Props {
   ratio?: string;
   tint?: 'cobalt' | 'turquoise' | 'bole' | 'gold';
   eager?: boolean;
+  /** Passed through to the figure, so a page can add `reveal-up` and the like. */
+  class?: string;
 }
-const { src, alt, caption, ratio = '3 / 2', tint = 'cobalt', eager = false } = Astro.props;
+const {
+  src,
+  alt,
+  caption,
+  ratio = '3 / 2',
+  tint = 'cobalt',
+  eager = false,
+  class: klass,
+} = Astro.props;
 ---
 
-<figure class="mimg" style={`--ratio:${ratio}; --tint: var(--${tint})`}>
+<figure class:list={['mimg', klass]} style={`--ratio:${ratio}; --tint: var(--${tint})`}>
   <div class="mimg__frame">
     {
       src ? (

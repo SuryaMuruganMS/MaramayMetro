@@ -1,0 +1,227 @@
+/* ==========================================================================
+   MEDIA TREATMENT
+
+   One recipe for every picture and every clip on the site, so a photograph on
+   the dig reads as the same kind of object as a photograph on the travelling
+   page. Before this, each component had invented its own frame and the set
+   looked assembled rather than designed.
+
+   WHERE THE NUMBERS COME FROM
+   Measured off okaydev.co rather than guessed, then re-pitched into this site's
+   palette. What was worth taking:
+
+     - Two shadow depths and only two. Feature media gets a deep one
+       (0 32px 80px + 0 8px 24px); tiles in a set get a shallow one
+       (0 12px 20px). A third depth would stop either meaning anything.
+     - Restrained radii. Their whole site runs on 4-12px, never a pill, which
+       is why the media reads as photographic prints rather than app chrome.
+     - Gradient masks, so a large media block DISSOLVES into the page instead
+       of ending on a hard horizontal edge.
+     - A full-bleed backdrop image blended into the ground colour, not pasted
+       over it, so the photograph belongs to the palette.
+
+   What was NOT worth taking: their look. This is a government engineering
+   record in an İznik palette; their site is an acid-green social network. The
+   mechanics travel, the styling does not.
+
+   ONE MORE RULE, OURS
+   Nothing here may move on its own. Every animation below is either a hover
+   the reader asked for or a scroll-driven reveal tied to the reader's own
+   scrolling, and all of it is off under prefers-reduced-motion. A page that
+   animates while you are trying to read a depth figure is a page that does not
+   respect what it is for.
+   ========================================================================== */
+
+:root {
+  /* The mount. A photographic print in a card window, not a rounded div. */
+  --frame-r: 10px;
+  --frame-r-sm: 6px;
+
+  /* Two depths. See above. */
+  --lift-deep:
+    0 32px 80px -24px color-mix(in oklab, #000 62%, transparent),
+    0 8px 24px -8px color-mix(in oklab, #000 46%, transparent);
+  --lift-tile: 0 12px 20px -10px color-mix(in oklab, #000 34%, transparent);
+}
+
+/* ---------------------------------------------------------------- the mount
+   ModeImage and ModeVideo both draw a passe-partout: hairline rule, a band of
+   surface, then the picture. That is the frame; this adds the depth, the load
+   fade and the inner zoom to both of them at once. */
+.mimg__frame,
+.mvid__frame {
+  box-shadow:
+    var(--lift-tile),
+    inset 0 0 0 1px var(--rule-strong),
+    inset 0 0 0 7px var(--surface),
+    inset 0 0 0 8px color-mix(in oklab, var(--ink) 14%, transparent);
+  transition:
+    box-shadow var(--d-ui) var(--ease-out),
+    transform var(--d-ui) var(--ease-out);
+}
+
+/* Feature media — the hero pair, the film band's neighbours, a finds panel —
+   sits deeper than a tile in a grid. */
+.media--deep .mimg__frame,
+.media--deep .mvid__frame,
+.find__media .mimg__frame,
+.find__media .mvid__frame {
+  box-shadow:
+    var(--lift-deep),
+    inset 0 0 0 1px var(--rule-strong),
+    inset 0 0 0 7px var(--surface),
+    inset 0 0 0 8px color-mix(in oklab, var(--ink) 14%, transparent);
+}
+
+/*
+   THE ZOOM IS INSIDE THE FRAME.
+
+   Scaling the whole figure on hover moves its edges, which shifts everything
+   next to it and makes a page of them twitch. Scaling the picture inside a
+   frame that does not move is the same gesture with none of the reflow — and
+   it reads better, because the mount stays put like a mount should.
+*/
+.mimg__i,
+.mvid__v {
+  transition: transform 620ms var(--ease-out);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .mimg:hover .mimg__i,
+  .mvid:hover .mvid__v {
+    transform: scale(1.035);
+  }
+}
+
+/*
+   Arriving.
+
+   An image that pops in at full opacity the instant it decodes is the single
+   most common way a careful page looks cheap. The frame reserves its space
+   from `aspect-ratio` already, so there is no shift either way; this just
+   makes the picture appear rather than snap.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  .mimg__i,
+  .mvid__v {
+    animation: media-in 520ms var(--ease-out) both;
+  }
+}
+@keyframes media-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+/*
+   ...except the pair that CSS is switching between. Both modes are in the DOM
+   and opacity decides which is painted, so an animation that ends at
+   `opacity: 1` would light up the hidden one for half a second on every load.
+   The mode rules own opacity; this one may only own the scale.
+*/
+.mimg__i--day,
+.mimg__i--night,
+.mvid__v--day,
+.mvid__v--night {
+  animation-name: media-in-scale;
+}
+@keyframes media-in-scale {
+  from {
+    transform: scale(1.02);
+  }
+}
+
+/* ------------------------------------------------------------- the reveal
+   Scroll-driven, so it is the reader's own scrolling that moves it — no
+   observer, no library, and it runs backwards when they scroll back up. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal-up {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      /* Starts as the element's top edge enters the viewport and finishes a
+         third of the way up, so it has settled well before it is read. */
+      animation-range: entry 0% cover 32%;
+    }
+  }
+}
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ---------------------------------------------------------- WHAT WAS CUT
+   A tilted plate — perspective on the parent, a few degrees of rotateY and
+   rotateX on the media — was built, looked at, and removed.
+
+   It is the technique okaydev uses and it works there, on a page selling a
+   social network. Here it made the platform-edge photograph look like it was
+   falling over, and it separated the caption from the picture it captions. A
+   government engineering record whose photographs lean is a record nobody
+   believes. The perspective container is gone rather than left unused; dead
+   CSS is a claim that something is coming back.
+
+   What replaced it is below, and it does more work for less noise.
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------- the wipe
+   A picture is DRAWN IN from its leading edge rather than faded up.
+
+   The direction is not arbitrary. This railway runs west to east and the whole
+   landing page moves that way, so the pictures open that way too, and a reader
+   who has scrolled the crossing meets the same gesture again on every page. An
+   effect that repeats the site's one idea is worth having; the same effect
+   pointing in a random direction is decoration.
+
+   Scroll-driven, so the reader's own scrolling draws it and scrolling back
+   undraws it. `inset()` rather than a mask so the mount's rule and the shadow
+   are clipped with the picture and the frame does not float free of it.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal-wipe {
+      animation: reveal-wipe linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 30%;
+    }
+  }
+}
+@keyframes reveal-wipe {
+  from {
+    clip-path: inset(0 100% 0 0 round var(--frame-r));
+    opacity: 0.35;
+  }
+  to {
+    clip-path: inset(0 0 0 0 round var(--frame-r));
+    opacity: 1;
+  }
+}
+/* Right to left where the page reads that way, for the same reason. */
+[dir='rtl'] .reveal-wipe {
+  animation-name: reveal-wipe-rtl;
+}
+@keyframes reveal-wipe-rtl {
+  from {
+    clip-path: inset(0 0 0 100% round var(--frame-r));
+    opacity: 0.35;
+  }
+  to {
+    clip-path: inset(0 0 0 0 round var(--frame-r));
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------- dissolve
+   A large media block that ends on a hard horizontal line looks pasted on.
+   Masking the last few per cent to transparent lets it settle into the ground
+   it is sitting on. Only for full-bleed media — a framed print has a mount and
+   wants its edge. */
+.media-dissolve {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0 82%, transparent 100%);
+}

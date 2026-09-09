@@ -3,8 +3,7 @@ import Track from './Track.astro';
 import SectionRail from './SectionRail.astro';
 import Engine from './Engine.svelte';
 import Girih from '../ui/Girih.astro';
-import ModeImage from '../ui/ModeImage.astro';
-import { modeAsset } from '../../lib/assets.ts';
+import HeroBackdrop from './HeroBackdrop.astro';
 import Figure from '../ui/Figure.astro';
 import { journeyCopy } from '../../data/journey-copy.ts';
 import { translator } from '../../i18n/index.ts';
@@ -48,6 +47,7 @@ const labels = {
 
 <section class="open">
   <Girih size={150} />
+  <HeroBackdrop />
   <div class="open__inner shell">
     <div class="open__cols">
       <div class="open__text">
@@ -88,14 +88,6 @@ const labels = {
         </p>
         <p class="open__hint open__hint--sub mono">{copy.intro.both}</p>
       </div>
-
-      <ModeImage
-        src={modeAsset('/img/hero')}
-        alt={tt('site.tagline')}
-        ratio="4 / 5"
-        tint="turquoise"
-        eager={true}
-      />
     </div>
   </div>
 </section>
@@ -124,14 +116,23 @@ const labels = {
     padding-block: var(--sp-loose) var(--sp-base);
     border-bottom: 1px solid var(--rule);
   }
-  /* Two columns above the fold: the argument on the left, a still on the
-     right. This is the only part of the landing page that does not travel
-     sideways, so it is the only place a photograph makes sense. */
+  /*
+     One column, over a photograph.
+
+     It was two — the argument on the left, a framed still on the right — which
+     is a fine layout and the wrong one for an opening. A picture in a box beside
+     the headline is an illustration OF the subject; the same picture full bleed
+     behind it IS the subject, and the reader is standing on the Bosphorus shore
+     before they have read a word.
+
+     The text column is held to its own measure rather than allowed to run the
+     full width, so the right-hand side of the frame stays picture.
+  */
   .open__cols {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-    gap: var(--sp-loose);
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
     width: 100%;
   }
   .open__text {
@@ -139,14 +140,7 @@ const labels = {
     flex-direction: column;
     gap: var(--sp-base);
     min-width: 0;
-  }
-  @media (max-width: 1100px) {
-    .open__cols {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .open__cols :global(.mimg) {
-      display: none;
-    }
+    max-width: 62rem;
   }
 
   .open__inner {

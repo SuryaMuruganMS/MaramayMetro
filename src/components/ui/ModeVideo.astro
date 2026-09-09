@@ -27,6 +27,8 @@ interface Props {
   caption?: string;
   ratio?: string;
   tint?: 'cobalt' | 'turquoise' | 'bole' | 'gold';
+  /** Passed through to the figure, so a page can add `reveal-up` and the like. */
+  class?: string;
 }
 const {
   film = {},
@@ -35,6 +37,7 @@ const {
   caption,
   ratio = '4 / 3',
   tint = 'turquoise',
+  class: klass,
 } = Astro.props;
 
 /** Clip if there is one for this mode, else its poster, else nothing. */
@@ -46,7 +49,7 @@ const MODES = (['day', 'night'] as const).map((m) => ({
 const anything = MODES.some((x) => x.video || x.still);
 ---
 
-<figure class="mvid" style={`--ratio:${ratio}; --tint: var(--${tint})`}>
+<figure class:list={['mvid', klass]} style={`--ratio:${ratio}; --tint: var(--${tint})`}>
   <div class="mvid__frame">
     {
       anything ? (
