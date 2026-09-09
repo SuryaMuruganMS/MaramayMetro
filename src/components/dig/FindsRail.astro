@@ -10,7 +10,7 @@ import {
   findOffset,
   findProgress,
 } from '../../data/finds.ts';
-import { modeAsset, filmAsset } from '../../lib/assets.ts';
+import { modeAsset, filmAsset, posterAsset } from '../../lib/assets.ts';
 import { digCopy } from '../../data/strata.ts';
 import { translator } from '../../i18n/index.ts';
 import { LAYERS } from '../../data/strata.ts';
@@ -54,8 +54,10 @@ const panels = FINDS.map((f, i) => ({
   i,
   left: findOffset(i),
   at: findProgress(i),
-  /** Undefined unless both mode files are actually on disk. */
-  src: f.media === 'video' ? filmAsset(f.stem) : modeAsset(f.stem),
+  /** Stills need both modes; a clip may arrive one mode at a time. */
+  src: f.media === 'video' ? undefined : modeAsset(f.stem),
+  film: f.media === 'video' ? filmAsset(f.stem) : undefined,
+  poster: f.media === 'video' ? posterAsset(f.stem) : undefined,
 }));
 ---
 
@@ -77,7 +79,7 @@ const panels = FINDS.map((f, i) => ({
     <div class="finds__pin">
       <div class="finds__track">
         {
-          panels.map(({ find, i, left, src }) => (
+          panels.map(({ find, i, left, src, film, poster }) => (
             <article
               class="find"
               data-find={find.id}
@@ -87,8 +89,8 @@ const panels = FINDS.map((f, i) => ({
               <div class="find__media">
                 {find.media === 'video' ? (
                   <ModeVideo
-                    src={src}
-                    poster={src}
+                    film={film}
+                    poster={poster}
                     alt={tt(`${find.key}.title`)}
                     ratio="4 / 3"
                     tint={i % 2 === 0 ? 'turquoise' : 'cobalt'}

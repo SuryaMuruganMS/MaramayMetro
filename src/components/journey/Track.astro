@@ -7,7 +7,7 @@ import { href, lower, upper, type Locale } from '../../lib/locale.ts';
 import Nameplate from './Nameplate.astro';
 import Girih from '../ui/Girih.astro';
 import FilmBand from './FilmBand.astro';
-import { filmAsset, modeAsset } from '../../lib/assets.ts';
+import { filmAsset, posterAsset } from '../../lib/assets.ts';
 import ServiceBoard from '../widgets/ServiceBoard.svelte';
 
 interface Props {
@@ -44,7 +44,7 @@ const snaps = PANEL_ANCHORS;
 
   <div class="journey__pin">
     <!-- The film runs the length of the crossing, behind everything. -->
-    <FilmBand src={filmAsset('/film/crossing')} poster={modeAsset('/img/film-poster')} />
+    <FilmBand film={filmAsset('/film/crossing')} poster={posterAsset('/img/film-poster')} />
 
     <div class="journey__track" id="track">
       {

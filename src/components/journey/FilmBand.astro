@@ -21,11 +21,28 @@
  * A missing video should not leave a black rectangle where the journey was.
  */
 interface Props {
-  /** Path stem: /film/crossing loads -day.mp4 and -night.mp4. */
-  src?: string;
-  poster?: string;
+  /** Clip per mode, from `filmAsset`. Either may be missing. */
+  film?: { day?: string; night?: string };
+  /** Poster still per mode, from `posterAsset`. Stands in for a missing clip. */
+  poster?: { day?: string; night?: string };
 }
-const { src, poster } = Astro.props;
+const { film = {}, poster = {} } = Astro.props;
+
+/**
+ * What to paint for each mode: the clip if there is one, else its poster.
+ *
+ * The night cut of the crossing exists and the day cut does not yet. Refusing
+ * to show either until the pair is complete would hide finished work; showing
+ * the night film in day service would be a straightforward lie about what the
+ * switch does. So day service gets the day poster — the same shot, held still —
+ * and starts moving the day the film lands.
+ */
+const MODES = (['day', 'night'] as const).map((m) => ({
+  m,
+  video: film[m],
+  still: film[m] ? undefined : poster[m],
+}));
+const anything = MODES.some((x) => x.video || x.still);
 ---
 
 <div class="film" aria-hidden="true">
@@ -33,29 +50,25 @@ const { src, poster } = Astro.props;
 
   <div class="film__stage">
     {
-      src ? (
-        <>
-          <video
-            class="film__v film__v--day"
-            src={`${src}-day.mp4`}
-            poster={poster ? `${poster}-day.webp` : undefined}
-            muted
-            loop
-            playsinline
-            preload="none"
-            data-mode-video="day"
-          />
-          <video
-            class="film__v film__v--night"
-            src={`${src}-night.mp4`}
-            poster={poster ? `${poster}-night.webp` : undefined}
-            muted
-            loop
-            playsinline
-            preload="none"
-            data-mode-video="night"
-          />
-        </>
+      anything ? (
+        MODES.map((x) =>
+          x.video ? (
+            <video
+              class={`film__v film__v--${x.m}`}
+              src={x.video}
+              poster={poster[x.m]}
+              muted
+              loop
+              playsinline
+              preload="none"
+              data-mode-video={x.m}
+            />
+          ) : x.still ? (
+            <img class={`film__v film__v--${x.m}`} src={x.still} alt="" loading="lazy" />
+          ) : (
+            <div class={`film__v film__v--${x.m} film__drawn`} />
+          ),
+        )
       ) : (
         <div class="film__drawn" />
       )
@@ -165,7 +178,7 @@ const { src, poster } = Astro.props;
   .film__wash {
     position: absolute;
     inset: 0;
-    background: color-mix(in oklab, var(--ground) 62%, transparent);
+    background: color-mix(in oklab, var(--ground) var(--wash), transparent);
     backdrop-filter: saturate(1.1);
     mask-image: linear-gradient(
       100deg,
@@ -174,6 +187,34 @@ const { src, poster } = Astro.props;
       color-mix(in oklab, #000 55%, transparent) 78%,
       color-mix(in oklab, #000 35%, transparent) 100%
     );
+  }
+
+  /*
+     How much wash, and why it depends on the service.
+
+     The wash exists to keep panel copy readable over moving footage, and 62%
+     is right over a bright daylight shot. Over the night cut it was a disaster:
+     the ground colour in night service is nearly black, the tunnel footage is
+     nearly black, and 62% of one over the other left the band looking like a
+     plain dark rectangle. The film was playing perfectly and could not be seen.
+
+     Night gets 34%, which is still enough to hold the text — the copy is set in
+     near-white on a tunnel wall — and leaves the train visible, which is the
+     entire point of having filmed one.
+  */
+  .film__stage {
+    --wash: 62%;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-service='day'])) .film__stage {
+      --wash: 34%;
+    }
+  }
+  :global(:root[data-service='night']) .film__stage {
+    --wash: 34%;
+  }
+  :global(:root[data-service='day']) .film__stage {
+    --wash: 62%;
   }
 
   @media (prefers-reduced-motion: reduce) {

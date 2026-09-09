@@ -32,7 +32,35 @@ export function modeAsset(stem: string): string | undefined {
   return hasAsset(`${stem}-day.webp`) && hasAsset(`${stem}-night.webp`) ? stem : undefined;
 }
 
-/** Same rule for the film band, which needs a day and a night cut. */
-export function filmAsset(stem: string): string | undefined {
-  return hasAsset(`${stem}-day.mp4`) && hasAsset(`${stem}-night.mp4`) ? stem : undefined;
+/**
+ * The film band and the finds clips, one mode at a time.
+ *
+ * Unlike a still, a clip is allowed to arrive alone. Footage is slower and
+ * dearer to make than a photograph, and the night cuts landed first — so
+ * requiring the pair would have meant showing neither, which is the wrong
+ * answer when one of them is finished and good.
+ *
+ * A mode with no clip falls back to its poster still, which is a frame of the
+ * same shot: the page is complete, the reader gets the picture rather than a
+ * hole, and the moment the other cut lands it starts moving. Neither present
+ * and the component draws its own panel.
+ */
+export interface ModeFilm {
+  day?: string;
+  night?: string;
+}
+
+export function filmAsset(stem: string): ModeFilm {
+  return {
+    day: hasAsset(`${stem}-day.mp4`) ? `${stem}-day.mp4` : undefined,
+    night: hasAsset(`${stem}-night.mp4`) ? `${stem}-night.mp4` : undefined,
+  };
+}
+
+/** Poster stills, per mode, on the same convention. */
+export function posterAsset(stem: string): ModeFilm {
+  return {
+    day: hasAsset(`${stem}-day.webp`) ? `${stem}-day.webp` : undefined,
+    night: hasAsset(`${stem}-night.webp`) ? `${stem}-night.webp` : undefined,
+  };
 }

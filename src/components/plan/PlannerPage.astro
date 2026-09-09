@@ -81,7 +81,7 @@ const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
     <!-- Without scripting the planner cannot run, so say what to do instead
          rather than rendering an inert set of dropdowns. -->
     <noscript>
-      <p class="panel">
+      <p class="card">
         {tt('plan.noJs')}
         <a href={href('/harita', locale)}>{tt('map.title')}</a>
       </p>

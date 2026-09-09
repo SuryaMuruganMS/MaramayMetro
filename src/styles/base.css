@@ -336,8 +336,17 @@ a:hover {
   margin-left: 0.1em;
 }
 
-/* ------------------------------------------------------------------ panels */
-.panel {
+/* -------------------------------------------------------------------- card
+   A bordered box for a standalone note.
+
+   NOT `.panel`. It was `.panel` until the film band went in and could not be
+   seen: the crossing's track panels also carry the class `panel`, so every one
+   of them was painting an opaque surface card over the video running behind
+   them. The film had been playing correctly and invisibly since the day it
+   landed. Two different things cannot share a class name in a global sheet,
+   and the one that had to move was the one used twice rather than the one
+   wired into the track geometry, the plan-view overrides and the layout gate. */
+.card {
   background: var(--surface);
   border: var(--border-hair);
   border-radius: var(--r-panel);

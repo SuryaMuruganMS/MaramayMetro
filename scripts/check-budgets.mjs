@@ -24,6 +24,15 @@ const BUDGETS = {
   'image:each': 200,
   'font:each': 70,
   'json:each': 120,
+  /*
+     Video is measured per file and not counted in any total, because it is the
+     one thing on this site nobody downloads by arriving. Every clip is
+     `preload="none"` and only starts when it is on screen and in the current
+     service, so a reader who never reaches the finds rail pays nothing for it.
+     What the ceiling protects against is a single clip large enough to stall
+     the connection once it does start.
+  */
+  'video:each': 4000,
 };
 
 const walk = (dir) => {
@@ -58,6 +67,7 @@ const sum = (exts) => sized.filter((f) => exts.includes(f.ext)).reduce((n, f) =>
 
 const FONT_EXT = ['.woff2', '.woff', '.ttf'];
 const IMG_EXT = ['.webp', '.png', '.jpg', '.jpeg', '.avif', '.gif'];
+const VIDEO_EXT = ['.mp4', '.webm', '.mov'];
 
 const results = [
   { key: 'js:total', got: kb(sum(['.js'])) },
@@ -76,6 +86,7 @@ results.push(worstOf(['.html'], 'html:each'));
 results.push(worstOf(IMG_EXT, 'image:each'));
 results.push(worstOf(FONT_EXT, 'font:each'));
 results.push(worstOf(['.json'], 'json:each'));
+results.push(worstOf(VIDEO_EXT, 'video:each'));
 
 console.log('\n  TRANSFER BUDGETS (gzipped where a server would compress)\n');
 

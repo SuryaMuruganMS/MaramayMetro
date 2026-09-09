@@ -19,45 +19,63 @@ import Girih from './Girih.astro';
  * page is complete before the footage arrives.
  */
 interface Props {
-  /** Path stem: /finds/mud loads -day.mp4 and -night.mp4. */
-  src?: string;
-  /** Poster stem, same convention. Shown before play and under reduced motion. */
-  poster?: string;
+  /** Clip per mode, from `filmAsset`. Either may be missing. */
+  film?: { day?: string; night?: string };
+  /** Poster still per mode, from `posterAsset`. Stands in for a missing clip. */
+  poster?: { day?: string; night?: string };
   alt: string;
   caption?: string;
   ratio?: string;
   tint?: 'cobalt' | 'turquoise' | 'bole' | 'gold';
 }
-const { src, poster, alt, caption, ratio = '4 / 3', tint = 'turquoise' } = Astro.props;
+const {
+  film = {},
+  poster = {},
+  alt,
+  caption,
+  ratio = '4 / 3',
+  tint = 'turquoise',
+} = Astro.props;
+
+/** Clip if there is one for this mode, else its poster, else nothing. */
+const MODES = (['day', 'night'] as const).map((m) => ({
+  m,
+  video: film[m],
+  still: film[m] ? undefined : poster[m],
+}));
+const anything = MODES.some((x) => x.video || x.still);
 ---
 
 <figure class="mvid" style={`--ratio:${ratio}; --tint: var(--${tint})`}>
   <div class="mvid__frame">
     {
-      src ? (
+      anything ? (
         <>
-          <video
-            class="mvid__v mvid__v--day"
-            src={`${src}-day.mp4`}
-            poster={poster ? `${poster}-day.webp` : undefined}
-            muted
-            loop
-            playsinline
-            preload="none"
-            aria-label={alt}
-            data-mode-video="day"
-          />
-          <video
-            class="mvid__v mvid__v--night"
-            src={`${src}-night.mp4`}
-            poster={poster ? `${poster}-night.webp` : undefined}
-            muted
-            loop
-            playsinline
-            preload="none"
-            aria-hidden="true"
-            data-mode-video="night"
-          />
+          {MODES.map((x) =>
+            x.video ? (
+              <video
+                class={`mvid__v mvid__v--${x.m}`}
+                src={x.video}
+                poster={poster[x.m]}
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label={x.m === 'day' ? alt : undefined}
+                aria-hidden={x.m === 'night' ? 'true' : undefined}
+                data-mode-video={x.m}
+              />
+            ) : x.still ? (
+              <img
+                class={`mvid__v mvid__v--${x.m}`}
+                src={x.still}
+                alt={x.m === 'day' ? alt : ''}
+                aria-hidden={x.m === 'night' ? 'true' : undefined}
+                loading="lazy"
+                decoding="async"
+              />
+            ) : null,
+          )}
           {/* A moving picture in the corner of the eye reads as an advert unless
               it is obviously footage. The sprocket strip says film. */}
           <span class="mvid__sprocket" aria-hidden="true" />
