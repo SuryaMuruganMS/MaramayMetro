@@ -50,6 +50,31 @@ const anything = MODES.some((x) => x.video || x.still);
 ---
 
 <figure class:list={['mvid', klass]} style={`--ratio:${ratio}; --tint: var(--${tint})`}>
+  {
+    /* Outside the frame, for the same reason as ModeImage. Taken from the
+       poster rather than the clip: a second decode of the same footage buys a
+       colour nobody can resolve through a 64px blur. */
+    <>
+      {poster.day && (
+        <img
+          class="mvid__glow mvid__glow--day"
+          src={poster.day}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+        />
+      )}
+      {poster.night && (
+        <img
+          class="mvid__glow mvid__glow--night"
+          src={poster.night}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+        />
+      )}
+    </>
+  }
   <div class="mvid__frame">
     {
       anything ? (

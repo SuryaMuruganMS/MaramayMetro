@@ -148,6 +148,17 @@ const desc = description ?? tt('site.description');
       window.addEventListener('resize', measureChrome);
 
       function setService(next: string) {
+        /*
+           Arm the wipe.
+
+           Every picture holds both modes and CSS decides which is painted. On
+           first paint the correct one has to be simply THERE — animating into
+           it would flash the wrong picture on every load, which is the exact
+           fault the two-in-the-DOM arrangement exists to prevent. So the
+           transition is not in the stylesheet until the reader asks for a
+           change, and from then on the switch reads like a train passing.
+        */
+        root.setAttribute('data-svc-anim', '');
         root.setAttribute('data-service', next);
         try {
           localStorage.setItem('marmaray-service', next);

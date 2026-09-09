@@ -19,6 +19,13 @@
        of ending on a hard horizontal edge.
      - A full-bleed backdrop image blended into the ground colour, not pasted
        over it, so the photograph belongs to the palette.
+     - THE GLOW. A second copy of the picture, scaled 1.15 and run through
+       `blur(48px) saturate(1.4) brightness(1.5)`, sitting behind the frame at
+       zero opacity until it is wanted. Their gallery does it on hover. It is
+       the best thing on their site and it costs nothing: the picture lights
+       the page it is sitting on, in its own colours.
+     - Their easing vocabulary, which is expo-out — cubic-bezier(.19,1,.22,1)
+       for anything that settles, cubic-bezier(1,0,0,1) for a shutter.
 
    What was NOT worth taking: their look. This is a government engineering
    record in an İznik palette; their site is an acid-green social network. The
@@ -36,6 +43,16 @@
   /* The mount. A photographic print in a card window, not a rounded div. */
   --frame-r: 10px;
   --frame-r-sm: 6px;
+
+  /*
+     Expo out, from okaydev's stylesheet. Everything that settles into place
+     uses it: fast at the start, a long tail, nothing bounces. The site already
+     had --ease-out for interface; this is for media, which is heavier and
+     should read as heavier.
+  */
+  --ease-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  /* And a shutter, for the wipes. Straight in, straight out, no easing tail. */
+  --ease-shutter: cubic-bezier(1, 0, 0, 1);
 
   /* Two depths. See above. */
   --lift-deep:
@@ -213,6 +230,165 @@
   to {
     clip-path: inset(0 0 0 0 round var(--frame-r));
     opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------- the glow
+   The picture lights the page it is sitting on.
+
+   A second copy of the same image behind the frame, blown up slightly and
+   blurred past all recognition, so what reaches the page is not a picture but
+   the colour of one. Measured off okaydev's gallery, which does it on hover;
+   ours is always on and quiet, because our media is documentary rather than
+   promotional and a photograph that only glows when you point at it reads as
+   an advert.
+
+   `blur()` on a large element is the one genuinely expensive thing on this
+   page, so: it is off below the two-column breakpoint, off under
+   reduced-motion, and the layer is `aria-hidden` and `pointer-events: none` so
+   it is invisible to everything except the eye.
+*/
+.mimg__glow,
+.mvid__glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /*
+     NOT scaled.
+
+     okaydev's glow is `scale(1.15)`, and copying that scaled the page: a
+     transform's overflow counts toward a document's scrollable width, so
+     /insaat/ grew sideways by exactly the bleed at all four widths — a WCAG
+     1.4.10 failure produced by a decoration, caught by the layout gate on the
+     run after it went in.
+
+     A filter's overflow does not count. So the blur alone does the spreading,
+     which is where nearly all of the effect was coming from anyway; the scale
+     was buying a little extra reach at the cost of the page's width.
+  */
+  filter: blur(48px) saturate(1.4) brightness(1.25);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity 700ms var(--ease-expo);
+}
+/*
+   Which glow is lit follows the service, exactly as the picture does — but it
+   cannot reuse the picture's classes, because those resolve to `opacity: 1`
+   and would blow the glow out to a full-strength blurred photograph. Its own
+   pair of classes, its own three rules, same logic.
+*/
+.mimg__glow--night,
+.mvid__glow--night {
+  --glow-on: 0;
+}
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .media--glow .mimg__glow,
+  .media--glow .mvid__glow {
+    filter: blur(64px) saturate(1.4) brightness(1.25);
+  }
+  .media--glow .mimg__glow--day,
+  .media--glow .mvid__glow--day {
+    opacity: 0.34;
+  }
+  .media--glow .mimg__glow--night,
+  .media--glow .mvid__glow--night {
+    opacity: 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-service='day']) .media--glow .mimg__glow--day,
+    :root:not([data-service='day']) .media--glow .mvid__glow--day {
+      opacity: 0;
+    }
+    :root:not([data-service='day']) .media--glow .mimg__glow--night,
+    :root:not([data-service='day']) .media--glow .mvid__glow--night {
+      opacity: 0.4;
+    }
+  }
+  :root[data-service='night'] .media--glow .mimg__glow--day,
+  :root[data-service='night'] .media--glow .mvid__glow--day {
+    opacity: 0;
+  }
+  :root[data-service='night'] .media--glow .mimg__glow--night,
+  :root[data-service='night'] .media--glow .mvid__glow--night {
+    opacity: 0.4;
+  }
+  :root[data-service='day'] .media--glow .mimg__glow--day,
+  :root[data-service='day'] .media--glow .mvid__glow--day {
+    opacity: 0.34;
+  }
+  :root[data-service='day'] .media--glow .mimg__glow--night,
+  :root[data-service='day'] .media--glow .mvid__glow--night {
+    opacity: 0;
+  }
+
+  /* Pointing at a picture turns its light up. */
+  .media--glow .mimg:hover .mimg__glow--day,
+  .media--glow .mvid:hover .mvid__glow--day,
+  :root[data-service='day'] .media--glow .mimg:hover .mimg__glow--day {
+    opacity: 0.58;
+  }
+  :root[data-service='night'] .media--glow .mimg:hover .mimg__glow--night,
+  :root[data-service='night'] .media--glow .mvid:hover .mvid__glow--night {
+    opacity: 0.62;
+  }
+}
+/* The frame has to stop clipping for the glow to escape it, and the figure has
+   to establish a stacking context or `z-index: -1` puts the glow behind the
+   page rather than behind the picture. */
+.media--glow .mimg,
+.media--glow .mvid {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ---------------------------------------------------- day becomes night
+   The service switch is a wipe, not a crossfade.
+
+   Every picture on the page holds both modes in the DOM and CSS decides which
+   is painted. That used to be an instant swap. It is now a curtain: the night
+   frame is drawn across the day one from the leading edge, on every image at
+   once, in the direction the railway runs. Pressing Service reads like a train
+   passing rather than like a setting changing.
+
+   It only animates after the reader presses the switch. On first paint the
+   correct mode has to be simply THERE — animating into it would flash the
+   wrong picture on every load, which is the exact fault the two-in-the-DOM
+   arrangement exists to prevent.
+*/
+:root[data-svc-anim] .mimg__i--night,
+:root[data-svc-anim] .mvid__v--night,
+:root[data-svc-anim] .bd__i--night {
+  transition:
+    opacity 40ms linear,
+    clip-path 760ms var(--ease-shutter);
+}
+:root[data-svc-anim] .mimg__i--day,
+:root[data-svc-anim] .mvid__v--day,
+:root[data-svc-anim] .bd__i--day {
+  transition: opacity 40ms linear 720ms;
+}
+:root[data-svc-anim][data-service='day'] .mimg__i--night,
+:root[data-svc-anim][data-service='day'] .mvid__v--night,
+:root[data-svc-anim][data-service='day'] .bd__i--night {
+  clip-path: inset(0 0 0 100%);
+}
+:root[data-svc-anim][data-service='night'] .mimg__i--night,
+:root[data-svc-anim][data-service='night'] .mvid__v--night,
+:root[data-svc-anim][data-service='night'] .bd__i--night {
+  clip-path: inset(0 0 0 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-svc-anim] .mimg__i--night,
+  :root[data-svc-anim] .mvid__v--night,
+  :root[data-svc-anim] .bd__i--night,
+  :root[data-svc-anim] .mimg__i--day,
+  :root[data-svc-anim] .mvid__v--day,
+  :root[data-svc-anim] .bd__i--day {
+    transition: none;
+    clip-path: none;
   }
 }
 

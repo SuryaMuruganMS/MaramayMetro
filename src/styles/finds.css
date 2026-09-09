@@ -96,10 +96,88 @@
     );
 }
 
+/* --------------------------------------------------------- the trench face
+   A photograph of a cut section, behind the panels.
+
+   The drawn version above stays: it is the fallback, and it is what the reader
+   sees until the photograph is generated. Where the photograph exists it is
+   laid over the drawn one at reduced opacity rather than replacing it, so the
+   warm gradient still carries the colour and the picture only supplies the
+   texture. A photograph at full strength competes with the finds in front of
+   it, which are also photographs of earth. */
+.finds__wall {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.finds__wallimg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  /* Luminosity again: the picture gives relief, the gradient underneath gives
+     the colour, and the two stay one surface rather than two. */
+  mix-blend-mode: luminosity;
+  opacity: 0.3;
+}
+.finds__wallimg--night {
+  opacity: 0;
+}
+
+/*
+   A scrim over the wall.
+
+   The photograph came in at 0.42 and the panel copy stopped being readable:
+   caption text set at eleven pixels over a picture of broken stone is text
+   over noise. The wall is texture and the text needs ground, so the strength
+   came down and a flat wash went over the top. What is left is unmistakably
+   earth and quiet enough to set type on, which is the whole job.
+*/
+.finds__wall::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--ground) 46%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-service='day']) .finds__wallimg--day {
+    opacity: 0;
+  }
+  :root:not([data-service='day']) .finds__wallimg--night {
+    opacity: 0.34;
+  }
+}
+:root[data-service='night'] .finds__wallimg--day {
+  opacity: 0;
+}
+:root[data-service='night'] .finds__wallimg--night {
+  opacity: 0.34;
+}
+:root[data-service='day'] .finds__wallimg--day {
+  opacity: 0.3;
+}
+:root[data-service='day'] .finds__wallimg--night {
+  opacity: 0;
+}
+
+/* With a photograph in place the drawn bedding lines would read as a printing
+   fault over real strata, so they come off. */
+.finds__pin[data-wall] {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--gold) 8%, var(--ground)),
+    color-mix(in oklab, var(--gold) 20%, color-mix(in oklab, var(--ink) 12%, var(--ground)))
+  );
+}
+
 .finds__track {
   position: relative;
   height: 100%;
   width: 100%;
+  z-index: 1;
 }
 
 .find {
@@ -257,6 +335,10 @@
     height: auto;
     overflow: visible;
     background: none;
+  }
+  /* The wall is the rail's ground. Without the rail there is no ground. */
+  .finds__wall {
+    display: none;
   }
   .finds__track {
     display: flex;

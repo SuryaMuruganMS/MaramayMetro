@@ -11,6 +11,9 @@ import {
   findProgress,
 } from '../../data/finds.ts';
 import { modeAsset, filmAsset, posterAsset } from '../../lib/assets.ts';
+
+/** The photographed section behind the rail, if it has arrived. */
+const wall = modeAsset('/finds/wall');
 import { digCopy } from '../../data/strata.ts';
 import { translator } from '../../i18n/index.ts';
 import { LAYERS } from '../../data/strata.ts';
@@ -76,7 +79,30 @@ const panels = FINDS.map((f, i) => ({
   </div>
 
   <div class="finds__runway">
-    <div class="finds__pin">
+    <div class="finds__pin" data-wall={wall ? '1' : undefined}>
+      {
+        /* A photographed trench face, if there is one. It replaces a wall that
+           was drawn in CSS — bedded hairlines over a warm gradient — which was
+           a decent stand-in and never looked like earth. Two modes, resolved
+           the same way as everything else, and the drawn version stays as the
+           fallback so the section is never bare. */
+        wall && (
+          <div class="finds__wall" aria-hidden="true">
+            <img
+              class="finds__wallimg finds__wallimg--day"
+              src={`${wall}-day.webp`}
+              alt=""
+              loading="lazy"
+            />
+            <img
+              class="finds__wallimg finds__wallimg--night"
+              src={`${wall}-night.webp`}
+              alt=""
+              loading="lazy"
+            />
+          </div>
+        )
+      }
       <div class="finds__track">
         {
           panels.map(({ find, i, left, src, film, poster }) => (
@@ -86,7 +112,7 @@ const panels = FINDS.map((f, i) => ({
               style={`--left:${left}`}
               aria-labelledby={`find-${find.id}`}
             >
-              <div class="find__media">
+              <div class="find__media media--glow">
                 {find.media === 'video' ? (
                   <ModeVideo
                     film={film}

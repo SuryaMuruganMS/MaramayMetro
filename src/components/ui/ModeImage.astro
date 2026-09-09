@@ -39,6 +39,33 @@ const {
 ---
 
 <figure class:list={['mimg', klass]} style={`--ratio:${ratio}; --tint: var(--${tint})`}>
+  {
+    /* The glow sits OUTSIDE the frame, because the frame clips and a clipped
+       glow is just a blurry picture with a hard edge on it. Same picture,
+       blurred past recognition, so what reaches the page is the colour of the
+       photograph rather than the photograph. Painted only where `media--glow`
+       asks for it; media.css says why it is not free. */
+    src && (
+      <>
+        <img
+          class="mimg__glow mimg__glow--day"
+          src={`${src}-day.webp`}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          class="mimg__glow mimg__glow--night"
+          src={`${src}-night.webp`}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+        />
+      </>
+    )
+  }
   <div class="mimg__frame">
     {
       src ? (
