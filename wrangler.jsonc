@@ -8,9 +8,11 @@
   // and has no cold start.
   //
   // The name must match the Worker created in the dashboard, or a deploy
-  // creates a second one beside it.
+  // creates a second one beside it. It also decides the address:
+  // https://maramaymetro.suryamuruganms40.workers.dev — which is the link the
+  // Continuum portfolio points at, so the two have to agree.
   // ---------------------------------------------------------------------
-  "name": "marmaray-crossing",
+  "name": "maramaymetro",
   "compatibility_date": "2025-09-01",
 
   "assets": {
