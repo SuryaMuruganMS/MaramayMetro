@@ -44,6 +44,27 @@ export default defineConfig({
     build: {
       chunkSizeWarningLimit: 110,
       cssCodeSplit: true,
+
+      /*
+         esbuild, NOT the default Lightning CSS minifier.
+
+         Lightning composes `animation-name`, `animation-timing-function`,
+         `animation-fill-mode` AND `animation-timeline` into one `animation`
+         shorthand. `animation-timeline` is deliberately not part of that
+         shorthand — the shorthand RESETS it to `auto` — so every scroll-driven
+         animation on this site came out of the build dead.
+
+         The crossing survived it because the engine writes `--fallback-x` for
+         browsers with no scroll timelines, and a reset timeline looks exactly
+         like no support. The finds rail has no such fallback, so it shipped
+         frozen: the panels laid out correctly, hit-testable, and never moving.
+         Every screenshot of it looked plausible because a stuck rail and a
+         rail at scroll position zero are the same picture.
+
+         esbuild does not do that composition. The cost is a few hundred bytes
+         of CSS, which the budget gate has room for many times over.
+      */
+      cssMinify: 'esbuild',
     },
   },
 });
