@@ -1,5 +1,6 @@
 ---
 import NetworkMap from './NetworkMap.svelte';
+import { MAP_KEYS } from './keys.ts';
 import { translator } from '../../i18n/index.ts';
 import { NETWORK } from '../../data/alignment.ts';
 import { DRAWN_STATIONS, INTERCHANGES } from '../../data/network.ts';
@@ -19,64 +20,7 @@ const tt = translator(locale);
  * this one list. Listing them rather than shipping the dictionary keeps the
  * page carrying only what it can actually say.
  */
-const KEYS = [
-  'reg.label',
-  'reg.diagram',
-  'reg.geographic',
-  'reg.section',
-  'map.stepFree',
-  'map.alt',
-  'map.geoCaveat',
-  'map.sectionCaveat',
-  'map.click',
-  'map.tableToggle',
-  'map.tableCaption',
-  'map.station',
-  'map.lines',
-  'map.continent',
-  'map.access',
-  'map.yes',
-  'map.no',
-  'map.notAll',
-  'map.pickPrompt',
-  'map.source',
-  'map.zoom',
-  'map.zoomIn',
-  'map.zoomOut',
-  'map.reset',
-  'map.drag',
-  'map.centre',
-  'map.lineDetails',
-  'map.lineStations',
-  'map.lineDrawn',
-  'map.lineDrawnNote',
-  'map.lineRoute',
-  'map.lineMeets',
-  'map.linesHeading',
-  'kind.metro',
-  'kind.rail',
-  'kind.tram',
-  'kind.funicular',
-  'x.stations',
-  // the station card
-  'map.openStation',
-  'map.close',
-  'map.calls',
-  'map.depth',
-  'map.notOnLine',
-  'map.otherSide',
-  'map.hereAlready',
-  'map.coords',
-  'map.planFrom',
-  'map.faresFrom',
-  'plan.duration',
-  'plan.changes',
-  'plan.fare',
-  'x.km',
-  'x.min',
-  'j.europe',
-  'j.asia',
-];
+const KEYS = MAP_KEYS;
 const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
 
 /** Counts substituted into one sentence, so the sentence can be translated. */

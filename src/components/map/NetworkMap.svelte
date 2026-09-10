@@ -840,7 +840,7 @@
   }}
 />
 
-<div class="netmap">
+<div class="netmap" class:netmap--route={isRouteMap}>
   {#if !isRouteMap}
     <div class="netmap__bar">
       <div class="seg" role="group" aria-label={labels['reg.label']}>
@@ -866,10 +866,7 @@
     </p>
   {/if}
 
-  <div
-    class="netmap__stage"
-    class:is-open={!isRouteMap && (!!selectedNode || !!selectedLineObj)}
-  >
+  <div class="netmap__stage" class:is-open={!!selectedNode || !!selectedLineObj}>
     <div class="netmap__frame" style={`--ar:${(W / H).toFixed(4)}`}>
       <!--
         role="application", because it is one.
@@ -1213,10 +1210,7 @@
       {/if}
     </div>
 
-    {#if isRouteMap}
-      <!-- Nothing in the side column: this map is answering one question and
-           it already knows the answer. -->
-    {:else if selectedNode}
+    {#if selectedNode}
       <StationCard
         node={selectedNode}
         {locale}
@@ -1384,6 +1378,16 @@
   @media (min-width: 1000px) {
     .netmap__stage.is-open {
       grid-template-columns: minmax(0, 1fr) 22rem;
+    }
+    /*
+       Except in the planner, where the map sits in a column of its own and a
+       22rem card beside it would leave the map at about five hundred pixels —
+       narrower than the journey it is drawing. The card goes underneath
+       instead. The media query is on the viewport, which knows nothing about
+       the container, so this has to be said rather than derived.
+    */
+    .netmap--route .netmap__stage.is-open {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 

@@ -215,41 +215,64 @@ const anything = MODES.some((x) => x.video || x.still);
     inset: 0;
     background: color-mix(in oklab, var(--ground) var(--wash), transparent);
     backdrop-filter: saturate(1.1);
+    /*
+       The wash is not flat: it is heavy where the headline starts and lets go
+       across the frame, so the reader gets legible type AND a picture rather
+       than one at the expense of the other. How far it lets go is per-service,
+       because the two grounds are at opposite ends of the scale.
+    */
     mask-image: linear-gradient(
       100deg,
       #000 0%,
       #000 46%,
-      color-mix(in oklab, #000 55%, transparent) 78%,
-      color-mix(in oklab, #000 35%, transparent) 100%
+      color-mix(in oklab, #000 var(--wash-mid), transparent) 78%,
+      color-mix(in oklab, #000 var(--wash-end), transparent) 100%
     );
   }
 
   /*
      How much wash, and why it depends on the service.
 
-     The wash exists to keep panel copy readable over moving footage, and 62%
-     is right over a bright daylight shot. Over the night cut it was a disaster:
-     the ground colour in night service is nearly black, the tunnel footage is
-     nearly black, and 62% of one over the other left the band looking like a
-     plain dark rectangle. The film was playing perfectly and could not be seen.
+     The wash keeps panel copy readable over moving footage, and both services
+     have been through the same mistake from opposite ends.
 
-     Night gets 34%, which is still enough to hold the text — the copy is set in
-     near-white on a tunnel wall — and leaves the train visible, which is the
-     entire point of having filmed one.
+     NIGHT first: at 62% of a near-black ground over near-black tunnel footage
+     the band was a plain dark rectangle. The film was playing perfectly and
+     could not be seen. It came down to 34%.
+
+     DAY had exactly the same fault and it took longer to see because a pale
+     rectangle looks like a design decision in a way a black one does not: 62%
+     of a near-white ground over a bright underwater shot left a train you had
+     to look for. It comes down to 40%, and the tail of the gradient is held
+     much higher — 82% and 68% against night's 55% and 35% — so the wash gives
+     the picture back in the middle of the frame while staying dense under the
+     right-hand column, where the station copy is set in near-black and needs
+     something pale behind it.
+
+     Both numbers are readability floors found by looking, not by taste. If the
+     footage is ever recut, they are the first thing to check.
   */
   .film__stage {
-    --wash: 62%;
+    --wash: 40%;
+    --wash-mid: 82%;
+    --wash-end: 68%;
   }
   @media (prefers-color-scheme: dark) {
     :global(:root:not([data-service='day'])) .film__stage {
       --wash: 34%;
+      --wash-mid: 55%;
+      --wash-end: 35%;
     }
   }
   :global(:root[data-service='night']) .film__stage {
     --wash: 34%;
+    --wash-mid: 55%;
+    --wash-end: 35%;
   }
   :global(:root[data-service='day']) .film__stage {
-    --wash: 62%;
+    --wash: 40%;
+    --wash-mid: 82%;
+    --wash-end: 68%;
   }
 
   @media (prefers-reduced-motion: reduce) {

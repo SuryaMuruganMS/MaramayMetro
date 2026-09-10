@@ -1,5 +1,6 @@
 ---
 import Planner from './Planner.svelte';
+import { MAP_KEYS } from '../map/keys.ts';
 import PageHead from '../ui/PageHead.astro';
 import InfoNote from '../ui/InfoNote.astro';
 import { translator } from '../../i18n/index.ts';
@@ -39,7 +40,6 @@ const KEYS = [
   'plan.showMap',
   'plan.hideMap',
   'plan.fullMap',
-  'map.source',
   'fare.free',
   'fare.transfer',
   'fare.band',
@@ -48,6 +48,11 @@ const KEYS = [
   'x.km',
   ...PASSENGERS.map((p) => p.key),
   ...BANDS.map((b) => b.key),
+  /* The planner mounts the map page's map, so it has to hand over the map
+     page's strings. Importing the list rather than copying it is the whole
+     point: the first version of this shipped a station card with no name on
+     it, because the planner's own list did not know what a station card was. */
+  ...MAP_KEYS,
 ];
 const labels = Object.fromEntries(KEYS.map((k) => [k, tt(k)]));
 ---
