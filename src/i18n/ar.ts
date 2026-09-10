@@ -14,8 +14,8 @@ import type { Keys } from './en.ts';
  * direction.
  */
 export const ar: Record<Keys, string> = {
-  'site.name': 'Boğaziçi Hattı',
-  'site.full': 'Boğaziçi Hattı — خط البوسفور',
+  'site.name': 'IstanMetro',
+  'site.full': 'IstanMetro — عبور البوسفور',
   'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'المظهر',
   'theme.light': 'فاتح',
@@ -146,6 +146,12 @@ export const ar: Record<Keys, string> = {
   'dig.periodAxis': 'الحقبة',
   'dig.bce': '{n} ق.م',
   'dig.century': 'ق',
+  'dig.f.matrix': 'طبيعة التربة',
+  'dig.f.holds': 'ما تحويه',
+  'dig.f.method': 'كيف جرى الوصول إليها',
+  'dig.colTitle': 'موضع هذه الطبقة في المقطع',
+  'dig.colCap': 'المقطع كاملًا، {n} م. هذا النطاق مُبرَز.',
+  'dig.floor': 'قاع الحفر. ما تحته أرض لم تُمَس.',
   'dig.moreHulls': 'و{n} سفينة أخرى لم تُفهرس هنا واحدةً واحدة',
   'dig.why': 'لماذا تأخّرت السكة',
   'dig.whyBody':

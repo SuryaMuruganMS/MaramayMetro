@@ -92,12 +92,19 @@
   white-space: pre-line;
   max-width: 22ch;
   color: var(--ink-2);
-  /* Motion smear. Station names blur as you pass them; so does this. A real
-     directional blur needs an SVG filter that cannot read a custom property,
-     so two offset shadows do the work at a fraction of the cost. */
-  text-shadow:
-    calc(var(--vel, 0) * 5px) 0 0 color-mix(in oklab, currentColor 22%, transparent),
-    calc(var(--vel, 0) * -5px) 0 0 color-mix(in oklab, currentColor 22%, transparent);
+  /*
+     THE MOTION SMEAR IS GONE.
+
+     Two offset shadows scaled by the train's speed, so the copy blurred as you
+     travelled. It was a good idea about a bad moment: the only time a reader
+     sees these lines is while scrolling, so the effect was active for one
+     hundred per cent of the time anybody was trying to read them. A headline
+     that is illegible whenever it is on screen is not styled, it is broken.
+
+     The speed still shows where it costs nothing — the nameplate's variable
+     width axis narrows as the train runs, which is a letterform changing
+     rather than a word smearing.
+  */
 }
 .run__note {
   font-size: var(--t-micro);

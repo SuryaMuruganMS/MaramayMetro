@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { nodeById, lineById } from '../../data/network.ts';
+  import { LINES, nodeById, lineById } from '../../data/network.ts';
   import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
   import type { Route } from '../../lib/route.ts';
   import { num, type Locale } from '../../lib/locale.ts';
@@ -46,43 +46,40 @@
   );
 
   /**
-   * Frame the journey, not the city.
+   * The whole network, every time.
    *
-   * A route from Sirkeci to Üsküdar occupies three per cent of the network's
-   * bounding box; drawn at the full extent it is a dash. The viewBox is the
-   * route's own bounds plus a margin, floored so a very short hop does not
-   * come out magnified past the point where the coastline means anything.
+   * The first cut framed the route and nothing else, which drew it beautifully
+   * and answered the wrong question: a route in isolation tells you the shape
+   * of the journey, not where in the city it happens. Sirkeci to Üsküdar came
+   * out as a confident diagonal across an anonymous coastline.
+   *
+   * So the frame is always the whole network. The route is lit and everything
+   * else is dimmed behind it, which is how a passenger reads a map on a wall —
+   * find your line among all the others, not instead of them.
    */
-  const box = $derived.by(() => {
-    const pts = stops.map((id) => GEO[id]).filter((p): p is NonNullable<typeof p> => !!p);
-    if (!pts.length) return { x: 0, y: 0, w: 100, h: GEO_H };
-    const xs = pts.map((p) => p.x);
-    const ys = pts.map((p) => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    const pad = 6;
-    let w = Math.max(22, maxX - minX + pad * 2);
-    let h = Math.max(14, maxY - minY + pad * 2);
-    // Hold the frame's own proportions, or the coastline comes out stretched.
-    const AR = 100 / 52;
-    if (w / h < AR) w = h * AR;
-    else h = w / AR;
-    const x = Math.max(0, Math.min(100 - w, (minX + maxX) / 2 - w / 2));
-    const y = Math.max(0, Math.min(GEO_H - h, (minY + maxY) / 2 - h / 2));
-    return { x, y, w, h };
-  });
+  const box = { x: 0, y: 0, w: 100, h: GEO_H };
+
+  /** Every line, faint, so the route has a network to sit in. */
+  const ghostPaths = $derived(
+    LINES.map((l) => ({
+      id: l.id,
+      d: l.route
+        .map((id) => GEO[id])
+        .filter(Boolean)
+        .map((p, i) => `${i === 0 ? 'M' : 'L'}${p!.x},${p!.y}`)
+        .join(' '),
+    })),
+  );
 
   /** Ink held at a constant size on screen, as on the full map. */
-  const px = $derived(box.w / 100);
+  const px = box.w / 100;
   const dp = (v: number) =>
     num(v, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 </script>
 
 <figure class="rmap">
   <svg
-    viewBox={`${box.x.toFixed(2)} ${box.y.toFixed(2)} ${box.w.toFixed(2)} ${box.h.toFixed(2)}`}
+    viewBox={`0 0 100 ${GEO_H}`}
     role="img"
     aria-label={`${nodeById.get(route.from)?.name} → ${nodeById.get(route.to)?.name}`}
   >
@@ -92,6 +89,19 @@
     {#each LAKES as l (l.name)}<path d={l.d} class="rmap__sea" />{/each}
     {#each SHORE as d, i (i)}
       <path {d} class="rmap__shore" stroke-width={0.22 * px} />
+    {/each}
+
+    <!-- The rest of the network, behind. -->
+    {#each ghostPaths as g (g.id)}
+      <path
+        d={g.d}
+        fill="none"
+        stroke="var(--ink-4)"
+        stroke-width={0.7 * px}
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        opacity="0.42"
+      />
     {/each}
 
     <!-- The route: a wide dark casing under a coloured core, which is how a
@@ -157,12 +167,21 @@
     flex-direction: column;
     gap: var(--sp-tight);
   }
+  /*
+     Sized off the height, not the width.
+
+     `width: 100%` with `max-height` let the box stay 1280px wide while the
+     drawing inside it was clamped to 62vh, so the map sat in the middle of two
+     grey bands with nothing in them — a letterbox, which is exactly the empty
+     space this map was added to remove. Deriving the width from the height and
+     the aspect ratio makes the frame the same shape as the drawing.
+  */
   .rmap svg {
     display: block;
-    width: 100%;
+    width: min(100%, calc(62vh * 100 / 82));
     height: auto;
-    max-height: 46vh;
-    aspect-ratio: 100 / 52;
+    aspect-ratio: 100 / 82;
+    margin-inline: auto;
     border: 1px solid var(--rule-strong);
     border-radius: var(--frame-r);
     background: var(--surface);

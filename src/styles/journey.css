@@ -338,6 +338,11 @@
   align-items: stretch;
 }
 .carbar__seg {
+  /* It is a button now. Reset what a button brings with it, and say so. */
+  appearance: none;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
   flex: var(--w) 1 0;
   border-radius: 2px;
   background: color-mix(in oklab, var(--ink) 14%, transparent);

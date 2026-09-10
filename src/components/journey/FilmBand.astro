@@ -120,12 +120,35 @@ const anything = MODES.some((x) => x.video || x.still);
     overflow: hidden;
     background: var(--band-abyssal);
   }
+  /*
+    Wider than its stage, on purpose: the right edge is cropped off.
+
+    Both clips carry the generator's sparkle watermark burned into the frames,
+    centred at about 91% across and 84% down. There is no way to take it out of
+    the pixels here, so the frame is cropped instead: the element is 116% of the
+    stage and pinned to the left, which puts everything past 86% of the picture
+    outside the stage's `overflow: hidden`. The watermark lands at 91% × 116% =
+    106% of the stage and is never painted.
+
+    No transform is used to do it. A transform's overflow counts toward the
+    document's scrollable width — that is what the glow's `scale(1.15)` cost on
+    /insaat/ — where an absolutely positioned box inside a clipping parent
+    costs nothing. The visible price is a 16% zoom on a background film, which
+    is invisible, and the loss of the right-hand seventh of a shot that was
+    composed centre-left anyway.
+  */
   .film__v {
     position: absolute;
-    inset: 0;
-    width: 100%;
+    top: 0;
+    left: 0;
+    width: 116%;
+    /* base.css caps every img/svg/video at `max-width: 100%`, which silently
+       clamped the 116% straight back to the stage width and left the watermark
+       exactly where it was. */
+    max-width: none;
     height: 100%;
     object-fit: cover;
+    object-position: 42% 50%;
   }
 
   /* Day is default; night takes over by either route. Three rules, so an

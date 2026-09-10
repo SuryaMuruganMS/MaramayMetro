@@ -1,6 +1,7 @@
 <script lang="ts">
   import { LINES, NODES, nodeById, type Node } from '../../data/network.ts';
   import { WINDOW } from '../../data/geography.ts';
+  import { WORLD, ISTANBUL, WORLD_W } from '../../data/world.ts';
   import { haversine } from '../../lib/geo.ts';
   import LineCard from './LineCard.svelte';
   import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
@@ -300,20 +301,49 @@
    * metres on the ground at every zoom, so the scale bar below is a
    * measurement rather than a decoration.
    */
-  const MIN_Z = 1;
+  /*
+     THE ZOOM RANGE GOES TO THE PLANET.
+
+     `world.ts` projects Natural Earth's coastline with this map's own Web
+     Mercator, so the world is not a second map to swap in — it is the same map
+     from further away. Pulling all the way out is one continuous movement, and
+     a reader who has never heard of this railway can see where on Earth it is.
+
+     The floor is the zoom at which 360 degrees of longitude fits the frame.
+     Derived, not typed: change the window in geography.ts and this follows.
+  */
+  const MIN_Z = W / WORLD_W;
   const MAX_Z = 14;
+
   let zoom = $state(1);
   /** Centre of the view, in viewBox units. */
   let cx = $state(W / 2);
   let cy = $state(GEO_H / 2);
 
+  /** Below 0.28 the world reads; above it, the network. They cross-fade. */
+  const worldAlpha = $derived(Math.max(0, Math.min(1, (0.28 - zoom) / 0.24)));
+  const netAlpha = $derived(Math.max(0, Math.min(1, (zoom - 0.05) / 0.12)));
+
   const viewW = $derived(W / zoom);
   const viewH = $derived(H / zoom);
 
-  /** Kept inside the drawing, so the map cannot be flung into empty space. */
+  /**
+   * Kept inside the drawing.
+   *
+   * Which drawing depends on how far out you are: inside the İstanbul window
+   * while the network is what you are looking at, and inside the planet once
+   * the world layer has taken over. Clamping to the window at world zoom would
+   * pin the camera to a rectangle a thousandth of the frame wide.
+   */
   function clamp() {
     const hw = viewW / 2;
     const hh = viewH / 2;
+    if (viewW > W) {
+      // Wider than İstanbul: let the reader roam the planet, in longitude only.
+      cx = Math.min(ISTANBUL.x + WORLD_W / 2, Math.max(ISTANBUL.x - WORLD_W / 2, cx));
+      cy = Math.min(ISTANBUL.y + WORLD_W / 6, Math.max(ISTANBUL.y - WORLD_W / 6, cy));
+      return;
+    }
     cx = Math.min(W - hw, Math.max(hw, cx));
     cy = Math.min(H - hh, Math.max(hh, cy));
   }
@@ -367,19 +397,44 @@
   let dragged = $state(false);
   let last = { x: 0, y: 0 };
 
+  /**
+   * CAPTURE LATE.
+   *
+   * The first cut called `setPointerCapture` on pointerdown, which is the
+   * textbook way to keep a drag alive outside the element — and it broke every
+   * station and every line on the map. With the pointer captured by the <svg>,
+   * the release is delivered to the <svg> too, so the browser never sees a
+   * press and a release on the same <g> and never synthesises a click. The map
+   * panned perfectly and nothing on it could be opened.
+   *
+   * So capture is deferred until the pointer has actually moved. A press is a
+   * press until it becomes a drag, at which point the capture takes over and
+   * the drag survives leaving the frame.
+   */
+  let downId: number | null = null;
   function onPointerDown(e: PointerEvent) {
     if (e.button !== 0) return;
     dragging = true;
     dragged = false;
+    downId = e.pointerId;
     last = { x: e.clientX, y: e.clientY };
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
   }
   function onPointerMove(e: PointerEvent) {
     if (!dragging || !svgEl) return;
+    if (!dragged && Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y) > 4) {
+      dragged = true;
+      if (downId !== null) {
+        try {
+          (e.currentTarget as Element).setPointerCapture(downId);
+        } catch {
+          /* the pointer is already gone */
+        }
+      }
+    }
+    if (!dragged) return;
     const r = svgEl.getBoundingClientRect();
     const dx = ((e.clientX - last.x) / r.width) * viewW;
     const dy = ((e.clientY - last.y) / r.height) * viewH;
-    if (Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y) > 3) dragged = true;
     cx -= dx;
     cy -= dy;
     last = { x: e.clientX, y: e.clientY };
@@ -387,6 +442,9 @@
   }
   function onPointerUp(e: PointerEvent) {
     dragging = false;
+    downId = null;
+    // Let the click that follows through, then forget the drag.
+    setTimeout(() => (dragged = false), 0);
     try {
       (e.currentTarget as Element).releasePointerCapture(e.pointerId);
     } catch {
@@ -551,8 +609,43 @@
           closed against the window edge when the data was built and the sea
           needs no shape of its own.
         -->
-        {#if coastAlpha > 0}
-          <g class="geo" opacity={coastAlpha}>
+        <!--
+          THE PLANET, under everything.
+
+          Only painted once the reader has pulled back far enough for the
+          İstanbul window to be a speck, and it fades as they come back in, so
+          the two never compete. The marker is the whole point: it says where
+          this railway is, which is the one question a map of the network
+          cannot answer from inside itself.
+        -->
+        {#if worldAlpha > 0}
+          <g class="world" opacity={worldAlpha}>
+            <rect
+              x={ISTANBUL.x - WORLD_W}
+              y={ISTANBUL.y - WORLD_W}
+              width={WORLD_W * 2}
+              height={WORLD_W * 2}
+              class="geo__sea"
+            />
+            {#each WORLD as d, i (i)}<path {d} class="world__land" />{/each}
+            <circle
+              cx={ISTANBUL.x}
+              cy={ISTANBUL.y}
+              r={Math.max(viewW * 0.012, 6)}
+              class="world__pin"
+              stroke-width={viewW * 0.004}
+            />
+            <text
+              x={ISTANBUL.x + viewW * 0.02}
+              y={ISTANBUL.y + viewW * 0.006}
+              class="world__label"
+              font-size={viewW * 0.026}>İstanbul</text
+            >
+          </g>
+        {/if}
+
+        {#if coastAlpha > 0 && netAlpha > 0}
+          <g class="geo" opacity={coastAlpha * netAlpha}>
             <rect x="0" y="0" width={W} height={GEO_H} class="geo__sea" />
             {#each LAND as d, i (i)}<path {d} class="geo__land" />{/each}
             {#each ISLANDS as d, i (i)}<path {d} class="geo__land" />{/each}
@@ -575,95 +668,99 @@
           />
         {/if}
 
-        {#each LINES as line (line.id)}
-          <path
-            d={routePath(line.route)}
-            stroke={line.colour}
-            stroke-width={(line.kind === 'rail' ? 1.5 : 1.1) * ink * px}
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            fill="none"
-            opacity={litLinesAll && !litLinesAll.has(line.id) ? 0.22 : 1}
-            class="netmap__line"
-            role="button"
-            tabindex="0"
-            aria-label={line.name}
-            onclick={(e) => {
-              if (dragged) return;
-              e.stopPropagation();
-              pickLine(line.id);
-            }}
-            onkeydown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+        <g opacity={netAlpha}>
+          {#each LINES as line (line.id)}
+            <path
+              d={routePath(line.route)}
+              stroke={line.colour}
+              stroke-width={(line.kind === 'rail' ? 1.5 : 1.1) * ink * px}
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+              opacity={litLinesAll && !litLinesAll.has(line.id) ? 0.22 : 1}
+              class="netmap__line"
+              role="button"
+              tabindex="0"
+              aria-label={line.name}
+              onclick={(e) => {
+                if (dragged) return;
+                e.stopPropagation();
                 pickLine(line.id);
-              }
-            }}
-          />
-        {/each}
+              }}
+              onkeydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  pickLine(line.id);
+                }
+              }}
+            />
+          {/each}
+        </g>
 
         <!-- Stations. Interchanges are larger because they are where a decision
              gets made; everything else is a stop. -->
-        {#each shown as n (n.id)}
-          {@const p = pos(n)}
-          <g
-            class="stn"
-            class:is-focused={focused === n.id}
-            class:is-selected={selected === n.id}
-            class:is-dimmed={(!!selectedNode || !!selectedLine) &&
-              selected !== n.id &&
-              !(selectedLine && n.lines.includes(selectedLine))}
-            role="button"
-            tabindex="0"
-            aria-pressed={selected === n.id}
-            aria-label={n.name}
-            onmouseenter={() => (focused = n.id)}
-            onmouseleave={() => (focused = null)}
-            onfocus={() => (focused = n.id)}
-            onblur={() => (focused = null)}
-            onclick={() => {
-              // A pan that ends over a station is a pan, not a press.
-              if (dragged) return;
-              pick(n.id);
-            }}
-            onkeydown={(e) => {
-              // Enter and Space, because this group is standing in for a
-              // button and a button responds to both.
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+        <g opacity={netAlpha}>
+          {#each shown as n (n.id)}
+            {@const p = pos(n)}
+            <g
+              class="stn"
+              class:is-focused={focused === n.id}
+              class:is-selected={selected === n.id}
+              class:is-dimmed={(!!selectedNode || !!selectedLine) &&
+                selected !== n.id &&
+                !(selectedLine && n.lines.includes(selectedLine))}
+              role="button"
+              tabindex="0"
+              aria-pressed={selected === n.id}
+              aria-label={n.name}
+              onmouseenter={() => (focused = n.id)}
+              onmouseleave={() => (focused = null)}
+              onfocus={() => (focused = n.id)}
+              onblur={() => (focused = null)}
+              onclick={() => {
+                // A pan that ends over a station is a pan, not a press.
+                if (dragged) return;
                 pick(n.id);
-              }
-            }}
-          >
-            <!-- A one-unit dot is a two-pixel target. This is the thing the
+              }}
+              onkeydown={(e) => {
+                // Enter and Space, because this group is standing in for a
+                // button and a button responds to both.
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  pick(n.id);
+                }
+              }}
+            >
+              <!-- A one-unit dot is a two-pixel target. This is the thing the
                    pointer actually hits; it is invisible and generous, and it
                    doubles as the keyboard focus ring. -->
-            <circle cx={p.x} cy={p.y} r={2.6 * px} class="stn__hit" fill="transparent" />
-            {#if selected === n.id}
-              <circle cx={p.x} cy={p.y} r={3.2 * px} class="stn__halo" />
-            {/if}
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={(n.lines.length > 1 ? 1.5 : 1) * ink * px}
-              class="stn__dot"
-              fill="var(--surface)"
-              stroke="var(--ink)"
-              stroke-width={(n.lines.length > 1 ? 0.7 : 0.5) * ink * px}
-            />
-            {#if labelFor(n)}
-              {@const l = labelFor(n)!}
-              <text
-                x={l.x}
-                y={l.y}
-                text-anchor={l.anchor}
-                class="stn__label"
-                font-size={FS * px}
-                stroke-width={0.55 * px}>{n.name}</text
-              >
-            {/if}
-          </g>
-        {/each}
+              <circle cx={p.x} cy={p.y} r={2.6 * px} class="stn__hit" fill="transparent" />
+              {#if selected === n.id}
+                <circle cx={p.x} cy={p.y} r={3.2 * px} class="stn__halo" />
+              {/if}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={(n.lines.length > 1 ? 1.5 : 1) * ink * px}
+                class="stn__dot"
+                fill="var(--surface)"
+                stroke="var(--ink)"
+                stroke-width={(n.lines.length > 1 ? 0.7 : 0.5) * ink * px}
+              />
+              {#if labelFor(n)}
+                {@const l = labelFor(n)!}
+                <text
+                  x={l.x}
+                  y={l.y}
+                  text-anchor={l.anchor}
+                  class="stn__label"
+                  font-size={FS * px}
+                  stroke-width={0.55 * px}>{n.name}</text
+                >
+              {/if}
+            </g>
+          {/each}
+        </g>
       </svg>
 
       <!--
@@ -911,6 +1008,24 @@
      came out barely a shade off the frame and the map read as pale smudges. */
   .netmap__svg.is-dragging {
     cursor: grabbing;
+  }
+  .world__land {
+    fill: color-mix(in oklab, var(--gold) 10%, var(--ground-2));
+    stroke: color-mix(in oklab, var(--turquoise) 55%, transparent);
+    stroke-width: 0;
+  }
+  .world__pin {
+    fill: var(--accent);
+    stroke: var(--surface);
+  }
+  .world__label {
+    fill: var(--ink);
+    font-family: var(--f-display);
+    font-weight: 700;
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 0.5%;
+    stroke-linejoin: round;
   }
   .geo__sea {
     fill: color-mix(in oklab, var(--turquoise) 30%, var(--surface));

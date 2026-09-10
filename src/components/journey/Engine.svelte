@@ -15,7 +15,7 @@
     overburden,
   } from '../../lib/chainage.ts';
   import { CH_END, STOPS } from '../../data/alignment.ts';
-  import { partAt, FORMATION } from '../../lib/formation.ts';
+  import { partAt, FORMATION, PART_STARTS } from '../../lib/formation.ts';
 
   interface Props {
     labels: Record<string, string>;
@@ -69,6 +69,22 @@
   const OB_MAX = 62;
   const groundPct = $derived(Math.min(100, (ob.ground / OB_MAX) * 100));
   const waterPct = $derived(Math.min(100 - groundPct, (ob.water / OB_MAX) * 100));
+
+  /**
+   * Travel to the middle of one part of the train.
+   *
+   * Top level rather than inside `onMount`, because the markup calls it and
+   * the markup cannot see into a lifecycle callback. It only announces the
+   * chainage — the listener set up in `onMount` owns every piece of scroll
+   * arithmetic, here as everywhere else.
+   */
+  function goToPart(i: number) {
+    const start = PART_STARTS[i] ?? 0;
+    const end = i + 1 < PART_STARTS.length ? PART_STARTS[i + 1]! : 1;
+    window.dispatchEvent(
+      new CustomEvent('crossing:goto', { detail: { ch: ((start + end) / 2) * CH_END } }),
+    );
+  }
 
   onMount(() => {
     const root = document.documentElement;
@@ -366,20 +382,38 @@
     needs and would announce on every frame. It is atmosphere for people
     watching the film, and the panel headings carry the actual content.
   -->
-  <aside class="carbar" aria-hidden="true">
-    <span class="carbar__k">{labels.car}</span>
-    <span class="carbar__v">{labels[where.part.key] ?? where.part.key}</span>
-    <span class="carbar__form">
+  <!--
+    The formation bar is a control.
+
+    It was a readout: it told you which part of the train you were standing in
+    and left it there. But it is a scale drawing of a five-car set laid across
+    the whole length of the line, which means every segment on it corresponds
+    to a position — so pressing one is a perfectly well-defined request, and
+    not offering it was leaving an obvious affordance on the floor.
+
+    Each segment travels to the middle of its own part rather than its leading
+    edge, so pressing "the pantograph" puts you under the pantograph rather
+    than at the moment it comes into view. Smooth, because the point of
+    pressing it is to watch the train get there.
+  -->
+  <aside class="carbar">
+    <span class="carbar__k" aria-hidden="true">{labels.car}</span>
+    <span class="carbar__v" aria-hidden="true">{labels[where.part.key] ?? where.part.key}</span>
+    <span class="carbar__form" role="group" aria-label={labels.car}>
       {#each FORMATION as p, i (i)}
-        <span
+        <button
+          type="button"
           class="carbar__seg"
           class:is-here={i === where.index}
           class:is-cab={p.id === 'cab'}
           style={`--w:${p.weight}`}
-        ></span>
+          aria-label={labels[p.key] ?? p.key}
+          aria-current={i === where.index ? 'true' : undefined}
+          onclick={() => goToPart(i)}
+        ></button>
       {/each}
     </span>
-    <span class="carbar__car mono">{where.part.car} / 5</span>
+    <span class="carbar__car mono" aria-hidden="true">{where.part.car} / 5</span>
   </aside>
 {/if}
 

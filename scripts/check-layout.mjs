@@ -18,10 +18,20 @@ import { chromium } from 'playwright';
  * boxes can intersect legitimately when one is the other's ancestor, or when a
  * decorative layer sits behind. Only a real occlusion counts.
  *
- * Usage: node scripts/check-layout.mjs [baseUrl]
+ * IT MUST AUDIT THE BUILT SITE, NOT THE DEV SERVER
+ * The default used to be a dev server, and that is how a whole class of fault
+ * got past this gate: `astro dev` does not minify, so it never reproduced the
+ * Lightning CSS bug that folded `animation-timeline` into the `animation`
+ * shorthand and killed every scroll-driven animation in the build. Dev also
+ * injects furniture of its own that this gate then measures as a layout fault.
+ * The thing that ships is `dist`, so that is what gets audited; a dev server is
+ * refused below rather than silently accepted.
+ *
+ * Usage: npm run build && npx astro preview --port 4399
+ *        node scripts/check-layout.mjs [baseUrl]
  */
 
-const BASE = process.argv[2] ?? 'http://localhost:4330';
+const BASE = process.argv[2] ?? 'http://localhost:4399';
 
 const ROUTES = [
   '/',
@@ -263,6 +273,20 @@ const audit = async (page) =>
   });
 
 const browser = await chromium.launch();
+
+/** Refuse a dev server outright. See the note at the top of this file. */
+{
+  const res = await fetch(BASE + '/');
+  const html = await res.text();
+  if (html.includes('@vite/client') || html.includes('astro-dev-toolbar')) {
+    console.error('');
+    console.error('  ' + BASE + ' is a dev server. This gate audits the built site.');
+    console.error('  Run: npm run build && npx astro preview --port 4399');
+    console.error('');
+    process.exit(1);
+  }
+}
+
 let audits = 0;
 const found = [];
 

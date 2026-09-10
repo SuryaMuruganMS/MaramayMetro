@@ -2,7 +2,6 @@
 import Track from './Track.astro';
 import SectionRail from './SectionRail.astro';
 import Engine from './Engine.svelte';
-import Girih from '../ui/Girih.astro';
 import HeroBackdrop from './HeroBackdrop.astro';
 import Figure from '../ui/Figure.astro';
 import { journeyCopy } from '../../data/journey-copy.ts';
@@ -46,7 +45,15 @@ const labels = {
 ---
 
 <section class="open">
-  <Girih size={150} />
+  <!--
+    No girih here any more.
+
+    The ten-fold strapwork is the city's own ornament and it belongs on this
+    site, but not behind a photograph: over the backdrop it read as a watermark
+    laid on the Bosphorus, and at the top of the page it was the first thing a
+    reader met. It stays where it does real work — the placeholder tiles that
+    stand in for a picture that has not arrived.
+  -->
   <HeroBackdrop />
   <div class="open__inner shell">
     <div class="open__cols">

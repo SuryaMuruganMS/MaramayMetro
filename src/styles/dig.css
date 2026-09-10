@@ -261,3 +261,156 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------- the rest of the record
+   Each band is as tall as the layer is thick, which is the whole point of the
+   page and also the reason the thick ones were mostly empty. This is what goes
+   in that space: the three notes a section drawing always carries, and a
+   drawing of the section itself with the current band lit.
+
+   Not decoration. A reader four layers down can see where they are without
+   scrolling back, and the space below the paragraph reads as record rather
+   than as ground the page forgot about. */
+.stratum__fill {
+  display: grid;
+  /*
+     Left-clustered, not spread.
+
+     `1fr auto` put the drawing hard against the far margin with four hundred
+     empty pixels between it and a 46ch paragraph — which read as exactly the
+     hole this block exists to close. The notes and the section are one object;
+     they sit next to each other.
+  */
+  grid-template-columns: minmax(0, 46ch) auto;
+  justify-content: start;
+  gap: var(--sp-loose);
+  align-items: start;
+  margin-top: var(--sp-base);
+  padding-top: var(--sp-base);
+  border-top: 1px solid var(--rule);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-snug);
+  margin: 0;
+}
+.field > div {
+  display: grid;
+  gap: 3px;
+}
+.field dd {
+  margin: 0;
+  font-size: var(--t-small);
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+/* The section, small. Drawn to the same 22 m as the page itself. */
+.colsec {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+.colsec svg {
+  display: block;
+  width: 178px;
+  height: auto;
+  overflow: visible;
+}
+.colsec__band {
+  /* The same tints as the bands themselves, so the drawing and the page agree. */
+  opacity: 0.55;
+}
+.colsec__band[data-tone='fill'] {
+  fill: color-mix(in oklab, var(--ink) 16%, var(--surface));
+}
+.colsec__band[data-tone='ottoman'] {
+  fill: color-mix(in oklab, var(--gold) 40%, var(--surface));
+}
+.colsec__band[data-tone='byzantine'] {
+  fill: color-mix(in oklab, var(--bole) 46%, var(--surface));
+}
+.colsec__band[data-tone='roman'] {
+  fill: color-mix(in oklab, var(--turquoise) 42%, var(--surface));
+}
+.colsec__band[data-tone='neolithic'] {
+  fill: color-mix(in oklab, var(--cobalt) 50%, var(--surface));
+}
+.colsec__band[data-on] {
+  opacity: 1;
+}
+/* The lit band gets an outline, not a brighter fill — the fill is already the
+   layer's own colour and changing it would be a second thing to decode. */
+.colsec__on {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+}
+.colsec__rule {
+  stroke: var(--rule-strong);
+  stroke-width: 0.8;
+}
+.colsec__tick {
+  fill: var(--ink-4);
+  font-family: var(--f-mono);
+  font-size: 6.5px;
+  text-anchor: end;
+}
+.colsec__here {
+  fill: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 7px;
+  font-weight: 500;
+}
+.colsec__cap {
+  margin: 0;
+  max-width: 22ch;
+  font-size: var(--t-micro);
+  line-height: 1.4;
+  color: var(--ink-4);
+}
+
+/* Below the two-column width the drawing goes above the notes, because a
+   178px column beside a 30ch paragraph is neither. */
+@media (max-width: 760px) {
+  .stratum__fill {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-base);
+  }
+  .colsec {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-base);
+  }
+  .colsec svg {
+    width: 116px;
+  }
+  .colsec figcaption {
+    display: none;
+  }
+}
+
+/* The base of the excavation, drawn where it actually is: the bottom edge of
+   the last band. A hatched rule, because that is how "undug" is drawn on a
+   section, and a line of text saying what is under it. Nothing. */
+.strata__floor {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 10px calc(var(--margin) + var(--digax-w)) var(--sp-base) var(--margin);
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  color: var(--ink-4);
+  border-top: 2px solid var(--rule-strong);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--ink) 7%, transparent) 0 2px,
+    transparent 2px 9px
+  );
+}

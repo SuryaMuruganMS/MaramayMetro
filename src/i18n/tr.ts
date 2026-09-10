@@ -2,8 +2,8 @@ import type { Keys } from './en.ts';
 
 /** Türkçe. The city's own language, and the one every place name stays in. */
 export const tr: Record<Keys, string> = {
-  'site.name': 'Boğaziçi Hattı',
-  'site.full': 'Boğaziçi Hattı — Boğaz geçişi',
+  'site.name': 'IstanMetro',
+  'site.full': 'IstanMetro — Boğaz geçişi',
   'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'Tema',
   'theme.light': 'Açık',
@@ -136,6 +136,12 @@ export const tr: Record<Keys, string> = {
   'dig.periodAxis': 'DÖNEM',
   'dig.bce': 'MÖ {n}',
   'dig.century': 'yy',
+  'dig.f.matrix': 'Zemin',
+  'dig.f.holds': 'Ne barındırıyor',
+  'dig.f.method': 'Nasıl kazıldı',
+  'dig.colTitle': 'Bu tabaka kesitin neresinde',
+  'dig.colCap': 'Kesitin tamamı, {n} m. Bu bant vurgulu.',
+  'dig.floor': 'Kazının tabanı. Bunun altı el değmemiş zemin.',
   'dig.moreHulls': 've adı ayrıca kayda geçmemiş {n} tekne daha',
   'dig.why': 'Demiryolu neden gecikti',
   'dig.whyBody':
@@ -191,7 +197,8 @@ export const tr: Record<Keys, string> = {
   'map.zoomIn': 'Yakınlaştır',
   'map.zoomOut': 'Uzaklaştır',
   'map.reset': 'Tüm ağı sığdır',
-  'map.drag': 'Kaydırmak için sürükleyin · yakınlaştırmak için tekerlek · hatta ya da istasyona basın',
+  'map.drag':
+    'Kaydırmak için sürükleyin · yakınlaştırmak için tekerlek · hatta ya da istasyona basın',
   'map.centre': 'Bu istasyonu ortala',
   'map.lineDetails': 'Hat',
   'map.lineStations': 'İstasyon',

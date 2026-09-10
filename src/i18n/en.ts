@@ -11,8 +11,8 @@
  */
 export const en = {
   // ------------------------------------------------------------------ identity
-  'site.name': 'Boğaziçi Hattı',
-  'site.full': 'Boğaziçi Hattı — the Bosphorus Line',
+  'site.name': 'IstanMetro',
+  'site.full': 'IstanMetro — the Bosphorus crossing',
   'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'Theme',
   'theme.light': 'Light',
@@ -151,6 +151,12 @@ export const en = {
   'dig.periodAxis': 'PERIOD',
   'dig.bce': '{n} BCE',
   'dig.century': 'c.',
+  'dig.f.matrix': 'The ground',
+  'dig.f.holds': 'What it holds',
+  'dig.f.method': 'How it was reached',
+  'dig.colTitle': 'Where this layer sits',
+  'dig.colCap': 'The whole section, {n} m. This band lit.',
+  'dig.floor': 'Floor of the excavation. Below this, undisturbed ground.',
   'dig.moreHulls': 'and {n} more hulls, not individually catalogued here',
   'dig.why': 'Why the railway was late',
   'dig.whyBody':

@@ -43,13 +43,14 @@
   /**
    * The map is opened, not shown.
    *
-   * Most people using a planner want the number of minutes and the price, and
-   * they want them without scrolling past a picture. The reader who wants to
-   * see where the line actually goes asks for it, and then it stays open while
-   * they change stations — so comparing two routes on the map costs one press,
-   * not one per route.
+   * It opens shut once, on the argument that most people want the minutes and
+   * the price without scrolling past a picture. That was wrong: a route is a
+   * list of station names, and a list of station names is a route to somebody
+   * who already knows the city and a column of words to everybody else. The
+   * map is the answer to "where does that go", so it is on, and the button is
+   * there for the reader who wants the numbers alone.
    */
-  let showMap = $state(false);
+  let showMap = $state(true);
 
   const result = $derived(findRoute(from, to));
   const fare = $derived(result ? fareFor(result, passenger) : null);

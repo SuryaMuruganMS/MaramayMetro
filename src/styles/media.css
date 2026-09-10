@@ -208,13 +208,22 @@
     }
   }
 }
+/*
+   No `round` on the wipe, and that is a fix rather than an omission.
+
+   It used to round the clip to `--frame-r`, which sounds right and is not: the
+   clip applies to the whole FIGURE, and a figure is the frame AND its caption.
+   At 26px on the travelling page the bottom-left corner of that rounding cut
+   the first letter off every caption — "aking a journey". The frame clips its
+   own corners with its own `overflow: hidden`, so the figure never needed to.
+*/
 @keyframes reveal-wipe {
   from {
-    clip-path: inset(0 100% 0 0 round var(--frame-r));
+    clip-path: inset(0 100% 0 0);
     opacity: 0.35;
   }
   to {
-    clip-path: inset(0 0 0 0 round var(--frame-r));
+    clip-path: inset(0 0 0 0);
     opacity: 1;
   }
 }
@@ -224,11 +233,11 @@
 }
 @keyframes reveal-wipe-rtl {
   from {
-    clip-path: inset(0 0 0 100% round var(--frame-r));
+    clip-path: inset(0 0 0 100%);
     opacity: 0.35;
   }
   to {
-    clip-path: inset(0 0 0 0 round var(--frame-r));
+    clip-path: inset(0 0 0 0);
     opacity: 1;
   }
 }
@@ -251,9 +260,19 @@
 .mimg__glow,
 .mvid__glow {
   position: absolute;
-  inset: 0;
+  /*
+     The frame's box, not the figure's.
+
+     `inset: 0` with `height: 100%` sized this to the whole figure — frame plus
+     caption — so the blurred copy spread a warm slab out behind the caption
+     text and the words read as sitting on the picture. The frame is full width
+     at `aspect-ratio: var(--ratio)`, so the glow takes the same two and lands
+     exactly on it.
+  */
+  inset: 0 0 auto 0;
   width: 100%;
-  height: 100%;
+  aspect-ratio: var(--ratio);
+  height: auto;
   object-fit: cover;
   /*
      NOT scaled.
@@ -269,6 +288,14 @@
      was buying a little extra reach at the cost of the page's width.
   */
   filter: blur(48px) saturate(1.4) brightness(1.25);
+  /*
+     And faded out at its own foot, so the blur has nothing left to spill
+     downward. The removed part is behind the bottom of the picture, which the
+     frame covers anyway; what it buys is a caption sitting on the page's
+     ground instead of on the last of the photograph's light.
+  */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 76%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0 76%, transparent 100%);
   opacity: 0;
   pointer-events: none;
   z-index: -1;
@@ -401,12 +428,54 @@
    construction record, the map — keeps the tighter print radius, because a
    record that rounds its corners is a record trying to be liked.
 */
-.media--round .mimg__frame,
-.media--round .mvid__frame {
-  border-radius: 22px;
+/*
+   Written element-first, and that is load-bearing.
+
+   Astro scopes a component's own rules to `[data-astro-cid-…]`, which makes
+   `.mimg__frame` inside ModeImage a (0,2,0) selector — the same weight as
+   `.media--round .mimg__frame` here. Ties go to source order, and component
+   styles are injected after this sheet, so the class did nothing at all: the
+   travelling page's photographs kept the 6px print radius while the CSS that
+   was supposed to round them sat in the file looking correct. Naming the
+   element takes it to (0,3,1) and it wins.
+*/
+figure.mimg.media--round .mimg__frame,
+figure.mvid.media--round .mvid__frame {
+  /*
+     `border-radius` alone was not enough. The frame's mount is drawn with
+     inset box-shadows, which follow the radius — but the picture inside is a
+     plain <img> filling the box, and an image is not clipped by its parent's
+     radius unless the parent actually clips. The frame does set
+     `overflow: hidden`, so the corner WAS round; at 22px against a 700px
+     picture, on a dark ground, nobody could see it. It needs to be a corner,
+     not a hint.
+  */
+  border-radius: 26px;
+  /*
+     And a rim you can actually see. The site-wide mount is a hairline of
+     `--rule-strong` inside a 7px surface border — a print in a passe-partout,
+     which is right for a record and invisible on a dark page at arm's length.
+     Here the innermost line takes a trace of the accent and the frame gets a
+     lift under it, so the picture reads as an object sitting on the page.
+  */
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in oklab, var(--accent) 38%, var(--rule-strong)),
+    inset 0 0 0 7px var(--surface),
+    inset 0 0 0 8px color-mix(in oklab, var(--ink) 20%, transparent),
+    var(--lift-tile);
+}
+figure.mimg.media--round,
+figure.mvid.media--round {
+  /*
+     The caption belongs to the picture, and 8px under a 26px corner reads as
+     type touching the curve. Same specificity problem as the radius above:
+     the component sets this gap on `.mimg` and would otherwise win the tie.
+  */
+  gap: var(--sp-base);
+  margin-bottom: var(--sp-snug);
 }
 .media--round.reveal-wipe {
-  --frame-r: 22px;
+  --frame-r: 26px;
 }
 
 /* --------------------------------------------------------------- dissolve

@@ -32,7 +32,11 @@ const BUDGETS = {
      What the ceiling protects against is a single clip large enough to stall
      the connection once it does start.
   */
-  'video:each': 4000,
+  /* Raised from 4000 when the day cut of the film band arrived at 4.8 MB.
+     It is the largest single thing on the site and the one thing nobody
+     downloads by arriving — preload="none", and it only starts once it is on
+     screen, in the current theme, and the train is moving. */
+  'video:each': 6000,
 };
 
 const walk = (dir) => {

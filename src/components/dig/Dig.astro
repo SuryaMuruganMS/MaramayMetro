@@ -109,6 +109,88 @@ const fmtYear = (y: number) =>
                 </h2>
                 <p class="stratum__text">{c.body}</p>
 
+                {/*
+                  The rest of the record, and the reason the band is not empty.
+
+                  Every layer is sized to its real excavated depth, so the thick
+                  ones ran a screen deep behind four lines of text. The space
+                  now holds the three notes a section drawing always carries —
+                  matrix, contents, method — beside a drawing of the section
+                  itself with this band lit, so a reader who has scrolled past
+                  three layers can see where they are without scrolling back.
+                */}
+                <div class="stratum__fill">
+                  <dl class="field">
+                    <div>
+                      <dt class="label">{tt('dig.f.matrix')}</dt>
+                      <dd>{c.matrix}</dd>
+                    </div>
+                    <div>
+                      <dt class="label">{tt('dig.f.holds')}</dt>
+                      <dd>{c.holds}</dd>
+                    </div>
+                    <div>
+                      <dt class="label">{tt('dig.f.method')}</dt>
+                      <dd>{c.method}</dd>
+                    </div>
+                  </dl>
+
+                  <figure class="colsec">
+                    <figcaption class="label">{tt('dig.colTitle')}</figcaption>
+                    <svg
+                      viewBox={`0 0 84 ${DIG_DEPTH * 10 + 4}`}
+                      role="img"
+                      aria-label={`${c.name}: ${l.depthM[0]}–${l.depthM[1]} m`}
+                    >
+                      {/* The scale, on the left, the way a section drawing has it. */}
+                      {[0, 5, 10, 15, 20].map((d) => (
+                        <g>
+                          <line
+                            class="colsec__rule"
+                            x1="17.5"
+                            x2="20"
+                            y1={d * 10 + 2}
+                            y2={d * 10 + 2}
+                          />
+                          <text class="colsec__tick" x="15" y={d * 10 + 2 + 2.4}>
+                            {num(d, locale)}
+                          </text>
+                        </g>
+                      ))}
+
+                      {/* Every band, in depth order. This one lit, the rest quiet. */}
+                      {LAYERS.map((o) => (
+                        <rect
+                          class="colsec__band"
+                          data-tone={o.tone}
+                          data-on={o.id === l.id ? '1' : null}
+                          x="20"
+                          y={o.depthM[0] * 10 + 2}
+                          width="30"
+                          height={(o.depthM[1] - o.depthM[0]) * 10}
+                        />
+                      ))}
+                      <rect
+                        class="colsec__on"
+                        x="20"
+                        y={l.depthM[0] * 10 + 2}
+                        width="30"
+                        height={(l.depthM[1] - l.depthM[0]) * 10}
+                      />
+                      <text
+                        class="colsec__here"
+                        x="54"
+                        y={((l.depthM[0] + l.depthM[1]) / 2) * 10 + 2 + 2.6}
+                      >
+                        {l.depthM[0]}–{l.depthM[1]} m
+                      </text>
+                    </svg>
+                    <p class="colsec__cap mono">
+                      {tt('dig.colCap').replace('{n}', num(DIG_DEPTH, locale))}
+                    </p>
+                  </figure>
+                </div>
+
                 {l.id === 'byzantine' && (
                   <ul class="hulls">
                     {HULLS.map((hl) => {
@@ -133,6 +215,17 @@ const fmtYear = (y: number) =>
                   </ul>
                 )}
               </div>
+
+              {/*
+                 The bottom of the trench.
+
+                 The deepest band is also the tallest, and it ended in ground
+                 with nothing under it — which is true of the excavation and
+                 read as an unfinished page. Saying so closes both.
+              */}
+              {l.id === LAYERS[LAYERS.length - 1].id && (
+                <p class="strata__floor mono">{tt('dig.floor')}</p>
+              )}
             </li>
           );
         })

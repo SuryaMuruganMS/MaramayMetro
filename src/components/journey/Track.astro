@@ -5,9 +5,8 @@ import { journeyCopy } from '../../data/journey-copy.ts';
 import { translator } from '../../i18n/index.ts';
 import { href, lower, upper, type Locale } from '../../lib/locale.ts';
 import Nameplate from './Nameplate.astro';
-import Girih from '../ui/Girih.astro';
 import FilmBand from './FilmBand.astro';
-import { filmAsset, posterAsset } from '../../lib/assets.ts';
+import { filmAsset } from '../../lib/assets.ts';
 import ServiceBoard from '../widgets/ServiceBoard.svelte';
 
 interface Props {
@@ -44,7 +43,16 @@ const snaps = PANEL_ANCHORS;
 
   <div class="journey__pin">
     <!-- The film runs the length of the crossing, behind everything. -->
-    <FilmBand film={filmAsset('/film/crossing')} poster={posterAsset('/img/film-poster')} />
+    <!--
+      No poster.
+
+      A poster is the frame a video shows before it plays, and with the band
+      gated on motion that meant a still photograph of a tunnel sitting behind
+      the opening panels until the reader scrolled — which read as the section's
+      picture rather than as a paused film. The band is now the ground colour
+      until the train moves and film from the first frame after that.
+    -->
+    <FilmBand film={filmAsset('/film/crossing')} />
 
     <div class="journey__track" id="track">
       {
@@ -136,7 +144,6 @@ const snaps = PANEL_ANCHORS;
                 aria-labelledby="h-arrival"
                 data-panel={p.id}
               >
-                <Girih />
                 <div class="arrival__body">
                   <h2 id="h-arrival">{copy.arrival.head}</h2>
                   <p class="lede">{copy.arrival.body}</p>

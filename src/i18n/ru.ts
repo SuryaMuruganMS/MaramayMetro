@@ -8,8 +8,8 @@ import type { Keys } from './en.ts';
  * тем, что написано на платформе, а на платформе написано Üsküdar.
  */
 export const ru: Record<Keys, string> = {
-  'site.name': 'Boğaziçi Hattı',
-  'site.full': 'Boğaziçi Hattı — линия через Босфор',
+  'site.name': 'IstanMetro',
+  'site.full': 'IstanMetro — переход через Босфор',
   'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'Тема',
   'theme.light': 'Светлая',
@@ -142,6 +142,12 @@ export const ru: Record<Keys, string> = {
   'dig.periodAxis': 'ПЕРИОД',
   'dig.bce': '{n} до н. э.',
   'dig.century': 'в.',
+  'dig.f.matrix': 'Грунт',
+  'dig.f.holds': 'Что в нём',
+  'dig.f.method': 'Как его проходили',
+  'dig.colTitle': 'Где лежит этот слой',
+  'dig.colCap': 'Весь разрез, {n} м. Этот пласт подсвечен.',
+  'dig.floor': 'Дно раскопа. Ниже — нетронутый грунт.',
   'dig.moreHulls': 'и ещё {n} корпусов, здесь по отдельности не расписанных',
   'dig.why': 'Почему железная дорога опоздала',
   'dig.whyBody':

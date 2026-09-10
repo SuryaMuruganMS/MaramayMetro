@@ -20,14 +20,40 @@ import type { Locale } from '../lib/locale.ts';
  * otherwise and neither should a concept of one.
  */
 
+/**
+ * The three lines of a field record.
+ *
+ * A section drawing is never just a coloured band with a date on it. Every
+ * layer on a real one carries the same three notes, in the same order, because
+ * they are the three things an excavator has to write down before they cut into
+ * it: what the ground is made of, what it holds, and how it was reached.
+ *
+ * They exist here for a second reason as well. The bands are sized to real
+ * excavated depth, so the thick ones ran a screen deep with four lines of text
+ * in them and the rest was empty ground. Filling that with decoration would
+ * have been the easy answer; filling it with the rest of the record is the
+ * honest one.
+ */
+export interface LayerCopy {
+  name: string;
+  period: string;
+  body: string;
+  /** What the ground physically is at this level. */
+  matrix: string;
+  /** What was recovered from it. */
+  holds: string;
+  /** How the excavation got through it. */
+  method: string;
+}
+
 export interface Layer {
   id: string;
   /** Metres below present ground level. Indicative. */
   depthM: [number, number];
   /** Calendar range, for the axis. Negative is BCE. */
   years: [number, number];
-  tr: { name: string; period: string; body: string };
-  en: { name: string; period: string; body: string };
+  tr: LayerCopy;
+  en: LayerCopy;
   /** Which depth tint this layer paints with. */
   tone: 'fill' | 'ottoman' | 'byzantine' | 'roman' | 'neolithic';
 }
@@ -42,11 +68,20 @@ export const LAYERS: Layer[] = [
       name: 'Bugün',
       period: '1923 – 2026',
       body: 'Asfalt, altyapı ve dolgu. Kazının başladığı yer; istasyonun bugün bulunduğu kot.',
+      matrix: 'Asfalt, mıcır ve moloz dolgu. Çalışan bir şehrin defalarca altüst ettiği zemin.',
+      holds:
+        'Yirminci yüzyıl altyapısı: su, gaz ve kablo hatları. Bu banttan arkeolojik bir beklenti yok.',
+      method: 'Makineyle kazı, arkeolojik gözetim altında.',
     },
     en: {
       name: 'Today',
       period: '1923 – 2026',
       body: 'Asphalt, services and made ground. Where the excavation began, and the level the station sits at now.',
+      matrix:
+        'Asphalt, ballast and rubble fill — the ground of a working city, turned over and put back many times.',
+      holds:
+        'Twentieth-century services: water, gas and cable runs. Nothing archaeological is expected at this level.',
+      method: 'Machine excavation under an archaeological watching brief.',
     },
   },
   {
@@ -58,11 +93,21 @@ export const LAYERS: Layer[] = [
       name: 'Osmanlı',
       period: '1453 – 1922',
       body: 'Limanın çoktan dolduğu, üzerinin bostan ve mahalleye dönüştüğü dönem. Kıyı çizgisi buradan itibaren artık denizde değil.',
+      matrix:
+        'Bostan toprağı ve yapı molozu; dolmuş liman havzasının üzerine serilmiş kuru zemin.',
+      holds:
+        'Ev temelleri, sarnıçlar, kuyular, sırlı kap kacak ve lüle parçaları. Bir mahallenin gündelik döküntüsü.',
+      method: 'Duvarlar çıktığı anda makine bırakıldı; el kazısına geçildi.',
     },
     en: {
       name: 'Ottoman',
       period: '1453 – 1922',
       body: 'By now the harbour has silted up entirely and been built over as market gardens and housing. From this layer up, the shoreline is no longer where the sea is.',
+      matrix:
+        'Garden soil and building rubble — dry ground laid over the filled basin of the harbour.',
+      holds:
+        'House foundations, cisterns and wells, glazed tableware and pipe bowls. The ordinary refuse of a neighbourhood.',
+      method: 'Machine excavation stopped as soon as walls appeared; hand-dug from there.',
     },
   },
   {
@@ -74,11 +119,23 @@ export const LAYERS: Layer[] = [
       name: 'Theodosius Limanı',
       period: '4. – 12. yüzyıl',
       body: 'Kazının kalbi. Konstantinopolis’in tahıl limanı: iskeleler, rıhtım yapıları ve tabanda batmış hâlde bulunan otuz yedi gemi. Buluntuların çoğu bu bantta.',
+      matrix:
+        'İnce, koyu, suya doymuş liman çamuru. Lykos deresinin yüzyıllar boyunca havzaya taşıdığı alüvyon — limanı önce sığlaştıran, sonra da içindeki her şeyi koruyan malzeme.',
+      holds:
+        'Otuz yedi tekne, ahşap iskeleler ve rıhtım duvarları, çapalar, halat, deri, amfora ve sekiz yüzyıllık yükleme boşaltma artığı.',
+      method:
+        'Islak kazı. Açığa çıkan ahşap, çıktığı andan itibaren sürekli ıslak tutuldu; kayıt yerinde alındı.',
     },
     en: {
       name: 'The Theodosian Harbour',
       period: '4th – 12th century',
       body: 'The heart of the excavation. Constantinople’s grain harbour: jetties, quay structures, and thirty-seven vessels found sunk where they settled. Most of the finds come from this band.',
+      matrix:
+        'Fine, dark, waterlogged harbour silt — carried into the basin by the Lykos stream season after season. The same material that shoaled the harbour is the reason everything in it survived.',
+      holds:
+        'Thirty-seven vessels, timber jetties and quay walls, anchors, rope, leather, amphorae, and eight centuries of loading and unloading.',
+      method:
+        'Excavated wet and recorded in place. Exposed timber was kept saturated from the moment it came out of the mud.',
     },
   },
   {
@@ -90,11 +147,22 @@ export const LAYERS: Layer[] = [
       name: 'Roma öncesi kıyı',
       period: 'MÖ 2. yy – MS 4. yy',
       body: 'Limandan önceki doğal koy. Deniz tabanı çökelleri ve kıyı kullanımının ilk izleri.',
+      matrix: 'Deniz kumu ve kavkı bantları. Liman kazılmadan önceki doğal koyun tabanı.',
+      holds:
+        'Yapı yok denecek kadar az. Dağınık seramik ve su kıyısındaki ilk kullanım izleri.',
+      method:
+        'Bu kottan aşağısı sürekli su altında. Kazı boyunca kesintisiz susuzlaştırma yapıldı.',
     },
     en: {
       name: 'Pre-harbour shore',
       period: '2nd c. BCE – 4th c. CE',
       body: 'The natural inlet before the harbour was cut into it. Seabed sediments and the first traces of use along the shore.',
+      matrix:
+        'Marine sand and shell beds — the floor of the natural inlet, before anyone made a harbour out of it.',
+      holds:
+        'Almost nothing built. Scattered pottery and the earliest traces of use along the water’s edge.',
+      method:
+        'Everything below this level is under the water table. The trench was pumped continuously from here down.',
     },
   },
   {
@@ -106,11 +174,21 @@ export const LAYERS: Layer[] = [
       name: 'Neolitik kıyı',
       period: 'yaklaşık MÖ 6500',
       body: 'Kazının tabanı. Deniz seviyesi bugünkünden alçakken yerleşilmiş bir kıyı: ayak izleri, ahşap yapı kalıntıları ve mezarlar. İstanbul’un bilinen tarihini binlerce yıl geriye taşıdı.',
+      matrix:
+        'Koyu, organik, hava almayan kil. Ahşabın, hasırın ve çamura basılmış ayak izlerinin bugüne kalmasının tek sebebi bu.',
+      holds:
+        'Eski çamur yüzeyine basılmış insan ve hayvan ayak izleri, ahşap yapı kalıntıları, mezarlar ve bir kıyı yerleşiminin çanak çömleği.',
+      method: 'Kesintisiz pompaj altında, kazının en dibinde, tamamen el aletiyle.',
     },
     en: {
       name: 'Neolithic shore',
       period: 'about 6500 BCE',
       body: 'The base of the excavation. A shoreline occupied when the sea stood lower than it does now: footprints, timber structures and burials. It moved the known history of İstanbul back by thousands of years.',
+      matrix:
+        'Dark organic clay, sealed and airless. It is the only reason wood, matting and a footprint pressed into mud are still here to find.',
+      holds:
+        'Human and animal footprints in the old mud surface, timber structures, burials, and the pottery of a settlement thousands of years older than any city on this site.',
+      method: 'Hand tools only, at the floor of the trench, under continuous pumping.',
     },
   },
 ];

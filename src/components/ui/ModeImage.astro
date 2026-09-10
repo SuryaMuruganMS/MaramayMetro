@@ -101,6 +101,8 @@ const {
 <style>
   .mimg {
     margin: 0;
+    /* The glow is absolute and wants this box to measure against. */
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--sp-tight);
