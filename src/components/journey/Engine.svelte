@@ -103,7 +103,6 @@
     let lastRailWrite = -1;
     let railOwnsUntil = 0;
     let raf = 0;
-    let stillTimer = 0;
     let lastCh = -1;
     let lastStamp = performance.now();
     let lastElement = -1;
@@ -111,6 +110,84 @@
     const railWindow = document.getElementById('rail-window');
     // A screenful is 100vw of a TRACK_VW-wide track. Fixed, so it is set once.
     railWindow?.style.setProperty('--win-width', ((100 / TRACK_VW) * 100).toFixed(3));
+
+    /* ------------------------------------------------------------- the film
+       The clip is not playing behind the journey. It IS the journey: the left
+       edge of the track is its first frame and the right edge is its last, so
+       `currentTime` is a pure function of scroll position exactly like depth
+       and chainage are. Scroll east and the train runs forward; scroll west
+       and it runs backward.
+
+       Reverse seeking is the part that people say cannot be done smoothly, and
+       it cannot if you fire a seek per scroll event: the requests queue, each
+       one lands late, and the picture crawls behind the page. `apply` runs at
+       most once per animation frame and this asks for nothing at all while the
+       element is still `seeking`, so the browser is never more than one
+       request behind. It drops frames under load rather than falling behind,
+       which is the right failure for a picture driven by a gesture.
+
+       Only the clip the reader can actually see is seeked. Both are in the DOM
+       so that switching service does not wait on a download, and decoding two
+       streams to show one would be paying twice for nothing. */
+    const films = Array.from(
+      document.querySelectorAll<HTMLVideoElement>('video[data-film-scrub]'),
+    );
+    const wantedMode = () => {
+      const svc = root.getAttribute('data-service');
+      if (svc === 'night' || svc === 'day') return svc;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
+    };
+    /**
+     * The last position the reader asked for, kept separately from the last
+     * one the browser managed to reach.
+     *
+     * Skipping a seek because one is already running is what keeps the picture
+     * from falling behind the gesture — but the request that gets skipped is
+     * usually the last one, and the reader stops scrolling right after it. So
+     * the target is remembered and re-applied when the in-flight seek lands,
+     * which is the difference between the film stopping where the reader
+     * stopped and stopping a quarter of a second short of it.
+     */
+    let filmWant = 0;
+
+    function pushFilm() {
+      if (!films.length) return;
+      const want = wantedMode();
+      for (const v of films) {
+        if (v.dataset.modeVideo !== want) continue;
+        // Fetch it, once, the first time it is the one on screen. Scrubbing a
+        // file the browser has not got is what makes this technique stutter.
+        if (v.preload === 'none') v.preload = 'auto';
+        if (v.seeking || v.readyState < 1) continue;
+        const d = v.duration;
+        if (!Number.isFinite(d) || d <= 0) continue;
+        // A hair short of the end: seeking exactly to `duration` fires `ended`
+        // and some builds then park on black rather than on the last frame.
+        const to = Math.max(0, Math.min(d - 0.05, filmWant * d));
+        if (Math.abs(v.currentTime - to) > 0.03) v.currentTime = to;
+      }
+    }
+    function scrubFilm(t: number) {
+      filmWant = t;
+      pushFilm();
+    }
+    for (const v of films) {
+      // Never playing, ever. And show frame one as soon as there is one, so a
+      // reader who has not scrolled yet sees the tunnel rather than a black
+      // band waiting to be told what to do.
+      v.pause();
+      v.addEventListener('seeked', pushFilm);
+      const ready = () => {
+        v.pause();
+        pushFilm();
+      };
+      if (v.readyState >= 2) ready();
+      else v.addEventListener('loadeddata', ready, { once: true });
+    }
+    /* A reader can switch service without scrolling, and the clip that comes
+       forward has never been told where the train is. */
+    const filmSvc = new MutationObserver(pushFilm);
+    filmSvc.observe(root, { attributes: true, attributeFilter: ['data-service'] });
 
     const isPlan = () => reduced.matches || narrow.matches || root.dataset.view === 'plan';
 
@@ -155,25 +232,8 @@
       root.style.setProperty('--depth-t', (depth(next) / 60).toFixed(4));
       root.style.setProperty('--vel', (vel / 1200).toFixed(3));
 
-      /*
-         Is the train moving?
-
-         The film band used to loop forever, which made it wallpaper: a train
-         travelling at speed behind a page that is standing still. It now runs
-         only while the reader is actually travelling, so the footage means the
-         same thing as the chainage readout next to it.
-
-         The threshold is in metres per second along the line and the stop is
-         held for a moment after the reader lets go, because scrolling is not
-         continuous — a wheel delivers a burst, a pause, another burst, and a
-         film that stopped between them would stutter rather than play.
-      */
-      const moving = vel > 120;
-      if (moving) {
-        root.dataset.moving = '1';
-        clearTimeout(stillTimer);
-        stillTimer = window.setTimeout(() => delete root.dataset.moving, 420);
-      }
+      // The film follows the scroll, one seek per frame at most.
+      scrubFilm(t);
 
       // The eleven precast elements. Everything behind you stays lit, the one
       // you are inside is marked. Toggled directly rather than through a custom
@@ -331,6 +391,8 @@
       reduced.removeEventListener('change', syncPlanFlag);
       narrow.removeEventListener('change', syncPlanFlag);
       observer.disconnect();
+      filmSvc.disconnect();
+      for (const v of films) v.removeEventListener('seeked', pushFilm);
       if (raf) cancelAnimationFrame(raf);
     };
   });

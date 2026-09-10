@@ -2,14 +2,26 @@
 /**
  * The film band: a long train video running the length of the crossing.
  *
- * WHY IT LOOPS RATHER THAN SCRUBS
- * Scrubbing a video by scroll position is the obvious idea and it does not
- * survive contact with real browsers: frame-accurate reverse seeking is still
- * broken across codecs, so scrolling back stutters or freezes on a keyframe.
- * The video plays at its own speed as atmosphere; everything that has to be
- * exact — chainage, depth, which car you are in — is derived from the scroll
- * position and drawn on top. Nobody can tell the difference, and nothing
- * stutters.
+ * IT SCRUBS. IT DOES NOT PLAY.
+ * The film is not atmosphere running alongside the journey — it IS the
+ * journey. The left edge of the track is the first frame, the right edge is
+ * the last, and the reader's scroll position sets `currentTime` directly. Roll
+ * forward and the train runs east; roll back and it runs west. The clip is
+ * seen exactly once, end to end, over the whole crossing.
+ *
+ * This was rejected once, on the grounds that reverse seeking stutters across
+ * codecs. It does, if you ask for a seek per scroll event and let them queue.
+ * The engine asks for at most one seek per animation frame and skips the ask
+ * entirely while the element is still `seeking`, so the browser is never more
+ * than one request behind and drops frames instead of backing up.
+ *
+ * The clip the reader can see is fetched in full the moment the page loads, so
+ * frame one is on screen without a scroll and the whole thing is buffered
+ * before anybody drags through it — scrubbing an unbuffered file is what makes
+ * scroll-driven video feel broken. The other mode's clip is left at
+ * `preload="none"` until the service switch asks for it, because downloading
+ * eight megabytes to show four is not a trade, it is a waste. The engine owns
+ * that decision, since which mode is showing is a media query.
  *
  * TWO FILMS, ONE BAND
  * Day service runs the underwater crossing; night service runs the tunnel.
@@ -58,11 +70,10 @@ const anything = MODES.some((x) => x.video || x.still);
               src={x.video}
               poster={poster[x.m]}
               muted
-              loop
               playsinline
               preload="none"
               data-mode-video={x.m}
-              data-motion-gated
+              data-film-scrub
             />
           ) : x.still ? (
             <img class={`film__v film__v--${x.m}`} src={x.still} alt="" loading="lazy" />
