@@ -51,11 +51,51 @@
 
 .stratum {
   position: relative;
-  /* --h is the layer's share of the total depth. 26vh per unit gives the
-     section enough height to scroll through without inventing filler. */
-  min-height: calc(var(--h) * 0.26vh * 40);
+  /*
+     --h is the layer's share of the total depth, and the height follows it,
+     because the whole conceit of this page is that the vertical axis is real.
+
+     It followed it too literally. At 0.26vh per unit the Ottoman band came out
+     four screens tall to hold three lines of text, and a reader scrolled past
+     an acre of nothing to reach the next layer. The scale is halved and given
+     a floor, so a thin layer still reads as thin and a thick one still reads
+     as thick — the ratios are intact — but no layer is emptier than it is
+     interesting.
+  */
+  min-height: max(58vh, calc(var(--h) * 0.13vh * 40));
   padding: var(--sp-loose) 0;
   border-top: 1px solid var(--rule);
+}
+
+/*
+   And the empty part is ground, not nothing.
+
+   Bedded hairlines, close together, at the tone of the layer they belong to:
+   the space below the text now reads as the rest of that stratum rather than
+   as a gap the page forgot to fill. It costs no image and no request, and it
+   is the same device as the trench wall on the finds rail — the section
+   drawing this page is pretending to be has exactly these lines on it.
+*/
+.stratum::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 26px,
+    color-mix(in oklab, var(--ink) 5%, transparent) 26px 27px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0 34%, #000 62%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0 34%, #000 62%, #000 100%);
+}
+.stratum__body,
+.stratum__rule {
+  position: relative;
+  z-index: 1;
 }
 
 /* Each layer paints its own ground. Stepped, like the depth bands on the
@@ -83,7 +123,15 @@
   right: 0;
   display: flex;
   justify-content: flex-end;
-  padding: 6px var(--margin) 0;
+  /*
+     The axis gutter again. `.stratum` reserves it with padding, but this rule
+     is absolutely positioned against the stratum's PADDING box edge — `right:
+     0` ignores the padding entirely — so the depth label sat under the fixed
+     axis at every scroll position where the axis was showing. Shortening the
+     layers made it visible: the label and the axis had never been on screen
+     together before.
+  */
+  padding: 6px calc(var(--margin) + var(--digax-w)) 0;
   pointer-events: none;
 }
 .stratum__depth {

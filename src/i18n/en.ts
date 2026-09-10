@@ -203,6 +203,23 @@ export const en = {
     'The network has {all} stations; {drawn} are drawn here, including all {interchanges} interchanges.',
   'map.pickPrompt': 'Select a station on the map to open it.',
   'map.source': 'Geography: OpenStreetMap contributors, ODbL.',
+  'map.zoom': 'Zoom',
+  'map.zoomIn': 'Zoom in',
+  'map.zoomOut': 'Zoom out',
+  'map.reset': 'Fit the whole network',
+  'map.drag': 'Drag to pan · scroll to zoom · press a line or a station',
+  'map.centre': 'Centre on this station',
+  'map.lineDetails': 'Line',
+  'map.lineStations': 'Stations',
+  'map.lineDrawn': 'Drawn here',
+  'map.lineDrawnNote':
+    'This map draws termini and interchanges — the stations a passenger makes a decision at — not every stop. The kilometres are the drawn route, not the line.',
+  'map.lineRoute': 'Drawn route',
+  'map.lineMeets': 'Where it meets other lines',
+  'kind.metro': 'Metro',
+  'kind.rail': 'Suburban rail',
+  'kind.tram': 'Tram',
+  'kind.funicular': 'Funicular',
 
   // ------------------------------------------------------------------- planner
   'plan.title': 'Journey planner',
@@ -232,6 +249,9 @@ export const en = {
   'plan.ride': 'Ride',
   'plan.fareNote': 'Fictional fare.',
   'plan.fullFare': 'At full fare',
+  'plan.showMap': 'Route details on the map',
+  'plan.hideMap': 'Hide the map',
+  'plan.fullMap': 'Open the full network map',
 
   // --------------------------------------------------------------------- fares
   'fare.title': 'Fares',

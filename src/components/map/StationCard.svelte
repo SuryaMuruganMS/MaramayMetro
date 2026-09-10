@@ -25,8 +25,10 @@
     locale: Locale;
     labels: Record<string, string>;
     onclose: () => void;
+    /** Frame this station on the map. Optional: the card is used without one. */
+    onfly?: () => void;
   }
-  const { node, locale, labels, onclose }: Props = $props();
+  const { node, locale, labels, onclose, onfly }: Props = $props();
 
   /** Its place on the crossing, if it has one. Nine stations do. */
   const stop = $derived(STOPS.find((s) => s.id === node.id) ?? null);
@@ -181,6 +183,11 @@
   {/if}
 
   <div class="card__links">
+    {#if onfly}
+      <button class="tile tile--sm tile--ghost" type="button" onclick={onfly}>
+        {labels['map.centre']}
+      </button>
+    {/if}
     <a class="tile tile--sm" href={href('/sefer', locale)}>{labels['map.planFrom']}</a>
     <a class="tile tile--sm tile--ghost" href={href('/ucret', locale)}>
       {labels['map.faresFrom']}

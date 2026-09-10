@@ -197,6 +197,23 @@ export const ar: Record<Keys, string> = {
     'تضم الشبكة {all} محطة، ورُسم منها هنا {drawn}، بما في ذلك محطات التبديل كلها وعددها {interchanges}.',
   'map.pickPrompt': 'اختر محطة على الخريطة لفتحها.',
   'map.source': 'الجغرافيا: مساهمو OpenStreetMap، رخصة ODbL.',
+  'map.zoom': 'التكبير',
+  'map.zoomIn': 'تكبير',
+  'map.zoomOut': 'تصغير',
+  'map.reset': 'إظهار الشبكة كاملة',
+  'map.drag': 'اسحب للتحريك · مرّر للتكبير · اضغط خطًا أو محطة',
+  'map.centre': 'توسيط هذه المحطة',
+  'map.lineDetails': 'الخط',
+  'map.lineStations': 'المحطات',
+  'map.lineDrawn': 'المرسوم هنا',
+  'map.lineDrawnNote':
+    'ترسم هذه الخريطة المحطات الطرفية ومحطات التبديل — حيث يتخذ الراكب قرارًا — لا كل موقف. والكيلومترات هي طول المسار المرسوم، لا طول الخط.',
+  'map.lineRoute': 'المسار المرسوم',
+  'map.lineMeets': 'حيث يلتقي بخطوط أخرى',
+  'kind.metro': 'مترو',
+  'kind.rail': 'قطار الضواحي',
+  'kind.tram': 'ترام',
+  'kind.funicular': 'قطار مائل',
 
   'plan.title': 'مخطط الرحلة',
   'plan.lede':
@@ -224,6 +241,9 @@ export const ar: Record<Keys, string> = {
   'plan.ride': 'رحلة',
   'plan.fareNote': 'أجرة متخيَّلة.',
   'plan.fullFare': 'بالأجرة الكاملة',
+  'plan.showMap': 'تفاصيل المسار على الخريطة',
+  'plan.hideMap': 'إخفاء الخريطة',
+  'plan.fullMap': 'فتح خريطة الشبكة كاملة',
 
   'fare.title': 'الأجور',
   'fare.lede': 'كل محطة، وكل نوع راكب. الدفع ببطاقة İstanbulkart عند البوابة.',

@@ -10,7 +10,8 @@
     toLira,
     type PassengerId,
   } from '../../data/fares.ts';
-  import { lira, num, type Locale } from '../../lib/locale.ts';
+  import { lira, num, href, type Locale } from '../../lib/locale.ts';
+  import RouteMap from './RouteMap.svelte';
 
   /**
    * A real shortest path over the real graph, priced for the person taking it.
@@ -38,6 +39,17 @@
   let from = $state('yenikapi');
   let to = $state('uskudar');
   let passenger = $state<PassengerId>('full');
+
+  /**
+   * The map is opened, not shown.
+   *
+   * Most people using a planner want the number of minutes and the price, and
+   * they want them without scrolling past a picture. The reader who wants to
+   * see where the line actually goes asks for it, and then it stays open while
+   * they change stations — so comparing two routes on the map costs one press,
+   * not one per route.
+   */
+  let showMap = $state(false);
 
   const result = $derived(findRoute(from, to));
   const fare = $derived(result ? fareFor(result, passenger) : null);
@@ -181,6 +193,26 @@
         </div>
       {/if}
 
+      <!-- The route on the ground. Same geography as the map page, framed to
+           this journey. -->
+      <div class="planner__mapbar">
+        <button
+          type="button"
+          class="tile tile--sm"
+          class:tile--ghost={showMap}
+          aria-expanded={showMap}
+          onclick={() => (showMap = !showMap)}
+        >
+          {showMap ? labels['plan.hideMap'] : labels['plan.showMap']}
+        </button>
+        {#if showMap}
+          <a class="planner__full" href={href('/harita', locale)}>{labels['plan.fullMap']}</a>
+        {/if}
+      </div>
+      {#if showMap}
+        <RouteMap route={result} {locale} {labels} />
+      {/if}
+
       <p class="planner__access" class:is-warn={!allStepFree}>
         {allStepFree ? labels['plan.stepFreeOk'] : labels['plan.stepFreeNo']}
       </p>
@@ -295,6 +327,16 @@
     margin: 0;
     font-size: 1.15rem;
     font-weight: 600;
+  }
+  .planner__mapbar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-snug);
+    flex-wrap: wrap;
+  }
+  .planner__full {
+    font-size: var(--t-small);
+    color: var(--ink-3);
   }
   .planner__access {
     font-size: var(--t-small);

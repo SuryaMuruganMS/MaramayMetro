@@ -225,8 +225,22 @@ const desc = description ?? tt('site.description');
       function syncVideos() {
         const want = wantedMode();
         document.querySelectorAll<HTMLVideoElement>('[data-mode-video]').forEach((v) => {
+          /*
+             A clip gated on motion runs only while the train does.
+
+             The film band behind the crossing looped forever, which turned it
+             into wallpaper — a train at speed behind a page standing still.
+             The engine sets `data-moving` on the document while the reader is
+             travelling, and the band follows it. Everything else (the finds
+             clips) keeps looping on its own, because nothing there is supposed
+             to be tied to a position on a line.
+          */
+          const gated = v.hasAttribute('data-motion-gated');
           const shouldRun =
-            !stillOnly.matches && onScreen.has(v) && v.dataset.modeVideo === want;
+            !stillOnly.matches &&
+            onScreen.has(v) &&
+            v.dataset.modeVideo === want &&
+            (!gated || root.hasAttribute('data-moving'));
           if (shouldRun) {
             if (v.preload === 'none') v.preload = 'auto';
             // A rejected play() is normal - a background tab, a power-saving
@@ -264,7 +278,7 @@ const desc = description ?? tt('site.description');
       // the attribute is the single source of that truth for CSS as well.
       new MutationObserver(syncVideos).observe(root, {
         attributes: true,
-        attributeFilter: ['data-service'],
+        attributeFilter: ['data-service', 'data-moving'],
       });
       stillOnly.addEventListener('change', syncVideos);
       document.addEventListener('visibilitychange', syncVideos);

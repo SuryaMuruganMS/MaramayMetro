@@ -51,6 +51,8 @@ describe('translations', () => {
       // called what it is called, in every language on the page.
       'site.name',
       'site.sub',
+      // "Metro" is the word in both languages, and in most others.
+      'kind.metro',
     ]);
     for (const loc of LOCALES) {
       if (loc === 'en') continue;

@@ -62,6 +62,7 @@ const anything = MODES.some((x) => x.video || x.still);
               playsinline
               preload="none"
               data-mode-video={x.m}
+              data-motion-gated
             />
           ) : x.still ? (
             <img class={`film__v film__v--${x.m}`} src={x.still} alt="" loading="lazy" />

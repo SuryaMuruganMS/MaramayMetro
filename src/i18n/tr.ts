@@ -187,6 +187,23 @@ export const tr: Record<Keys, string> = {
     'Ağda toplam {all} istasyon var; burada {drawn} tanesi çizili — {interchanges} aktarma noktasının tamamı dahil.',
   'map.pickPrompt': 'Açmak için haritadan bir istasyon seçin.',
   'map.source': 'Coğrafya: OpenStreetMap katkıcıları, ODbL.',
+  'map.zoom': 'Yakınlaştırma',
+  'map.zoomIn': 'Yakınlaştır',
+  'map.zoomOut': 'Uzaklaştır',
+  'map.reset': 'Tüm ağı sığdır',
+  'map.drag': 'Kaydırmak için sürükleyin · yakınlaştırmak için tekerlek · hatta ya da istasyona basın',
+  'map.centre': 'Bu istasyonu ortala',
+  'map.lineDetails': 'Hat',
+  'map.lineStations': 'İstasyon',
+  'map.lineDrawn': 'Burada çizili',
+  'map.lineDrawnNote':
+    'Bu harita her durağı değil, uç istasyonları ve aktarma noktalarını — yolcunun karar verdiği yerleri — çizer. Kilometre, hattın değil çizili güzergâhın uzunluğudur.',
+  'map.lineRoute': 'Çizili güzergâh',
+  'map.lineMeets': 'Diğer hatlarla kesiştiği yerler',
+  'kind.metro': 'Metro',
+  'kind.rail': 'Banliyö demiryolu',
+  'kind.tram': 'Tramvay',
+  'kind.funicular': 'Füniküler',
 
   'plan.title': 'Sefer planlayıcı',
   'plan.lede':
@@ -217,6 +234,9 @@ export const tr: Record<Keys, string> = {
   'plan.ride': 'Biniş',
   'plan.fareNote': 'Kurgusal ücret.',
   'plan.fullFare': 'Tam ücretle',
+  'plan.showMap': 'Güzergâhı haritada göster',
+  'plan.hideMap': 'Haritayı gizle',
+  'plan.fullMap': 'Tüm ağ haritasını aç',
 
   'fare.title': 'Ücretler',
   'fare.lede':

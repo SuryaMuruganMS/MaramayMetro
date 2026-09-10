@@ -1,8 +1,11 @@
 <script lang="ts">
   import { LINES, NODES, nodeById, type Node } from '../../data/network.ts';
-    import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
+  import { WINDOW } from '../../data/geography.ts';
+  import { haversine } from '../../lib/geo.ts';
+  import LineCard from './LineCard.svelte';
+  import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
   import StationCard from './StationCard.svelte';
-  import type { Locale } from '../../lib/locale.ts';
+  import { num, type Locale } from '../../lib/locale.ts';
 
   /**
    * The network in two registers.
@@ -278,7 +281,204 @@
 
   function pick(id: string) {
     selected = selected === id ? null : id;
+    if (selected) selectedLine = null;
   }
+
+  // ==========================================================================
+  // ZOOM AND PAN
+  // ==========================================================================
+  /**
+   * The viewBox is the camera.
+   *
+   * Not a CSS transform on a wrapper: an SVG scaled by transform is a bitmap
+   * blown up, and this map's whole argument is that it is drawn from
+   * coordinates rather than photographed. Moving the viewBox re-rasterises
+   * every path at the new size, so a coastline at eight times magnification is
+   * as sharp as it is at one.
+   *
+   * It also keeps the maths honest. One viewBox unit is a fixed number of
+   * metres on the ground at every zoom, so the scale bar below is a
+   * measurement rather than a decoration.
+   */
+  const MIN_Z = 1;
+  const MAX_Z = 14;
+  let zoom = $state(1);
+  /** Centre of the view, in viewBox units. */
+  let cx = $state(W / 2);
+  let cy = $state(GEO_H / 2);
+
+  const viewW = $derived(W / zoom);
+  const viewH = $derived(H / zoom);
+
+  /** Kept inside the drawing, so the map cannot be flung into empty space. */
+  function clamp() {
+    const hw = viewW / 2;
+    const hh = viewH / 2;
+    cx = Math.min(W - hw, Math.max(hw, cx));
+    cy = Math.min(H - hh, Math.max(hh, cy));
+  }
+  $effect(() => {
+    // H changes with the morph, so the clamp has to run again when it does.
+    void H;
+    clamp();
+  });
+
+  const viewBox = $derived(
+    `${(cx - viewW / 2).toFixed(3)} ${(cy - viewH / 2).toFixed(3)} ${viewW.toFixed(3)} ${viewH.toFixed(3)}`,
+  );
+
+  /**
+   * Ink is measured in SCREEN units, not drawing units.
+   *
+   * Zoom the viewBox and everything in it grows, including the hairlines and
+   * the station names — so at eight times magnification a 1.7-unit label is
+   * the size of a building. Dividing every width and font size by the zoom
+   * holds them at a constant size on screen, which is what every map does and
+   * the reason zooming in reveals detail rather than magnifying it.
+   */
+  const px = $derived(1 / zoom);
+
+  let svgEl = $state<SVGSVGElement | null>(null);
+
+  /** Where a pointer is, in viewBox units. */
+  function toView(clientX: number, clientY: number) {
+    const r = svgEl!.getBoundingClientRect();
+    return {
+      x: cx - viewW / 2 + ((clientX - r.left) / r.width) * viewW,
+      y: cy - viewH / 2 + ((clientY - r.top) / r.height) * viewH,
+    };
+  }
+
+  /** Zoom about a fixed point, so what is under the cursor stays under it. */
+  function zoomAt(factor: number, clientX?: number, clientY?: number) {
+    const next = Math.min(MAX_Z, Math.max(MIN_Z, zoom * factor));
+    if (next === zoom) return;
+    if (clientX !== undefined && clientY !== undefined && svgEl) {
+      const p = toView(clientX, clientY);
+      const k = 1 - zoom / next;
+      cx += (p.x - cx) * k;
+      cy += (p.y - cy) * k;
+    }
+    zoom = next;
+    clamp();
+  }
+
+  let dragging = $state(false);
+  let dragged = $state(false);
+  let last = { x: 0, y: 0 };
+
+  function onPointerDown(e: PointerEvent) {
+    if (e.button !== 0) return;
+    dragging = true;
+    dragged = false;
+    last = { x: e.clientX, y: e.clientY };
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: PointerEvent) {
+    if (!dragging || !svgEl) return;
+    const r = svgEl.getBoundingClientRect();
+    const dx = ((e.clientX - last.x) / r.width) * viewW;
+    const dy = ((e.clientY - last.y) / r.height) * viewH;
+    if (Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y) > 3) dragged = true;
+    cx -= dx;
+    cy -= dy;
+    last = { x: e.clientX, y: e.clientY };
+    clamp();
+  }
+  function onPointerUp(e: PointerEvent) {
+    dragging = false;
+    try {
+      (e.currentTarget as Element).releasePointerCapture(e.pointerId);
+    } catch {
+      /* the pointer was already gone */
+    }
+  }
+
+  /**
+   * The wheel zooms, and the page does not scroll while it does.
+   *
+   * Hijacking the wheel is normally the wrong answer, and on a map it is the
+   * expected one — but only over the map itself, only when it is already
+   * magnified or the reader means to magnify it, and never as a substitute for
+   * the page's own scrolling. `passive: false` is required to be able to
+   * refuse the scroll at all.
+   */
+  function onWheel(e: WheelEvent) {
+    e.preventDefault();
+    zoomAt(e.deltaY < 0 ? 1.16 : 1 / 1.16, e.clientX, e.clientY);
+  }
+
+  function resetView() {
+    zoom = 1;
+    cx = W / 2;
+    cy = H / 2;
+  }
+
+  /** Frame a station: zoom in and put it in the middle. */
+  function flyTo(id: string, z = 5) {
+    const p = pos(nodeById.get(id)!);
+    zoom = Math.min(MAX_Z, z);
+    cx = p.x;
+    cy = p.y;
+    clamp();
+  }
+
+  /**
+   * The scale bar, which is why the zoom had to be honest.
+   *
+   * One viewBox unit is a known number of metres, so a bar of N units is a
+   * real distance. This picks the roundest distance that fits comfortably in
+   * the frame at the current zoom — 1, 2, 5, 10, 20 km and so on — which is
+   * exactly how a paper map's scale bar is chosen.
+   */
+  const UNIT_KM = $derived(
+    // The window is 100 units wide and spans this many kilometres of ground.
+    (haversine(WINDOW.south, WINDOW.west, WINDOW.south, WINDOW.east) / W) * (morph || 1),
+  );
+  const scale = $derived.by(() => {
+    const wantUnits = viewW * 0.22;
+    const wantKm = wantUnits * UNIT_KM;
+    const steps = [0.5, 1, 2, 5, 10, 20, 50];
+    const km = steps.find((k) => k >= wantKm) ?? 50;
+    return { km, units: km / UNIT_KM };
+  });
+
+  // ==========================================================================
+  // LINES
+  // ==========================================================================
+  let selectedLine = $state<string | null>(null);
+  const selectedLineObj = $derived(
+    selectedLine ? (LINES.find((l) => l.id === selectedLine) ?? null) : null,
+  );
+
+  function pickLine(id: string) {
+    selectedLine = selectedLine === id ? null : id;
+    if (selectedLine) {
+      selected = null;
+      frameLine(id);
+    }
+  }
+
+  /** Put the whole of a line in the frame, with a margin. */
+  function frameLine(id: string) {
+    const l = LINES.find((x) => x.id === id);
+    if (!l) return;
+    const pts = l.route.map((n) => pos(nodeById.get(n)!));
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const w = Math.max(6, Math.max(...xs) - Math.min(...xs)) * 1.35;
+    const h = Math.max(6, Math.max(...ys) - Math.min(...ys)) * 1.35;
+    zoom = Math.min(MAX_Z, Math.max(MIN_Z, Math.min(W / w, H / h)));
+    cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    clamp();
+  }
+
+  /** Which lines are drawn at full strength. */
+  const litLinesAll = $derived(
+    selectedLine ? new Set([selectedLine]) : selectedNode ? litLines : null,
+  );
+
   const REGISTERS: Array<{ id: Register; key: string }> = [
     { id: 'geographic', key: 'reg.geographic' },
     { id: 'diagram', key: 'reg.diagram' },
@@ -315,9 +515,33 @@
     {/if}
   </p>
 
-  <div class="netmap__stage" class:is-open={!!selectedNode}>
+  <div class="netmap__stage" class:is-open={!!selectedNode || !!selectedLineObj}>
     <div class="netmap__frame" style={`--ar:${(W / H).toFixed(4)}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} class="netmap__svg" aria-label={labels['map.alt']}>
+      <!--
+        role="application", because it is one.
+
+        The drag-to-pan and wheel-to-zoom make this a thing you operate rather
+        than a picture you look at, and a screen reader needs to be told that
+        or it will read the whole SVG as an image and hand the keys back to the
+        browser. Every station and every line inside it is still an individual
+        button with a name, and the table below is still the complete
+        non-visual route to the same information.
+      -->
+      <svg
+        bind:this={svgEl}
+        {viewBox}
+        class="netmap__svg"
+        class:is-dragging={dragging}
+        role="application"
+        aria-roledescription={labels['map.zoom']}
+        aria-label={`${labels['map.alt']} ${labels['map.drag']}`}
+        onpointerdown={onPointerDown}
+        onpointermove={onPointerMove}
+        onpointerup={onPointerUp}
+        onpointercancel={onPointerUp}
+        onwheel={onWheel}
+        ondblclick={(e) => zoomAt(1.9, e.clientX, e.clientY)}
+      >
         <!--
           THE GROUND.
 
@@ -333,7 +557,9 @@
             {#each LAND as d, i (i)}<path {d} class="geo__land" />{/each}
             {#each ISLANDS as d, i (i)}<path {d} class="geo__land" />{/each}
             {#each LAKES as l (l.name)}<path d={l.d} class="geo__sea" />{/each}
-            {#each SHORE as d, i (i)}<path {d} class="geo__shore" />{/each}
+            {#each SHORE as d, i (i)}
+              <path {d} class="geo__shore" stroke-width={0.22 * px} />
+            {/each}
           </g>
         {/if}
 
@@ -343,7 +569,7 @@
           <path
             d="M53,0 L53,56"
             stroke="var(--turquoise)"
-            stroke-width={2.4}
+            stroke-width={2.4 * px}
             fill="none"
             opacity={0.34 * (1 - coastAlpha)}
           />
@@ -353,11 +579,26 @@
           <path
             d={routePath(line.route)}
             stroke={line.colour}
-            stroke-width={(line.kind === 'rail' ? 1.5 : 1.1) * ink}
+            stroke-width={(line.kind === 'rail' ? 1.5 : 1.1) * ink * px}
             stroke-linecap="round"
             stroke-linejoin="round"
             fill="none"
-            opacity={selectedNode && !litLines.has(line.id) ? 0.34 : 1}
+            opacity={litLinesAll && !litLinesAll.has(line.id) ? 0.22 : 1}
+            class="netmap__line"
+            role="button"
+            tabindex="0"
+            aria-label={line.name}
+            onclick={(e) => {
+              if (dragged) return;
+              e.stopPropagation();
+              pickLine(line.id);
+            }}
+            onkeydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                pickLine(line.id);
+              }
+            }}
           />
         {/each}
 
@@ -369,7 +610,9 @@
             class="stn"
             class:is-focused={focused === n.id}
             class:is-selected={selected === n.id}
-            class:is-dimmed={!!selectedNode && selected !== n.id}
+            class:is-dimmed={(!!selectedNode || !!selectedLine) &&
+              selected !== n.id &&
+              !(selectedLine && n.lines.includes(selectedLine))}
             role="button"
             tabindex="0"
             aria-pressed={selected === n.id}
@@ -378,7 +621,11 @@
             onmouseleave={() => (focused = null)}
             onfocus={() => (focused = n.id)}
             onblur={() => (focused = null)}
-            onclick={() => pick(n.id)}
+            onclick={() => {
+              // A pan that ends over a station is a pan, not a press.
+              if (dragged) return;
+              pick(n.id);
+            }}
             onkeydown={(e) => {
               // Enter and Space, because this group is standing in for a
               // button and a button responds to both.
@@ -391,28 +638,74 @@
             <!-- A one-unit dot is a two-pixel target. This is the thing the
                    pointer actually hits; it is invisible and generous, and it
                    doubles as the keyboard focus ring. -->
-            <circle cx={p.x} cy={p.y} r="2.6" class="stn__hit" fill="transparent" />
+            <circle cx={p.x} cy={p.y} r={2.6 * px} class="stn__hit" fill="transparent" />
             {#if selected === n.id}
-              <circle cx={p.x} cy={p.y} r="3.2" class="stn__halo" />
+              <circle cx={p.x} cy={p.y} r={3.2 * px} class="stn__halo" />
             {/if}
             <circle
               cx={p.x}
               cy={p.y}
-              r={(n.lines.length > 1 ? 1.5 : 1) * ink}
+              r={(n.lines.length > 1 ? 1.5 : 1) * ink * px}
               class="stn__dot"
               fill="var(--surface)"
               stroke="var(--ink)"
-              stroke-width={(n.lines.length > 1 ? 0.7 : 0.5) * ink}
+              stroke-width={(n.lines.length > 1 ? 0.7 : 0.5) * ink * px}
             />
             {#if labelFor(n)}
               {@const l = labelFor(n)!}
-              <text x={l.x} y={l.y} text-anchor={l.anchor} class="stn__label" font-size={FS}
-                >{n.name}</text
+              <text
+                x={l.x}
+                y={l.y}
+                text-anchor={l.anchor}
+                class="stn__label"
+                font-size={FS * px}
+                stroke-width={0.55 * px}>{n.name}</text
               >
             {/if}
           </g>
         {/each}
       </svg>
+
+      <!--
+        The camera controls.
+
+        A map that can only be zoomed with a wheel is a map half its readers
+        cannot zoom. These are real buttons: reachable by keyboard, sized for a
+        thumb, and they do exactly what the wheel does.
+      -->
+      <div class="cam" role="group" aria-label={labels['map.zoom']}>
+        <button type="button" onclick={() => zoomAt(1.6)} title={labels['map.zoomIn']}>
+          <span aria-hidden="true">+</span><span class="visually-hidden"
+            >{labels['map.zoomIn']}</span
+          >
+        </button>
+        <button type="button" onclick={() => zoomAt(1 / 1.6)} title={labels['map.zoomOut']}>
+          <span aria-hidden="true">−</span><span class="visually-hidden"
+            >{labels['map.zoomOut']}</span
+          >
+        </button>
+        <button
+          type="button"
+          class="cam__reset"
+          onclick={resetView}
+          title={labels['map.reset']}
+          disabled={zoom === 1}
+        >
+          <span aria-hidden="true">⤢</span><span class="visually-hidden"
+            >{labels['map.reset']}</span
+          >
+        </button>
+      </div>
+
+      <!-- A real scale bar. One viewBox unit is a fixed number of metres, so
+           this is a measurement rather than a decoration. -->
+      <div class="scalebar" aria-hidden="true">
+        <span class="scalebar__bar" style={`width:${((scale.units / viewW) * 100).toFixed(2)}%`}
+        ></span>
+        <span class="scalebar__txt mono"
+          >{scale.km < 1 ? scale.km * 1000 + ' m' : scale.km + ' km'}</span
+        >
+      </div>
 
       {#if register === 'geographic' && coastAlpha > 0.8}
         <p class="netmap__attr mono">{labels['map.source']}</p>
@@ -420,10 +713,65 @@
     </div>
 
     {#if selectedNode}
-      <StationCard node={selectedNode} {locale} {labels} onclose={() => (selected = null)} />
+      <StationCard
+        node={selectedNode}
+        {locale}
+        {labels}
+        onclose={() => (selected = null)}
+        onfly={() => flyTo(selectedNode.id)}
+      />
+    {:else if selectedLineObj}
+      <LineCard
+        line={selectedLineObj}
+        {locale}
+        {labels}
+        onclose={() => (selectedLine = null)}
+        onstation={(id) => {
+          selectedLine = null;
+          selected = id;
+          flyTo(id);
+        }}
+      />
     {:else}
       <p class="netmap__prompt">{labels['map.pickPrompt']}</p>
     {/if}
+  </div>
+
+  <!--
+    The lines, as buttons.
+
+    This was a legend under the map: twelve chips with a station count on each,
+    read-only, in a different component. A legend answers one question — which
+    colour is which — and leaves the reader with the twelve more interesting
+    ones. Pressing a chip now frames that line on the map, dims everything
+    else, and opens its card.
+
+    It moved in here because the selection is state, and state belongs with the
+    thing that draws it. Keeping the list outside the island would have meant
+    two components agreeing about which line is chosen, which is the kind of
+    agreement that lasts until the next change.
+  -->
+  <div class="lines">
+    <h2 class="lines__h">{labels['map.linesHeading']}</h2>
+    <ul class="lines__list">
+      {#each LINES as l (l.id)}
+        <li>
+          <button
+            type="button"
+            class="lines__row"
+            class:is-on={selectedLine === l.id}
+            aria-pressed={selectedLine === l.id}
+            onclick={() => pickLine(l.id)}
+          >
+            <span class="roundel" style={`--line:${l.colour}`}>{l.name}</span>
+            <span class="lines__meta mono">
+              {num(l.stations, locale)}
+              {labels['x.stations']}
+            </span>
+          </button>
+        </li>
+      {/each}
+    </ul>
   </div>
 
   <!--
@@ -542,6 +890,8 @@
     overflow-x: auto;
   }
   .netmap__svg {
+    cursor: grab;
+    touch-action: none;
     /* Bounded by HEIGHT, not width. A wide viewBox stretched to a 1290px column
        comes out taller than the screen, and the whole point of a network
        diagram is seeing all of it at once. The aspect ratio follows the morph,
@@ -559,6 +909,9 @@
   /* Water carries the turquoise; land is paper with the faintest warmth in it.
      The first cut used the depth-band tokens, which are backgrounds — the sea
      came out barely a shade off the frame and the map read as pale smudges. */
+  .netmap__svg.is-dragging {
+    cursor: grabbing;
+  }
   .geo__sea {
     fill: color-mix(in oklab, var(--turquoise) 30%, var(--surface));
   }
@@ -571,6 +924,82 @@
     stroke-width: 0.22;
     stroke-linejoin: round;
     opacity: 0.75;
+  }
+
+  /* ----------------------------------------------------------- the camera */
+  .cam {
+    position: absolute;
+    inset-inline-end: var(--sp-snug);
+    top: var(--sp-snug);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border-radius: var(--frame-r-sm);
+    overflow: hidden;
+    border: 1px solid var(--rule-strong);
+    background: var(--rule-strong);
+    box-shadow: var(--lift-tile);
+  }
+  .cam button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: color-mix(in oklab, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--ink-2);
+    font-family: var(--f-mono);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .cam button:hover:not(:disabled) {
+    background: var(--accent);
+    color: #fff;
+  }
+  .cam button:disabled {
+    color: var(--ink-4);
+    cursor: default;
+  }
+  .cam__reset {
+    font-size: 13px;
+  }
+
+  /* ---------------------------------------------------------- the scale bar */
+  .scalebar {
+    position: absolute;
+    inset-inline-start: var(--sp-snug);
+    bottom: var(--sp-snug);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 7px;
+    border-radius: 4px;
+    background: color-mix(in oklab, var(--surface) 78%, transparent);
+    pointer-events: none;
+  }
+  .scalebar__bar {
+    display: block;
+    height: 5px;
+    min-width: 22px;
+    max-width: 40%;
+    border: 1px solid var(--ink-3);
+    border-top: 0;
+  }
+  .scalebar__txt {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+  }
+
+  /* A line is a control. It is also two pixels wide, so the cursor and the
+     focus ring do the work of telling you so. */
+  .netmap__line {
+    cursor: pointer;
+    transition: opacity var(--d-ui) var(--ease-out);
+  }
+  .netmap__line:focus-visible {
+    outline: none;
+    stroke-dasharray: 2 1.4;
   }
 
   .netmap__attr {
@@ -664,6 +1093,56 @@
       scale: 1.25;
       opacity: 0;
     }
+  }
+
+  /* ------------------------------------------------------------- the lines */
+  .lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-snug);
+    padding-top: var(--sp-base);
+  }
+  .lines__h {
+    font-size: var(--t-h3);
+    margin: 0;
+  }
+  .lines__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: var(--sp-tight);
+  }
+  .lines__row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-tight);
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-capsule);
+    background: var(--surface);
+    color: inherit;
+    font: inherit;
+    min-width: 0;
+    cursor: pointer;
+    transition:
+      border-color var(--d-hover) var(--ease-out),
+      background-color var(--d-hover) var(--ease-out);
+  }
+  .lines__row:hover {
+    border-color: var(--accent);
+  }
+  .lines__row.is-on {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  }
+  .lines__meta {
+    font-size: var(--t-micro);
+    color: var(--ink-3);
+    margin-left: auto;
+    white-space: nowrap;
   }
 
   .netmap__table summary {

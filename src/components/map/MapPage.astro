@@ -2,7 +2,7 @@
 import NetworkMap from './NetworkMap.svelte';
 import { translator } from '../../i18n/index.ts';
 import { NETWORK } from '../../data/alignment.ts';
-import { LINES, DRAWN_STATIONS, INTERCHANGES } from '../../data/network.ts';
+import { DRAWN_STATIONS, INTERCHANGES } from '../../data/network.ts';
 import { href, num, type Locale } from '../../lib/locale.ts';
 
 interface Props {
@@ -40,6 +40,24 @@ const KEYS = [
   'map.notAll',
   'map.pickPrompt',
   'map.source',
+  'map.zoom',
+  'map.zoomIn',
+  'map.zoomOut',
+  'map.reset',
+  'map.drag',
+  'map.centre',
+  'map.lineDetails',
+  'map.lineStations',
+  'map.lineDrawn',
+  'map.lineDrawnNote',
+  'map.lineRoute',
+  'map.lineMeets',
+  'map.linesHeading',
+  'kind.metro',
+  'kind.rail',
+  'kind.tram',
+  'kind.funicular',
+  'x.stations',
   // the station card
   'map.openStation',
   'map.close',
@@ -78,28 +96,10 @@ const note = tt('map.drawnNote')
 
     <NetworkMap client:load locale={locale} labels={labels} />
 
-    <div class="lines">
-      <h2>{tt('map.linesHeading')}</h2>
-      <ul class="lines__list">
-        {
-          LINES.map((l) => (
-            <li class="lines__row">
-              <span class="roundel" style={`--line:${l.colour}`}>
-                {l.name}
-              </span>
-              <span class="lines__meta mono">
-                {num(l.stations, locale)} {tt('x.stations')}
-              </span>
-            </li>
-          ))
-        }
-      </ul>
-      <p class="lines__note">
-        {note}
-        {' '}
-        <a href={href('/renkler', locale)}>{tt('nav.colours')}</a>
-      </p>
-    </div>
+    <p class="lines__note">
+      {note}
+      <a href={href('/renkler', locale)}>{tt('nav.colours')}</a>
+    </p>
   </div>
 </section>
 

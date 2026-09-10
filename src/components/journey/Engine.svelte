@@ -87,6 +87,7 @@
     let lastRailWrite = -1;
     let railOwnsUntil = 0;
     let raf = 0;
+    let stillTimer = 0;
     let lastCh = -1;
     let lastStamp = performance.now();
     let lastElement = -1;
@@ -137,6 +138,26 @@
 
       root.style.setProperty('--depth-t', (depth(next) / 60).toFixed(4));
       root.style.setProperty('--vel', (vel / 1200).toFixed(3));
+
+      /*
+         Is the train moving?
+
+         The film band used to loop forever, which made it wallpaper: a train
+         travelling at speed behind a page that is standing still. It now runs
+         only while the reader is actually travelling, so the footage means the
+         same thing as the chainage readout next to it.
+
+         The threshold is in metres per second along the line and the stop is
+         held for a moment after the reader lets go, because scrolling is not
+         continuous — a wheel delivers a burst, a pause, another burst, and a
+         film that stopped between them would stutter rather than play.
+      */
+      const moving = vel > 120;
+      if (moving) {
+        root.dataset.moving = '1';
+        clearTimeout(stillTimer);
+        stillTimer = window.setTimeout(() => delete root.dataset.moving, 420);
+      }
 
       // The eleven precast elements. Everything behind you stays lit, the one
       // you are inside is marked. Toggled directly rather than through a custom
