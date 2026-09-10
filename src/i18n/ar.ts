@@ -14,8 +14,14 @@ import type { Keys } from './en.ts';
  * direction.
  */
 export const ar: Record<Keys, string> = {
-  'site.name': 'العبور',
-  'site.full': 'عبور مرمراي',
+  'site.name': 'Boğaziçi Hattı',
+  'site.full': 'Boğaziçi Hattı — خط البوسفور',
+  'site.sub': 'B1 · İSTANBUL',
+  'theme.label': 'المظهر',
+  'theme.light': 'فاتح',
+  'theme.dark': 'داكن',
+  'theme.toLight': 'التبديل إلى المظهر الفاتح',
+  'theme.toDark': 'التبديل إلى المظهر الداكن',
   'site.tagline': 'من أوروبا إلى آسيا، على عمق ستين متراً تحت البوسفور.',
   'site.description':
     'القطاع النفقي الأوسط لمرمراي: ١٣٫٦ كيلومتراً، وست محطات، وأنبوب مغمور على عمق ٦٠ متراً تحت سطح البحر.',

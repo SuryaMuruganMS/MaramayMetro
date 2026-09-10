@@ -8,8 +8,14 @@ import type { Keys } from './en.ts';
  * тем, что написано на платформе, а на платформе написано Üsküdar.
  */
 export const ru: Record<Keys, string> = {
-  'site.name': 'Переход',
-  'site.full': 'Переход Мармарай',
+  'site.name': 'Boğaziçi Hattı',
+  'site.full': 'Boğaziçi Hattı — линия через Босфор',
+  'site.sub': 'B1 · İSTANBUL',
+  'theme.label': 'Тема',
+  'theme.light': 'Светлая',
+  'theme.dark': 'Тёмная',
+  'theme.toLight': 'Переключить на светлую тему',
+  'theme.toDark': 'Переключить на тёмную тему',
   'site.tagline': 'Из Европы в Азию, на шестьдесят метров под Босфором.',
   'site.description':
     'Центральный тоннельный участок Мармарая: 13,6 километра, шесть станций и погружная секция на 60 метрах ниже уровня моря.',

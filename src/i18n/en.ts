@@ -11,8 +11,14 @@
  */
 export const en = {
   // ------------------------------------------------------------------ identity
-  'site.name': 'The Crossing',
-  'site.full': 'The Marmaray Crossing',
+  'site.name': 'Boğaziçi Hattı',
+  'site.full': 'Boğaziçi Hattı — the Bosphorus Line',
+  'site.sub': 'B1 · İSTANBUL',
+  'theme.label': 'Theme',
+  'theme.light': 'Light',
+  'theme.dark': 'Dark',
+  'theme.toLight': 'Switch to the light theme',
+  'theme.toDark': 'Switch to the dark theme',
   'site.tagline': 'Europe to Asia, sixty metres under the Bosphorus.',
   'site.description':
     'The central tunnel section of the Marmaray: 13.6 kilometres, six stations, and an immersed tube 60 metres below sea level.',

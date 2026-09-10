@@ -299,3 +299,29 @@ body:has(.rail) .foot {
 body:has(.rail) .open {
   padding-bottom: calc(var(--rail-h) + var(--carbar-h) + var(--sp-base));
 }
+
+/* --------------------------------------------------------------- the theme
+   One button, two icons, and only ever one of them painted. The sun shows in
+   the light theme and the moon in the dark one — the icon is the state, not
+   the action, which is the convention every operating system uses and the one
+   readers already know. */
+.ctl--theme .ctl__ico--moon {
+  display: none;
+}
+:root[data-service='night'] .ctl--theme .ctl__ico--sun {
+  display: none;
+}
+:root[data-service='night'] .ctl--theme .ctl__ico--moon {
+  display: inline-flex;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-service='day']) .ctl--theme .ctl__ico--sun {
+    display: none;
+  }
+  :root:not([data-service='day']) .ctl--theme .ctl__ico--moon {
+    display: inline-flex;
+  }
+}
+.ctl--theme[aria-pressed='true'] {
+  border-color: var(--rule-strong);
+}

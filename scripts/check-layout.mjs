@@ -51,8 +51,10 @@ const ROUTES = [
    * than a look.
    */
   {
+    // Geographic is now the register the page opens on, so the plain /harita/
+    // row above already covers it. This one presses the other button.
     path: '/harita/',
-    name: '/harita/ (geographic)',
+    name: '/harita/ (diagram)',
     prepare: async (page) => {
       await page.locator('.seg__btn').nth(1).click({ force: true });
       // Longer than the 900ms morph, so the audit sees it settled.
@@ -63,10 +65,8 @@ const ROUTES = [
     path: '/harita/',
     name: '/harita/ (station open)',
     prepare: async (page) => {
-      await page.locator('.seg__btn').nth(1).click({ force: true });
-      await page.waitForTimeout(1100);
       await page.locator('g.stn[aria-label="Yenikapı"]').click({ force: true });
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(400);
     },
   },
 ];

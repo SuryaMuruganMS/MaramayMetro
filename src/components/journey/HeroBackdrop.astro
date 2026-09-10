@@ -62,7 +62,15 @@ const src = modeAsset('/img/backdrop') ?? modeAsset('/img/hero');
       palette rather than arguing with it.
     */
     mix-blend-mode: luminosity;
-    opacity: 0.5;
+    /*
+       Day sits much higher than night, and that is not an oversight.
+       Luminosity blending throws the photograph's colour away and takes the
+       ground's; on a near-white day ground that leaves a pale image with very
+       little left in it, where the same treatment on a near-black night ground
+       keeps plenty. Matching the two numbers matches the maths, not the
+       picture. 0.5 was invisible in daylight.
+    */
+    opacity: 0.82;
   }
 
   /* The pair, resolved exactly the way ModeImage resolves it: three rules, so
@@ -85,7 +93,7 @@ const src = modeAsset('/img/backdrop') ?? modeAsset('/img/hero');
     opacity: 0.62;
   }
   :global(:root[data-service='day']) .bd__i--day {
-    opacity: 0.5;
+    opacity: 0.82;
   }
   :global(:root[data-service='day']) .bd__i--night {
     opacity: 0;
@@ -98,9 +106,9 @@ const src = modeAsset('/img/backdrop') ?? modeAsset('/img/hero');
     background: linear-gradient(
       100deg,
       var(--ground) 0%,
-      color-mix(in oklab, var(--ground) 88%, transparent) 34%,
-      color-mix(in oklab, var(--ground) 40%, transparent) 62%,
-      color-mix(in oklab, var(--ground) 12%, transparent) 100%
+      color-mix(in oklab, var(--ground) 86%, transparent) 32%,
+      color-mix(in oklab, var(--ground) 32%, transparent) 58%,
+      transparent 100%
     );
   }
   /* And a short one at the foot, where the section rail crosses the picture. */
@@ -142,7 +150,7 @@ const src = modeAsset('/img/backdrop') ?? modeAsset('/img/hero');
      picture has to step back further or the type sits on top of a building. */
   @media (max-width: 1100px) {
     .bd__i {
-      opacity: 0.3;
+      opacity: 0.42;
       object-position: 60% 50%;
     }
     :global(:root[data-service='night']) .bd__i--night,
@@ -150,7 +158,7 @@ const src = modeAsset('/img/backdrop') ?? modeAsset('/img/hero');
       opacity: 0.4;
     }
     :global(:root[data-service='day']) .bd__i--day {
-      opacity: 0.3;
+      opacity: 0.42;
     }
     .bd__scrim {
       background: linear-gradient(

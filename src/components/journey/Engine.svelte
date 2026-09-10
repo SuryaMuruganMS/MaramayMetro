@@ -14,7 +14,7 @@
     nearestStop,
     overburden,
   } from '../../lib/chainage.ts';
-  import { CH_END } from '../../data/alignment.ts';
+  import { CH_END, STOPS } from '../../data/alignment.ts';
   import { partAt, FORMATION } from '../../lib/formation.ts';
 
   interface Props {
@@ -219,6 +219,40 @@
       });
     }
 
+    /**
+     * Somebody pressed a station.
+     *
+     * The rail dispatches a chainage and this is the only place that knows what
+     * a chainage means in scroll pixels. Smooth, because this one IS a
+     * navigation the reader asked for and watching the train run there is the
+     * point — unlike the deep-link restore, which has to be instant or the page
+     * opens at the wrong place and then slides.
+     */
+    function onGoto(e: Event) {
+      const ch = (e as CustomEvent<{ ch: number }>).detail?.ch;
+      if (!Number.isFinite(ch)) return;
+      const want = Math.min(CH_END, Math.max(0, ch));
+      if (isPlan()) {
+        // No horizontal track to travel: go to the station's own panel.
+        const el = document.getElementById(`istasyon-${nearestStopId(want)}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      const scrubPx = journey!.offsetHeight - window.innerHeight;
+      if (scrubPx <= 0) return;
+      window.scrollTo({
+        top: journey!.offsetTop + chToProgress(want) * scrubPx,
+        behavior: 'smooth',
+      });
+    }
+
+    /** The stop a chainage belongs to, for the vertical fallback. */
+    function nearestStopId(ch: number): string {
+      let best = STOPS[0]!;
+      for (const s of STOPS) if (Math.abs(s.ch - ch) < Math.abs(best.ch - ch)) best = s;
+      return best.id;
+    }
+
     function syncPlanFlag() {
       planView = isPlan();
       if (planView) {
@@ -231,6 +265,8 @@
         apply(progress());
       }
     }
+
+    window.addEventListener('crossing:goto', onGoto);
 
     measure();
     restoreDeepLink();

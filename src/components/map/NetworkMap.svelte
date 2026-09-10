@@ -1,12 +1,11 @@
 <script lang="ts">
   import { LINES, NODES, nodeById, type Node } from '../../data/network.ts';
-  import { PROFILE, STOPS, CH_END } from '../../data/alignment.ts';
-  import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
+    import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
   import StationCard from './StationCard.svelte';
   import type { Locale } from '../../lib/locale.ts';
 
   /**
-   * The network in three registers.
+   * The network in two registers.
    *
    * A transit diagram is a lie that works: Beck threw away geography so the
    * decisions would be legible. Showing both registers and animating between
@@ -20,7 +19,7 @@
    * placed by eye and labelled indicative, which made the morph a comparison
    * between a diagram and a guess. Now it compares a diagram with the ground.
    *
-   * All three registers share one set of station nodes, so the morph is a
+   * Both registers share one set of station nodes, so the morph is a
    * position tween rather than a crossfade between two pictures. Nothing is
    * redrawn; the same stations move. The frame grows taller as it goes, because
    * İstanbul is not the shape of a transit diagram.
@@ -31,14 +30,30 @@
   }
   const { locale, labels }: Props = $props();
 
-  type Register = 'diagram' | 'geographic' | 'section';
+  /*
+     Two registers, not three.
 
-  let register = $state<Register>('diagram');
-  let stepFreeOnly = $state(false);
+     The section came off: it draws the Marmaray spine's vertical alignment,
+     which the crossing already draws far better across a whole screen, and
+     having it here meant a third of the control was a worse copy of the
+     landing page. The step-free filter came off with it — it dimmed lines and
+     hid stations to answer a question the table below answers precisely.
+  */
+  type Register = 'geographic' | 'diagram';
+
+  /*
+     The map opens on the ground.
+
+     It opened on Beck's diagram, which is the more beautiful drawing and the
+     wrong first answer: a reader arriving at a map page wants to know where
+     things are, and only then how the network is shaped. The diagram is one
+     press away and the morph between them is still the point.
+  */
+  let register = $state<Register>('geographic');
   let focused = $state<string | null>(null);
   let selected = $state<string | null>(null);
   /** 0 = diagram, 1 = geographic. Tweened, so the two registers morph. */
-  let morph = $state(0);
+  let morph = $state(1);
 
   const W = 100;
   /**
@@ -52,24 +67,9 @@
   const DIAG_H = 56;
 
   /** The frame's height follows the morph, so neither register is squashed. */
-  const H = $derived(register === 'section' ? DIAG_H : DIAG_H + (GEO_H - DIAG_H) * morph);
-
-  // The section register is a different projection entirely: chainage across,
-  // real elevation down. It only has data for the Marmaray spine, and says so.
-  const SPINE = new Set(STOPS.map((s) => s.id));
-
-  function sectionPos(n: Node): { x: number; y: number } | null {
-    const stop = STOPS.find((s) => s.id === n.id);
-    if (!stop) return null;
-    return {
-      x: 6 + (stop.ch / CH_END) * 88,
-      // +10 m at the top of the box, -65 m at the bottom.
-      y: 8 + ((10 - stop.level) / 75) * 54,
-    };
-  }
+  const H = $derived(DIAG_H + (GEO_H - DIAG_H) * morph);
 
   function pos(n: Node): { x: number; y: number } {
-    if (register === 'section') return sectionPos(n) ?? { x: n.x, y: n.y };
     const g = GEO[n.id];
     if (!g) return { x: n.x, y: n.y };
     return { x: n.x + (g.x - n.x) * morph, y: n.y + (g.y - n.y) * morph };
@@ -82,7 +82,7 @@
    * from - so it arrives instead, and late enough that the stations have mostly
    * finished moving by the time there is anything to read them against.
    */
-  const coastAlpha = $derived(register === 'section' ? 0 : Math.max(0, (morph - 0.4) / 0.6));
+  const coastAlpha = $derived(Math.max(0, (morph - 0.4) / 0.6));
 
   /**
    * Dots and strokes thin out as the map becomes real.
@@ -103,7 +103,7 @@
    */
   const byName = $derived([...NODES].sort((a, b) => a.name.localeCompare(b.name, locale)));
 
-  const shown = $derived(NODES.filter((n) => !stepFreeOnly || n.stepFree));
+  const shown = $derived(NODES);
   const shownIds = $derived(new Set(shown.map((n) => n.id)));
 
   // ---------------------------------------------------------------- labels
@@ -189,7 +189,7 @@
     const left: Place = { x: p.x - gap, y: p.y + 0.7, anchor: 'end' };
     // On the spine, alternate above and below first: consecutive stations take
     // turns, which doubles the room each name has without moving a station.
-    if (i >= 0 && register !== 'section') {
+    if (i >= 0) {
       return i % 2 === 0 ? [above, below, right, left] : [below, above, right, left];
     }
     return [right, left, above, below];
@@ -207,7 +207,6 @@
     // Station dots are obstacles too: a name printed across a neighbouring
     // station's dot is as unreadable as one printed across another name.
     for (const n of shown) {
-      if (register === 'section' && !SPINE.has(n.id)) continue;
       const p = pos(n);
       const r = (n.lines.length > 1 ? 1.7 : 1.2) * ink;
       taken.push({ x0: p.x - r, x1: p.x + r, y0: p.y - r, y1: p.y + r });
@@ -219,7 +218,6 @@
        reactivity nothing reads. */
     const out = new Map<string, Place>();
     for (const n of order) {
-      if (register === 'section' && !SPINE.has(n.id)) continue;
       for (const c of candidates(n)) {
         const b = boxOf(n.name, c);
         if (taken.some((t) => overlaps(t, b))) continue;
@@ -245,7 +243,6 @@
     const pts = routeIds
       .map((id) => nodeById.get(id))
       .filter((n): n is Node => !!n)
-      .filter((n) => register !== 'section' || SPINE.has(n.id))
       .map((n) => pos(n));
     if (pts.length < 2) return '';
     return pts
@@ -253,28 +250,9 @@
       .join(' ');
   }
 
-  /** The section register draws the real vertical alignment, not straight hops. */
-  const sectionAlignment = $derived(
-    PROFILE.map(
-      (p, i) =>
-        `${i === 0 ? 'M' : 'L'}${(6 + (p.ch / CH_END) * 88).toFixed(2)},${(
-          8 +
-          ((10 - p.level) / 75) * 54
-        ).toFixed(2)}`,
-    ).join(' '),
-  );
-
   function setRegister(next: Register) {
     if (next === register) return;
-    const wasSection = register === 'section';
     register = next;
-    if (next === 'section' || wasSection) {
-      // No tween into or out of a different projection: chainage and geography
-      // are not the same axis, and interpolating between them would draw a
-      // shape that is neither.
-      morph = next === 'geographic' ? 1 : 0;
-      return;
-    }
     tweenTo(next === 'geographic' ? 1 : 0);
   }
 
@@ -302,9 +280,8 @@
     selected = selected === id ? null : id;
   }
   const REGISTERS: Array<{ id: Register; key: string }> = [
-    { id: 'diagram', key: 'reg.diagram' },
     { id: 'geographic', key: 'reg.geographic' },
-    { id: 'section', key: 'reg.section' },
+    { id: 'diagram', key: 'reg.diagram' },
   ];
 </script>
 
@@ -328,19 +305,11 @@
         </button>
       {/each}
     </div>
-
-    <label class="switch">
-      <input type="checkbox" bind:checked={stepFreeOnly} />
-      <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
-      <span class="switch__txt">{labels['map.stepFree']}</span>
-    </label>
   </div>
 
   <p class="netmap__caveat mono">
     {#if register === 'geographic'}
       {labels['map.geoCaveat']}
-    {:else if register === 'section'}
-      {labels['map.sectionCaveat']}
     {:else}
       {labels['map.click']}
     {/if}
@@ -370,7 +339,7 @@
 
         <!-- The Bosphorus, schematic. It hands over to the real coastline as
              that fades in, rather than being drawn on top of it. -->
-        {#if register !== 'section' && coastAlpha < 1}
+        {#if coastAlpha < 1}
           <path
             d="M53,0 L53,56"
             stroke="var(--turquoise)"
@@ -380,90 +349,68 @@
           />
         {/if}
 
-        {#if register === 'section'}
-          <!-- Sea level, and the alignment as it really runs. -->
-          <line
-            x1="6"
-            y1={8 + (10 / 75) * 54}
-            x2="94"
-            y2={8 + (10 / 75) * 54}
-            stroke="var(--turquoise)"
-            stroke-width="0.5"
-            opacity="0.7"
-          />
+        {#each LINES as line (line.id)}
           <path
-            d={sectionAlignment}
-            stroke="var(--accent)"
-            stroke-width="1.1"
-            fill="none"
+            d={routePath(line.route)}
+            stroke={line.colour}
+            stroke-width={(line.kind === 'rail' ? 1.5 : 1.1) * ink}
+            stroke-linecap="round"
             stroke-linejoin="round"
+            fill="none"
+            opacity={selectedNode && !litLines.has(line.id) ? 0.34 : 1}
           />
-        {:else}
-          {#each LINES as line (line.id)}
-            <path
-              d={routePath(line.route)}
-              stroke={line.colour}
-              stroke-width={(line.kind === 'rail' ? 1.5 : 1.1) * ink}
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              fill="none"
-              opacity={stepFreeOnly ? 0.35 : selectedNode && !litLines.has(line.id) ? 0.34 : 1}
-            />
-          {/each}
-        {/if}
+        {/each}
 
         <!-- Stations. Interchanges are larger because they are where a decision
              gets made; everything else is a stop. -->
         {#each shown as n (n.id)}
           {@const p = pos(n)}
-          {#if register !== 'section' || SPINE.has(n.id)}
-            <g
-              class="stn"
-              class:is-focused={focused === n.id}
-              class:is-selected={selected === n.id}
-              class:is-dimmed={!!selectedNode && selected !== n.id}
-              role="button"
-              tabindex="0"
-              aria-pressed={selected === n.id}
-              aria-label={n.name}
-              onmouseenter={() => (focused = n.id)}
-              onmouseleave={() => (focused = null)}
-              onfocus={() => (focused = n.id)}
-              onblur={() => (focused = null)}
-              onclick={() => pick(n.id)}
-              onkeydown={(e) => {
-                // Enter and Space, because this group is standing in for a
-                // button and a button responds to both.
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  pick(n.id);
-                }
-              }}
-            >
-              <!-- A one-unit dot is a two-pixel target. This is the thing the
+          <g
+            class="stn"
+            class:is-focused={focused === n.id}
+            class:is-selected={selected === n.id}
+            class:is-dimmed={!!selectedNode && selected !== n.id}
+            role="button"
+            tabindex="0"
+            aria-pressed={selected === n.id}
+            aria-label={n.name}
+            onmouseenter={() => (focused = n.id)}
+            onmouseleave={() => (focused = null)}
+            onfocus={() => (focused = n.id)}
+            onblur={() => (focused = null)}
+            onclick={() => pick(n.id)}
+            onkeydown={(e) => {
+              // Enter and Space, because this group is standing in for a
+              // button and a button responds to both.
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                pick(n.id);
+              }
+            }}
+          >
+            <!-- A one-unit dot is a two-pixel target. This is the thing the
                    pointer actually hits; it is invisible and generous, and it
                    doubles as the keyboard focus ring. -->
-              <circle cx={p.x} cy={p.y} r="2.6" class="stn__hit" fill="transparent" />
-              {#if selected === n.id}
-                <circle cx={p.x} cy={p.y} r="3.2" class="stn__halo" />
-              {/if}
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={(n.lines.length > 1 ? 1.5 : 1) * ink}
-                class="stn__dot"
-                fill="var(--surface)"
-                stroke="var(--ink)"
-                stroke-width={(n.lines.length > 1 ? 0.7 : 0.5) * ink}
-              />
-              {#if labelFor(n)}
-                {@const l = labelFor(n)!}
-                <text x={l.x} y={l.y} text-anchor={l.anchor} class="stn__label" font-size={FS}
-                  >{n.name}</text
-                >
-              {/if}
-            </g>
-          {/if}
+            <circle cx={p.x} cy={p.y} r="2.6" class="stn__hit" fill="transparent" />
+            {#if selected === n.id}
+              <circle cx={p.x} cy={p.y} r="3.2" class="stn__halo" />
+            {/if}
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r={(n.lines.length > 1 ? 1.5 : 1) * ink}
+              class="stn__dot"
+              fill="var(--surface)"
+              stroke="var(--ink)"
+              stroke-width={(n.lines.length > 1 ? 0.7 : 0.5) * ink}
+            />
+            {#if labelFor(n)}
+              {@const l = labelFor(n)!}
+              <text x={l.x} y={l.y} text-anchor={l.anchor} class="stn__label" font-size={FS}
+                >{n.name}</text
+              >
+            {/if}
+          </g>
         {/each}
       </svg>
 
@@ -561,48 +508,6 @@
   .seg__btn[aria-pressed='true'] {
     background: var(--accent);
     color: #fff;
-  }
-
-  .switch {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-tight);
-    cursor: pointer;
-    font-size: var(--t-small);
-    color: var(--ink-2);
-  }
-  .switch input {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-  }
-  .switch__track {
-    width: 40px;
-    height: 23px;
-    border-radius: var(--r-capsule);
-    background: color-mix(in oklab, var(--ink) 16%, transparent);
-    padding: 3px;
-    transition: background-color var(--d-ui) var(--ease-out);
-  }
-  .switch__knob {
-    display: block;
-    width: 17px;
-    height: 17px;
-    border-radius: var(--r-capsule);
-    background: var(--surface);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.24);
-    transition: translate var(--d-ui) var(--ease-mech);
-  }
-  .switch input:checked + .switch__track {
-    background: var(--ok);
-  }
-  .switch input:checked + .switch__track .switch__knob {
-    translate: 17px 0;
-  }
-  .switch input:focus-visible + .switch__track {
-    outline: 3px solid var(--accent);
-    outline-offset: 2px;
   }
 
   .netmap__caveat {

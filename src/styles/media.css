@@ -392,6 +392,23 @@
   }
 }
 
+/* ------------------------------------------------------------ rounder
+   The travelling page's photographs take a larger radius than the rest.
+
+   Not decoration: that page is the only one addressed to a passenger rather
+   than to a reader of a record, and a softer corner is the difference between
+   an exhibit and an instruction. Everything else on the site — the finds, the
+   construction record, the map — keeps the tighter print radius, because a
+   record that rounds its corners is a record trying to be liked.
+*/
+.media--round .mimg__frame,
+.media--round .mvid__frame {
+  border-radius: 22px;
+}
+.media--round.reveal-wipe {
+  --frame-r: 22px;
+}
+
 /* --------------------------------------------------------------- dissolve
    A large media block that ends on a hard horizontal line looks pasted on.
    Masking the last few per cent to transparent lets it settle into the ground

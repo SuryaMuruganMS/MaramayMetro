@@ -321,20 +321,35 @@ const OFFICIAL = 'https://www.metro.istanbul/';
     grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
     gap: var(--sp-base);
   }
+  /*
+     Every card has an edge.
+
+     They all had `--border-hair`, which is a 1px rule in --rule — and in the
+     dark theme --rule is within a shade or two of the surface it sits on, so
+     three of the four cards read as floating text and only the accented one
+     looked like a card at all. A set of four where one is bordered is not a
+     set. `--rule-strong` holds in both themes.
+  */
   .rule {
     display: flex;
     flex-direction: column;
     gap: var(--sp-tight);
     padding: var(--sp-base);
     background: var(--surface);
-    border: var(--border-hair);
-    border-radius: var(--r-panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--frame-r);
   }
   /* Only the distance rule is lifted, because it is the one thing about this
      railway's tariff that is different from every other line in the city. */
   .rule--mr {
     border-color: var(--turquoise);
     border-top-width: 3px;
+  }
+  .tariff,
+  .free,
+  .ladder__step,
+  .tw {
+    border-color: var(--rule-strong);
   }
   .rule h3 {
     font-size: var(--t-h3);

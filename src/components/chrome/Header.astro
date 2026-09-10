@@ -29,7 +29,7 @@ const isCurrent = (to: string) => path === to || (to !== '/' && path.startsWith(
       <Mark size={30} />
       <span class="head__word">
         <b>{tt('site.name')}</b>
-        <em class="mono">MARMARAY</em>
+        <em class="mono">{tt('site.sub')}</em>
       </span>
     </a>
 
@@ -48,32 +48,36 @@ const isCurrent = (to: string) => path === to || (to !== '/' && path.startsWith(
     </nav>
 
     <div class="head__ctl">
-      <button class="ctl" type="button" data-view-toggle aria-pressed="false">
-        <span class="ctl__ico" aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="13" height="13">
-            <rect x="1" y="2" width="14" height="2" rx="1" fill="currentColor"></rect>
-            <rect x="1" y="7" width="14" height="2" rx="1" fill="currentColor"></rect>
-            <rect x="1" y="12" width="14" height="2" rx="1" fill="currentColor"></rect>
-          </svg>
-        </span>
-        <span class="ctl__txt">{tt('ctl.planview')}</span>
-      </button>
+      <!--
+        Light and dark, called light and dark.
 
-      <!-- Day / night is service hours, so the icon is a clock, not a moon. -->
-      <button class="ctl" type="button" data-service-toggle aria-pressed="false">
-        <span class="ctl__ico" aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="13" height="13">
-            <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"
-            ></circle>
+        It used to say "Service", on the reasoning that day and night are
+        operating hours rather than a preference — which is true of the railway
+        and false of the control. Nobody pressing a button in a website header
+        is setting an operating hour; they are changing the theme, and a label
+        that hides that is cleverness at the reader's expense. The distinction
+        survives where it is real: the imagery still switches between the
+        daylight set and the night set, because those are two different
+        photographs of the same railway.
+      -->
+      <button class="ctl ctl--theme" type="button" data-service-toggle aria-pressed="false">
+        <span class="ctl__ico ctl__ico--sun" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="14" height="14">
+            <circle cx="8" cy="8" r="3.4" fill="currentColor"></circle>
             <path
-              d="M8 4.4 V8 L10.4 9.6"
-              fill="none"
+              d="M8 .8v2.1M8 13.1v2.1M15.2 8h-2.1M2.9 8H.8M13.1 2.9l-1.5 1.5M4.4 11.6l-1.5 1.5M13.1 13.1l-1.5-1.5M4.4 4.4 2.9 2.9"
               stroke="currentColor"
-              stroke-width="1.6"
+              stroke-width="1.5"
               stroke-linecap="round"></path>
           </svg>
         </span>
-        <span class="ctl__txt">{tt('ctl.service')}</span>
+        <span class="ctl__ico ctl__ico--moon" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="14" height="14">
+            <path d="M13.4 9.9A6 6 0 0 1 6.1 2.6 6 6 0 1 0 13.4 9.9Z" fill="currentColor"
+            ></path>
+          </svg>
+        </span>
+        <span class="ctl__txt" data-theme-label>{tt('theme.dark')}</span>
       </button>
 
       <!--

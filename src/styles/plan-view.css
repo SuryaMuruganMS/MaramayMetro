@@ -109,128 +109,17 @@
   }
 }
 
-/* The switch. Same declarations, reached deliberately rather than by viewport. */
-:root[data-view='plan'] .journey {
-  height: auto;
-  view-timeline-name: none;
-}
-:root[data-view='plan'] .journey__pin {
-  position: static;
-  height: auto;
-  overflow: visible;
-}
-:root[data-view='plan'] .journey__track {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-:root[data-view='plan'] .panel,
-:root[data-view='plan'] .panel--stop,
-:root[data-view='plan'] .panel--run,
-:root[data-view='plan'] .panel--crossing,
-:root[data-view='plan'] .panel--arrival {
-  position: static;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  padding: var(--sp-vast) var(--margin);
-  border-bottom: 1px solid var(--rule-soft);
-  animation: none !important;
-  transform: none !important;
-}
-:root[data-view='plan'] .snap {
-  display: none;
-}
-:root[data-view='plan'] .rail,
-:root[data-view='plan'] .readout {
-  display: none !important;
-}
-:root[data-view='plan'] .crossing__grid {
-  grid-template-columns: 1fr;
-  height: auto;
-  padding: 0;
-  gap: var(--sp-base);
-}
-:root[data-view='plan'] .crossing__after {
-  justify-self: start;
-  text-align: left;
-}
-:root[data-view='plan'] .crossing__mid {
-  align-items: flex-start;
-  text-align: left;
-}
-:root[data-view='plan'] .sea {
-  position: relative;
-  height: 90px;
-  margin-bottom: var(--sp-base);
-  border-radius: var(--r-panel);
-}
-:root[data-view='plan'] .divide {
-  position: relative;
-  inset: auto;
-  left: 0;
-  width: auto;
-  margin: var(--sp-base) 0;
-  padding-left: var(--sp-base);
-  border-left: 2px dashed var(--accent);
-}
-:root[data-view='plan'] .divide__rule {
-  display: none;
-}
-:root[data-view='plan'] .divide__tag,
-:root[data-view='plan'] .divide__eu,
-:root[data-view='plan'] .divide__as,
-:root[data-view='plan'] .divide__ch {
-  position: static;
-  translate: none;
-  display: inline-block;
-  margin-right: var(--sp-tight);
-}
-:root[data-view='plan'] .run__line {
-  text-shadow: none;
-}
+/*
+   THE SWITCH IS GONE.
 
-/* --------------------------------------------------------------------------
-   The finds rail, in plan view.
+   Everything below this line used to be the same declarations again, keyed off
+   `:root[data-view='plan']`, so a reader could ask for the vertical layout by
+   pressing a button in the header. The button has been removed: it offered a
+   choice nobody was making, and it cost a permanent slot in a header that has
+   real controls in it.
 
-   Its own media-query fallback lives in finds.css next to the rules it undoes,
-   which is fine because nothing else declares `.find`. What cannot live there
-   is the switch: `[data-view='plan']` has to beat every rule in every file, and
-   the only way to guarantee that is to be last. Same declarations, reached
-   deliberately rather than by viewport.
-   -------------------------------------------------------------------------- */
-:root[data-view='plan'] .finds__runway {
-  height: auto;
-  view-timeline-name: none;
-}
-:root[data-view='plan'] .finds__pin {
-  position: static;
-  height: auto;
-  overflow: visible;
-  background: none;
-}
-:root[data-view='plan'] .finds__track {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-loose);
-  height: auto;
-  width: min(100% - var(--margin) * 2, var(--shell));
-  margin-inline: auto;
-  padding: var(--sp-base) 0;
-}
-:root[data-view='plan'] .find {
-  position: static;
-  width: auto;
-  grid-template-columns: 1fr;
-  gap: var(--sp-base);
-  padding: var(--sp-base);
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-panel);
-  animation: none !important;
-  transform: none !important;
-}
-:root[data-view='plan'] .finds__cue-arrow {
-  rotate: 90deg;
-  animation: none;
-}
+   The escape hatch itself is untouched. Under 1024px, at 400% zoom and under
+   reduced motion the whole site still lays out as an ordinary vertical
+   document, which is what WCAG 1.4.10 requires and the only reason the
+   sideways reading is allowed to exist at all.
+*/

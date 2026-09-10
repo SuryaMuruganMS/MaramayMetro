@@ -2,12 +2,13 @@
 /**
  * The mark.
  *
- * A capsule with the alignment drawn through it: level, dipping under the
- * middle, level again. It is the long-section of the crossing reduced to
- * fourteen pixels, and the two dots are the continents.
+ * A train, head on, in a roundel: the raked windscreen, the cab glass, two
+ * headlights and the rails running away underneath. It replaced a drawing of
+ * the tunnel's long-section — accurate, and unreadable at fourteen pixels,
+ * which is the only size a mark is ever seen at.
  *
- * A roundel because that is what transit identity is made of, and because every
- * other project in this portfolio has a corner radius of zero.
+ * A roundel because that is what transit identity is made of, and because
+ * every other project in this portfolio has a corner radius of zero.
  */
 interface Props {
   size?: number;
@@ -26,15 +27,23 @@ const { size = 30, title } = Astro.props;
   aria-hidden={title ? undefined : 'true'}
 >
   <rect x="1" y="1" width="38" height="38" rx="19" fill="var(--accent)"></rect>
+  <!-- The car body: raked at the top, square at the sill. -->
   <path
-    d="M7 16 H13 Q16 16 17.5 22 T20 27 T22.5 22 Q24 16 27 16 H33"
+    d="M13 12.5 Q20 9.5 27 12.5 L27.5 28 H12.5 Z"
     fill="none"
     stroke="var(--ink-on-pigment)"
-    stroke-width="2.4"
-    stroke-linecap="round"
+    stroke-width="2.1"
     stroke-linejoin="round"></path>
-  <circle cx="7" cy="16" r="2.6" fill="var(--ink-on-pigment)"></circle>
-  <circle cx="33" cy="16" r="2.6" fill="var(--ink-on-pigment)"></circle>
+  <!-- The windscreen. -->
+  <path d="M15 15.5 Q20 13.8 25 15.5 L25 20 H15 Z" fill="var(--ink-on-pigment)"></path>
+  <!-- Headlights, and the rails under them. -->
+  <circle cx="16.2" cy="24" r="1.5" fill="var(--ink-on-pigment)"></circle>
+  <circle cx="23.8" cy="24" r="1.5" fill="var(--ink-on-pigment)"></circle>
+  <path
+    d="M11 31.5 H29 M15.5 28 V31.5 M24.5 28 V31.5"
+    stroke="var(--ink-on-pigment)"
+    stroke-width="1.8"
+    stroke-linecap="round"></path>
 </svg>
 
 <style>

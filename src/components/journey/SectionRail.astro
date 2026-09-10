@@ -136,17 +136,38 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
         stroke-linejoin="round"
         stroke-linecap="round"></polyline>
 
-      <!-- stations -->
+      <!--
+        Stations, and every one of them is a control.
+
+        The rail was already a real scrollbar you could drag; these make it a
+        set of destinations you can press. The circle is 3.6 units in a
+        preserveAspectRatio="none" viewBox, which is a smear a few pixels wide
+        on screen — so the thing that takes the press is the invisible bar
+        drawn behind it, full height and generous, and the circle is only what
+        you see.
+      -->
       {
         STOPS.map((s) => (
-          <circle
-            cx={x(s.ch)}
-            cy={y(s.level)}
-            r="3.6"
-            fill="var(--surface)"
-            stroke="var(--accent)"
-            stroke-width="2"
-          />
+          <g class="rail__pin" data-ch={s.ch}>
+            <title>{s.name}</title>
+            <rect
+              class="rail__hit"
+              x={x(s.ch) - 9}
+              y="0"
+              width="18"
+              height={H}
+              fill="transparent"
+            />
+            <circle
+              class="rail__dot"
+              cx={x(s.ch)}
+              cy={y(s.level)}
+              r="3.6"
+              fill="var(--surface)"
+              stroke="var(--accent)"
+              stroke-width="2"
+            />
+          </g>
         ))
       }
     </svg>
@@ -174,7 +195,7 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
       {
         STOPS.map((s) => (
           <li style={`left:${(s.ch / CH_END) * 100}%`}>
-            <a href={`?ch=${s.ch}`} class="rail__stop">
+            <a href={`?ch=${s.ch}`} class="rail__stop" data-ch={s.ch} title={s.name}>
               <span class="visually-hidden">{s.name}</span>
             </a>
           </li>
@@ -184,6 +205,47 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
   </div>
 </div>
 
+<script>
+  /**
+   * A station on the rail takes you to it.
+   *
+   * The links already worked — they are `?ch=…` and the engine restores a deep
+   * link before the first frame — but they worked by reloading the whole page
+   * to travel four hundred metres. This intercepts them and hands the chainage
+   * to the engine instead, which owns the only correct mapping from a position
+   * on the line to a position in the document.
+   *
+   * The SVG dots get the same treatment, and they are keyboard-reachable in
+   * their own right, so a reader who can see the section can press the station
+   * they can see rather than hunting for its invisible twin in the list.
+   */
+  function goto(ch: number, replace: boolean) {
+    window.dispatchEvent(new CustomEvent('crossing:goto', { detail: { ch } }));
+    // Keep the address bar honest, without a history entry per station.
+    const url = new URL(location.href);
+    url.searchParams.set('ch', String(Math.round(ch)));
+    history[replace ? 'replaceState' : 'pushState']({}, '', url);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-ch]').forEach((el) => {
+    const ch = Number(el.dataset.ch);
+    if (!Number.isFinite(ch)) return;
+    if (el.tagName === 'G') {
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'button');
+    }
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      goto(ch, false);
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        goto(ch, false);
+      }
+    });
+  });
+</script>
 
 <style>
   .rail__side {
@@ -234,4 +296,29 @@ for (let ch = 0; ch <= CH_END; ch += tickEvery) ticks.push(ch);
   }
 
   @media (max-width: 1023px) {
-  </style>
+  
+  /* A station on the rail is a button. It says so on hover and under a
+     keyboard, and it grows rather than changing colour, because at this size a
+     colour change is invisible and a size change is not. */
+  .rail__pin {
+    cursor: pointer;
+  }
+  .rail__dot {
+    transition:
+      r var(--d-hover) var(--ease-out),
+      stroke-width var(--d-hover) var(--ease-out);
+  }
+  .rail__pin:hover .rail__dot,
+  .rail__pin:focus-visible .rail__dot {
+    r: 5.4;
+    stroke-width: 3;
+  }
+  .rail__pin:focus-visible {
+    outline: none;
+  }
+  .rail__pin:focus-visible .rail__hit {
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+  }
+</style>

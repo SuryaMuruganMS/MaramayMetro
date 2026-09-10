@@ -47,6 +47,10 @@ describe('translations', () => {
       'dig.place',
       // A range of years in Latin digits, identical in English and Turkish.
       'find.station.period',
+      // The line's own name and its designation on the network. A railway is
+      // called what it is called, in every language on the page.
+      'site.name',
+      'site.sub',
     ]);
     for (const loc of LOCALES) {
       if (loc === 'en') continue;

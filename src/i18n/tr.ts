@@ -2,8 +2,14 @@ import type { Keys } from './en.ts';
 
 /** Türkçe. The city's own language, and the one every place name stays in. */
 export const tr: Record<Keys, string> = {
-  'site.name': 'Geçiş',
-  'site.full': 'Marmaray Geçişi',
+  'site.name': 'Boğaziçi Hattı',
+  'site.full': 'Boğaziçi Hattı — Boğaz geçişi',
+  'site.sub': 'B1 · İSTANBUL',
+  'theme.label': 'Tema',
+  'theme.light': 'Açık',
+  'theme.dark': 'Koyu',
+  'theme.toLight': 'Açık temaya geç',
+  'theme.toDark': 'Koyu temaya geç',
   'site.tagline': 'Avrupa’dan Asya’ya, Boğaz’ın altmış metre altından.',
   'site.description':
     'Marmaray’ın merkez tünel kesiti: 13,6 kilometre, altı istasyon ve deniz seviyesinin 60 metre altında bir batırma tüp geçit.',

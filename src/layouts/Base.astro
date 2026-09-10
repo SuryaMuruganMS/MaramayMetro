@@ -76,9 +76,11 @@ const desc = description ?? tt('site.description');
       like a different site depending on when you arrived, which is a poor
       trade for a page most people see exactly once.)
 
-      Second, whether the reader has asked for plan view, which must be known
-      before layout or the horizontal track flashes into existence and then
-      collapses.
+      Plan view used to be decided here too. The escape hatch it drove is still
+      in the stylesheet — under 1024px, at 400% zoom and under reduced motion
+      the whole site lays out as an ordinary vertical document, which is what
+      WCAG 1.4.10 requires — but the button that let a reader ask for it by
+      hand has gone. It was a control for a preference nobody has.
     -->
     <script is:inline>
       (function () {
@@ -87,13 +89,6 @@ const desc = description ?? tt('site.description');
           r.setAttribute('data-service', localStorage.getItem('marmaray-service') || 'night');
         } catch {
           r.setAttribute('data-service', 'night');
-        }
-        try {
-          if (localStorage.getItem('marmaray-view') === 'plan') {
-            r.setAttribute('data-view', 'plan');
-          }
-        } catch {
-          /* storage blocked; section view is the default and works fine */
         }
       })();
     </script>
@@ -110,6 +105,18 @@ const desc = description ?? tt('site.description');
       Kestrel, where exactly that pattern hid copy at sixty combinations before
       a gate caught it. A bar in the flow can never cover anything.
     -->
+    <script
+      type="application/json"
+      id="theme-words"
+      set:html={JSON.stringify({
+        light: tt('theme.light'),
+        dark: tt('theme.dark'),
+        toLight: tt('theme.toLight'),
+        toDark: tt('theme.toDark'),
+      })}
+      is:inline
+    />
+
     <Disclosure locale={locale} />
     <Header locale={locale} path={path} />
 
@@ -128,6 +135,11 @@ const desc = description ?? tt('site.description');
        * engine watches data-view and reconfigures itself when it changes.
        */
       const root = document.documentElement;
+
+      /** Theme wording, from the page's own dictionary. */
+      const THEME = JSON.parse(
+        document.getElementById('theme-words')?.textContent || '{}',
+      ) as Record<string, string>;
 
       /**
        * How much fixed chrome sits at the top of the page.
@@ -165,35 +177,24 @@ const desc = description ?? tt('site.description');
         } catch {
           /* nothing to do; the attribute still applies for this page */
         }
+        paintThemeButtons(next);
+      }
+
+      /** The button says which theme you are in and what pressing it will do. */
+      function paintThemeButtons(mode: string) {
+        const dark = mode === 'night';
         document.querySelectorAll<HTMLButtonElement>('[data-service-toggle]').forEach((b) => {
-          b.setAttribute('aria-pressed', String(next === 'night'));
+          b.setAttribute('aria-pressed', String(dark));
+          b.title = dark ? THEME.toLight : THEME.toDark;
+          const label = b.querySelector<HTMLElement>('[data-theme-label]');
+          if (label) label.textContent = dark ? THEME.dark : THEME.light;
         });
       }
 
-      function setView(next: string) {
-        if (next === 'plan') root.setAttribute('data-view', 'plan');
-        else root.removeAttribute('data-view');
-        try {
-          localStorage.setItem('marmaray-view', next);
-        } catch {
-          /* as above */
-        }
-        document.querySelectorAll<HTMLButtonElement>('[data-view-toggle]').forEach((b) => {
-          b.setAttribute('aria-pressed', String(next === 'plan'));
-        });
-      }
-
+      paintThemeButtons(root.getAttribute('data-service') ?? 'night');
       document.querySelectorAll<HTMLButtonElement>('[data-service-toggle]').forEach((b) => {
-        b.setAttribute('aria-pressed', String(root.getAttribute('data-service') === 'night'));
         b.addEventListener('click', () => {
           setService(root.getAttribute('data-service') === 'night' ? 'day' : 'night');
-        });
-      });
-
-      document.querySelectorAll<HTMLButtonElement>('[data-view-toggle]').forEach((b) => {
-        b.setAttribute('aria-pressed', String(root.getAttribute('data-view') === 'plan'));
-        b.addEventListener('click', () => {
-          setView(root.getAttribute('data-view') === 'plan' ? 'section' : 'plan');
         });
       });
 
