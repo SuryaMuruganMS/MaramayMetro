@@ -39,11 +39,14 @@ ends up serving an empty site.
 
 ## What is in wrangler.jsonc, and why
 
-- **`name: "maramaymetro"`** — this decides the address. The Worker already
-  exists at `https://maramaymetro.suryamuruganms40.workers.dev` and the
-  Continuum portfolio links to it, so changing this name means creating a
-  second Worker and updating `liveUrl` in
-  `strata/src/content/work/istanmetro.md`. Do both or neither.
+- **`name: "istanmetro"`** — this decides the address. The Worker lives at
+  `https://istanmetro.suryamuruganms40.workers.dev` and the Continuum portfolio
+  links to it, so changing this name means creating a second Worker and
+  updating `liveUrl` in `strata/src/content/work/istanmetro.md`. Do both or
+  neither — that is not a style note, it is what happened: the site was renamed
+  from Marmaray to IstanMetro, the Worker was renamed with it, and for one
+  commit this file still said `maramaymetro`, which would have recreated the
+  old Worker and left the live one frozen.
 - **`html_handling: "auto-trailing-slash"`** — `astro.config.mjs` sets
   `trailingSlash: 'always'`, so the build emits `/harita/index.html`. Without
   this a request for `/harita` is a 404 rather than a redirect.

@@ -14,7 +14,17 @@ import svelte from '@astrojs/svelte';
  * honest way to publish the privacy page it ships with.
  */
 export default defineConfig({
-  site: 'https://marmaray.continuumstudios.co',
+  /*
+     The address this site actually answers on.
+
+     It was `https://marmaray.continuumstudios.co`, a custom domain that has
+     never resolved — so every `rel="canonical"` and every `hreflang` alternate
+     in Base.astro pointed at nothing. `site` is not a wish: it is what a
+     crawler is told to treat as the real copy of a page, in four languages,
+     across forty-nine of them. When the domain exists, change this line and
+     the rest follows.
+  */
+  site: 'https://istanmetro.suryamuruganms40.workers.dev',
   output: 'static',
   trailingSlash: 'always',
   integrations: [svelte()],
