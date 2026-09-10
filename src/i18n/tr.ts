@@ -4,7 +4,6 @@ import type { Keys } from './en.ts';
 export const tr: Record<Keys, string> = {
   'site.name': 'IstanMetro',
   'site.full': 'IstanMetro — Boğaz geçişi',
-  'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'Tema',
   'theme.light': 'Açık',
   'theme.dark': 'Koyu',

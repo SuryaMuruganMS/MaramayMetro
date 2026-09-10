@@ -310,6 +310,13 @@
   backdrop-filter: blur(10px);
   font-family: var(--f-mono);
   font-size: var(--t-micro);
+  /*
+     The bar itself takes no clicks: it is fixed furniture lying across the
+     track, and a strip of glass that swallowed drags would make the crossing
+     feel broken wherever it happened to sit. The formation inside it does take
+     them - see `.carbar__form` below, which is where the fix went that made
+     these segments actually pressable.
+  */
   pointer-events: none;
 }
 .carbar__k {
@@ -336,6 +343,9 @@
   margin-inline-start: auto;
   height: 9px;
   align-items: stretch;
+  /* Clicks land here. The parent turns them off for the whole bar; this turns
+     them back on for the one part of it that is a control. */
+  pointer-events: auto;
 }
 .carbar__seg {
   /* It is a button now. Reset what a button brings with it, and say so. */
@@ -346,13 +356,54 @@
   flex: var(--w) 1 0;
   border-radius: 2px;
   background: color-mix(in oklab, var(--ink) 14%, transparent);
-  transition: background-color 140ms linear;
+  transition:
+    background-color 140ms linear,
+    transform 140ms var(--ease-expo);
+  position: relative;
+}
+/*
+   A nine-pixel-tall target is a drawing, not a button.
+
+   The strip is drawn to scale — a gangway really is a sliver of a train — and
+   making the sliver taller would be a lie about the formation. So the picture
+   keeps its proportions and an invisible pad reaching the full height of the
+   bar takes the press.
+*/
+.carbar__seg::before {
+  content: '';
+  position: absolute;
+  inset-inline: -1px;
+  top: calc((var(--carbar-h) - 9px) / -2);
+  bottom: calc((var(--carbar-h) - 9px) / -2);
+}
+.carbar__seg:hover {
+  background: color-mix(in oklab, var(--accent) 55%, var(--ink-4));
+  transform: scaleY(1.5);
+}
+.carbar__seg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 .carbar__seg.is-cab {
   background: color-mix(in oklab, var(--ink) 26%, transparent);
 }
 .carbar__seg.is-here {
   background: var(--accent);
+}
+/* And the whole strip says it is a control when the pointer is anywhere on it. */
+.carbar__form:hover .carbar__seg {
+  background: color-mix(in oklab, var(--ink) 24%, transparent);
+}
+.carbar__form:hover .carbar__seg.is-here {
+  background: var(--accent);
+}
+.carbar__form:hover .carbar__seg:hover {
+  background: color-mix(in oklab, var(--accent) 55%, var(--ink-4));
+}
+@media (prefers-reduced-motion: reduce) {
+  .carbar__seg:hover {
+    transform: none;
+  }
 }
 .carbar__car {
   flex: none;

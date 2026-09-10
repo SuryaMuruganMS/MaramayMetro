@@ -13,7 +13,6 @@ export const en = {
   // ------------------------------------------------------------------ identity
   'site.name': 'IstanMetro',
   'site.full': 'IstanMetro — the Bosphorus crossing',
-  'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'Theme',
   'theme.light': 'Light',
   'theme.dark': 'Dark',

@@ -16,7 +16,6 @@ import type { Keys } from './en.ts';
 export const ar: Record<Keys, string> = {
   'site.name': 'IstanMetro',
   'site.full': 'IstanMetro — عبور البوسفور',
-  'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'المظهر',
   'theme.light': 'فاتح',
   'theme.dark': 'داكن',

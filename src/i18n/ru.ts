@@ -10,7 +10,6 @@ import type { Keys } from './en.ts';
 export const ru: Record<Keys, string> = {
   'site.name': 'IstanMetro',
   'site.full': 'IstanMetro — переход через Босфор',
-  'site.sub': 'B1 · İSTANBUL',
   'theme.label': 'Тема',
   'theme.light': 'Светлая',
   'theme.dark': 'Тёмная',

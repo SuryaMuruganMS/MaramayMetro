@@ -403,6 +403,10 @@
   bottom: 0;
   z-index: 1;
   margin: 0;
+  /* base.css gives every <p> a reading measure. This one is a rule across the
+     bottom of the trench, not a paragraph, and the measure cut it to a third
+     of the width. */
+  max-width: none;
   padding: 10px calc(var(--margin) + var(--digax-w)) var(--sp-base) var(--margin);
   font-size: var(--t-micro);
   letter-spacing: 0.08em;

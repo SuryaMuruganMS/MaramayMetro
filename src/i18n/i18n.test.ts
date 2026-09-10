@@ -50,7 +50,6 @@ describe('translations', () => {
       // The line's own name and its designation on the network. A railway is
       // called what it is called, in every language on the page.
       'site.name',
-      'site.sub',
       // "Metro" is the word in both languages, and in most others.
       'kind.metro',
     ]);

@@ -408,6 +408,7 @@
           class:is-cab={p.id === 'cab'}
           style={`--w:${p.weight}`}
           aria-label={labels[p.key] ?? p.key}
+          title={labels[p.key] ?? p.key}
           aria-current={i === where.index ? 'true' : undefined}
           onclick={() => goToPart(i)}
         ></button>
