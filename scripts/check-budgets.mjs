@@ -37,6 +37,18 @@ const BUDGETS = {
      downloads by arriving — preload="none", and it only starts once it is on
      screen, in the current theme, and the train is moving. */
   'video:each': 6000,
+  /*
+     The world map, measured on its own and kept out of `json:each` so that
+     ceiling still means something for the open-data files.
+
+     It is Natural Earth 1:50m borders with 1:10m places — every country
+     outline, its name in four languages, and seven thousand towns. Nobody
+     downloads it by arriving: the map fetches it the first time a reader pulls
+     back far enough for the world layer to be visible, and never otherwise.
+     That is the trade this budget exists to record — a third of a megabyte, on
+     request, for a map that can answer "where on Earth is this".
+  */
+  'map:each': 560,
 };
 
 const walk = (dir) => {
@@ -79,8 +91,8 @@ const results = [
   { key: 'font:total', got: kb(sum(FONT_EXT)) },
 ];
 
-const worstOf = (exts, key) => {
-  const group = sized.filter((f) => exts.includes(f.ext));
+const worstOf = (exts, key, skip = () => false) => {
+  const group = sized.filter((f) => exts.includes(f.ext) && !skip(f.path));
   if (group.length === 0) return { key, got: 0, of: '(none)' };
   const worst = group.reduce((a, b) => (b.wire > a.wire ? b : a));
   return { key, got: kb(worst.wire), of: worst.path };
@@ -89,7 +101,9 @@ const worstOf = (exts, key) => {
 results.push(worstOf(['.html'], 'html:each'));
 results.push(worstOf(IMG_EXT, 'image:each'));
 results.push(worstOf(FONT_EXT, 'font:each'));
-results.push(worstOf(['.json'], 'json:each'));
+const isWorld = (p) => p.endsWith('dunya.json');
+results.push(worstOf(['.json'], 'json:each', isWorld));
+results.push(worstOf(['.json'], 'map:each', (p) => !isWorld(p)));
 results.push(worstOf(VIDEO_EXT, 'video:each'));
 
 console.log('\n  TRANSFER BUDGETS (gzipped where a server would compress)\n');

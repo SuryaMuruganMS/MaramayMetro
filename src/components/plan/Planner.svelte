@@ -11,7 +11,7 @@
     type PassengerId,
   } from '../../data/fares.ts';
   import { lira, num, href, type Locale } from '../../lib/locale.ts';
-  import RouteMap from './RouteMap.svelte';
+  import NetworkMap from '../map/NetworkMap.svelte';
 
   /**
    * A real shortest path over the real graph, priced for the person taking it.
@@ -211,7 +211,9 @@
         {/if}
       </div>
       {#if showMap}
-        <RouteMap route={result} {locale} {labels} />
+        <div class="planner__map">
+          <NetworkMap {locale} {labels} route={result} />
+        </div>
       {/if}
 
       <p class="planner__access" class:is-warn={!allStepFree}>
@@ -328,6 +330,16 @@
     margin: 0;
     font-size: 1.15rem;
     font-weight: 600;
+  }
+  /*
+     The same map the map page draws, at a width that leaves it a map rather
+     than a wall. Its frame is aspect-ratio'd off the geography, so left to run
+     the full column it came out over a thousand pixels tall and the fare table
+     above it scrolled away.
+  */
+  .planner__map {
+    width: min(100%, 58rem);
+    margin-inline: auto;
   }
   .planner__mapbar {
     display: flex;

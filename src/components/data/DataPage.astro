@@ -19,6 +19,10 @@ const SETS = [
   { file: '/veri/ag.json', k: 'data.graph', b: 'data.graphBody' },
   { file: '/veri/hat.json', k: 'data.alignment', b: 'data.alignmentBody' },
   { file: '/veri/kazi.json', k: 'data.strata', b: 'data.strataBody' },
+  /* The one file here that is not about this railway. The map fetches it when
+     a reader zooms out past the city, and it is published for the same reason
+     the rest of these are: it is what the drawing is made of. */
+  { file: '/veri/dunya.json', k: 'data.world', b: 'data.worldBody' },
 ];
 ---
 

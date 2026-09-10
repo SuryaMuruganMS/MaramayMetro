@@ -423,6 +423,9 @@ export const ar: Record<Keys, string> = {
   'data.alignmentBody': 'نقاط ضبط المناسيب للقطاع الأوسط من مرمراي.',
   'data.strata': 'طبقات الحفريات',
   'data.strataBody': 'مقطع يني كابي: الطبقات ومدياتها الزمنية.',
+  'data.world': 'خريطة أساس للعالم',
+  'data.worldBody':
+    'حدود الدول والبحيرات الكبرى وسبعة آلاف موضع مأهول، مُسقطة على إحداثيات هذه الخريطة نفسها. من Natural Earth، ملكية عامة.',
   'data.download': 'حمّل JSON',
   'data.licence': 'الترخيص',
   'data.licenceBody':

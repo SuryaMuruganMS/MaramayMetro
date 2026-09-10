@@ -426,6 +426,9 @@ export const ru: Record<Keys, string> = {
   'data.alignmentBody': 'Отметки центрального участка Мармарая.',
   'data.strata': 'Слои раскопок',
   'data.strataBody': 'Разрез Йеникапы: слои и их датировки.',
+  'data.world': 'Мировая подложка',
+  'data.worldBody':
+    'Контуры и границы стран, крупные озёра и семь тысяч населённых пунктов в системе координат этой карты. Natural Earth, общественное достояние.',
   'data.download': 'Скачать JSON',
   'data.licence': 'Лицензия',
   'data.licenceBody':

@@ -1,12 +1,20 @@
 <script lang="ts">
   import { LINES, NODES, nodeById, type Node } from '../../data/network.ts';
   import { WINDOW } from '../../data/geography.ts';
-  import { WORLD, ISTANBUL, WORLD_W } from '../../data/world.ts';
+  import {
+    ISTANBUL,
+    WORLD_W,
+    WORLD_X0,
+    UNITS_PER_DEG,
+    WORLD_URL,
+    type WorldData,
+  } from '../../data/world.ts';
   import { haversine } from '../../lib/geo.ts';
   import LineCard from './LineCard.svelte';
   import { GEO, GEO_H, LAND, SHORE, ISLANDS, LAKES } from '../../data/geography.ts';
   import StationCard from './StationCard.svelte';
   import { num, type Locale } from '../../lib/locale.ts';
+  import type { Route } from '../../lib/route.ts';
 
   /**
    * The network in two registers.
@@ -31,8 +39,20 @@
   interface Props {
     locale: Locale;
     labels: Record<string, string>;
+    /**
+     * One journey, lit through the network.
+     *
+     * When this is set the component is the planner's map rather than the map
+     * page's: no register toggle, no lines list, no station table, and the
+     * route drawn over the top of everything with the rest of the network
+     * stepped back behind it. The camera, the world layer, the zoom and the
+     * pan are all exactly the same, because a reader who has learnt the map on
+     * one page should not have to learn a different one on the other.
+     */
+    route?: Route | null;
   }
-  const { locale, labels }: Props = $props();
+  const { locale, labels, route = null }: Props = $props();
+  const isRouteMap = $derived(!!route);
 
   /*
      Two registers, not three.
@@ -169,14 +189,28 @@
     anchor: 'start' | 'middle' | 'end';
   }
 
+  /**
+   * Everything here is multiplied by `px`, and that is the whole point.
+   *
+   * A station's dot, its hit circle and its name are all drawn at a constant
+   * size on screen — `r={1.5 * px}`, `font-size={FS * px}` — but this box was
+   * measured in raw viewBox units, so the collision test was only correct at
+   * zoom 1. Pulled back to a regional view the real names were four times the
+   * size of the boxes being compared, every candidate "fitted", and thirty-two
+   * station names printed through each other in a heap over the Bosphorus.
+   *
+   * Solving in the space the labels are actually drawn in fixes it at every
+   * zoom, and changes nothing at zoom 1, where `px` is 1.
+   */
   const boxOf = (name: string, p: Place): Box => {
-    const w = name.length * CHAR_W * FS;
+    const w = name.length * CHAR_W * FS * px;
+    const pad = PAD * px;
     const x0 = p.anchor === 'middle' ? p.x - w / 2 : p.anchor === 'end' ? p.x - w : p.x;
     return {
-      x0: x0 - PAD,
-      x1: x0 + w + PAD,
-      y0: p.y - FS * 1.05 - PAD,
-      y1: p.y + FS * 0.5 + PAD,
+      x0: x0 - pad,
+      x1: x0 + w + pad,
+      y0: p.y - FS * 1.05 * px - pad,
+      y1: p.y + FS * 0.5 * px + pad,
     };
   };
   const overlaps = (a: Box, b: Box): boolean =>
@@ -186,11 +220,13 @@
   function candidates(n: Node): Place[] {
     const p = pos(n);
     const i = spineOrder.indexOf(n.id);
-    const gap = 1.2 + 1.2 * ink;
-    const above: Place = { x: p.x, y: p.y - gap - 1.1, anchor: 'middle' };
-    const below: Place = { x: p.x, y: p.y + gap + 2.5, anchor: 'middle' };
-    const right: Place = { x: p.x + gap, y: p.y + 0.7, anchor: 'start' };
-    const left: Place = { x: p.x - gap, y: p.y + 0.7, anchor: 'end' };
+    // Screen-constant, for the same reason `boxOf` is: the offset has to match
+    // where the name is actually drawn, not where it would be at zoom 1.
+    const gap = (1.2 + 1.2 * ink) * px;
+    const above: Place = { x: p.x, y: p.y - gap - 1.1 * px, anchor: 'middle' };
+    const below: Place = { x: p.x, y: p.y + gap + 2.5 * px, anchor: 'middle' };
+    const right: Place = { x: p.x + gap, y: p.y + 0.7 * px, anchor: 'start' };
+    const left: Place = { x: p.x - gap, y: p.y + 0.7 * px, anchor: 'end' };
     // On the spine, alternate above and below first: consecutive stations take
     // turns, which doubles the room each name has without moving a station.
     if (i >= 0) {
@@ -212,7 +248,7 @@
     // station's dot is as unreadable as one printed across another name.
     for (const n of shown) {
       const p = pos(n);
-      const r = (n.lines.length > 1 ? 1.7 : 1.2) * ink;
+      const r = (n.lines.length > 1 ? 1.7 : 1.2) * ink * px;
       taken.push({ x0: p.x - r, x1: p.x + r, y0: p.y - r, y1: p.y + r });
     }
 
@@ -320,12 +356,197 @@
   let cx = $state(W / 2);
   let cy = $state(GEO_H / 2);
 
-  /** Below 0.28 the world reads; above it, the network. They cross-fade. */
-  const worldAlpha = $derived(Math.max(0, Math.min(1, (0.28 - zoom) / 0.24)));
-  const netAlpha = $derived(Math.max(0, Math.min(1, (zoom - 0.05) / 0.12)));
-
   const viewW = $derived(W / zoom);
   const viewH = $derived(H / zoom);
+
+  /**
+   * How wide the view is, in degrees of longitude.
+   *
+   * Every decision the world layer makes is really a decision about scale, and
+   * scale is a distance, not a zoom factor. Working in degrees means the
+   * thresholds in `dunya.json` — which say "draw this country's name once the
+   * view is narrower than 110 degrees" — are read in the units they were
+   * written in, and they stay right if the İstanbul window ever changes shape.
+   */
+  const degW = $derived(viewW / UNITS_PER_DEG);
+
+  /**
+   * The world is the ground, not a bookend.
+   *
+   * It used to fade out as soon as the reader came in past about twenty
+   * degrees, on the theory that it was a "where on Earth" gesture and the
+   * network took over from there. That left a dead band — three degrees across
+   * is the Sea of Marmara and half of Thrace, and the map showed neither: the
+   * world had gone and the İstanbul window is under one degree wide.
+   *
+   * Now it holds full strength until the window itself fills the frame, and
+   * the window's own coastline — a hundred times more accurate — simply paints
+   * over the top of it inside its own rectangle. Same sea colour, same land
+   * colour, so the join does not show.
+   */
+  const worldAlpha = $derived(Math.max(0, Math.min(1, (degW - 0.95) / 0.55)));
+  const netAlpha = $derived(Math.max(0, Math.min(1, (zoom - 0.05) / 0.12)));
+
+  /**
+   * The world, fetched rather than bundled.
+   *
+   * Natural Earth 1:50m with borders, names and cities is most of a megabyte,
+   * and a reader who never pulls back never needs a byte of it. It is
+   * requested the first time the layer would be visible, and prefetched when
+   * the browser is otherwise idle so that in practice it has almost always
+   * already arrived by then.
+   */
+  let world = $state<WorldData | null>(null);
+  let worldPending = false;
+  function loadWorld() {
+    if (world || worldPending) return;
+    worldPending = true;
+    fetch(WORLD_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j) world = j as WorldData;
+      })
+      .catch(() => {
+        // A map that cannot reach its own data still draws the network. The
+        // world layer simply never appears, which is a smaller failure than an
+        // error state over a working map.
+      })
+      .finally(() => {
+        worldPending = false;
+      });
+  }
+  $effect(() => {
+    if (worldAlpha > 0) loadWorld();
+  });
+
+  /**
+   * Which copies of the planet are on screen.
+   *
+   * İstanbul sits at 29 degrees east, so one copy leaves the Pacific torn down
+   * the middle of the frame. Repeating the land either side is what every
+   * slippy map does; drawing all three at every zoom is not, so the ones
+   * entirely off screen are skipped.
+   */
+  const copies = $derived.by(() => {
+    const l = cx - viewW / 2,
+      r = cx + viewW / 2;
+    const out: number[] = [];
+    for (const k of [-1, 0, 1]) {
+      const a = WORLD_X0 + k * WORLD_W;
+      if (a < r && a + WORLD_W > l) out.push(k);
+    }
+    return out.length ? out : [0];
+  });
+
+  /** Country names come in all four of this site's languages. */
+  const countryName = (n: { en: string; tr: string; ar: string; ru: string }) =>
+    n[locale as keyof typeof n] ?? n.en;
+
+  /** Only what the current scale asks for, so the map fills in as you lean in. */
+  const shownCountries = $derived(world ? world.countries.filter((c) => degW <= c.t) : []);
+  const shownCities = $derived(world ? world.cities.filter((c) => degW <= c.t) : []);
+
+  /**
+   * The world's names, decluttered — the same greedy pass the stations get.
+   *
+   * A scale threshold alone is not enough, and the first cut proved it: at
+   * planet zoom ninety-four country names passed the threshold and western
+   * Europe came out as one illegible block with UNITED KINGDOM, BELGIUM,
+   * GERMANY and FRANCE printed through each other. Natural Earth's LABELRANK
+   * says which names deserve the room. It cannot know whether there is any.
+   *
+   * So importance decides the ORDER and geometry decides the OUTCOME: work
+   * down from the most prominent name to the least and draw each one only if
+   * its box is still clear. That is what a cartographer does, and it is why an
+   * atlas of Europe names Luxembourg and a globe does not.
+   *
+   * Culled to the view first. Placing names for the far side of the planet
+   * costs exactly as much as placing the ones on screen and buys nothing, and
+   * this runs on every frame of a drag.
+   */
+  const MAX_LABELS = 140;
+  interface WorldLabel {
+    city: boolean;
+    cap: boolean;
+    x: number;
+    y: number;
+    text: string;
+    fs: number;
+  }
+  const worldLabels = $derived.by(() => {
+    const out: WorldLabel[] = [];
+    if (!world || worldAlpha <= 0) return out;
+
+    // One rect covering every copy of the planet currently on screen, so a
+    // name belonging to the copy left of centre is not culled by the
+    // untranslated coordinates it is stored in.
+    const pad = viewW * 0.06;
+    const lo = Math.min(...copies.map((k) => cx - viewW / 2 - k * WORLD_W)) - pad;
+    const hi = Math.max(...copies.map((k) => cx + viewW / 2 - k * WORLD_W)) + pad;
+    const top = cy - viewH / 2 - pad;
+    const bot = cy + viewH / 2 + pad;
+    const seen = (x: number, y: number) => x > lo && x < hi && y > top && y < bot;
+
+    const fsC = Math.min(2.3, 0.95 + degW / 240) * px;
+    const fsT = 1.3 * px;
+    const taken: Box[] = [];
+
+    // The subject reserves its room before anything else is placed. It is the
+    // reason this layer exists; nothing gets to print over it.
+    taken.push({
+      x0: ISTANBUL.x - 1.6 * px,
+      x1: ISTANBUL.x + 2 * px + 'İstanbul'.length * 0.6 * 3.1 * px,
+      y0: ISTANBUL.y - 2.6 * px,
+      y1: ISTANBUL.y + 1.8 * px,
+    });
+
+    type Cand = {
+      t: number;
+      c?: (typeof shownCountries)[number];
+      p?: (typeof shownCities)[number];
+    };
+    const cands: Cand[] = [];
+    for (const c of shownCountries) if (seen(c.x, c.y)) cands.push({ t: c.t, c });
+    for (const q of shownCities) if (seen(q.x, q.y)) cands.push({ t: q.t, p: q });
+    cands.sort((a, b) => b.t - a.t);
+
+    for (const cand of cands) {
+      if (out.length >= MAX_LABELS) break;
+      if (cand.c) {
+        const text = countryName(cand.c.n);
+        const w = text.length * 0.62 * fsC;
+        const b = {
+          x0: cand.c.x - w / 2,
+          x1: cand.c.x + w / 2,
+          y0: cand.c.y - fsC * 0.82,
+          y1: cand.c.y + fsC * 0.36,
+        };
+        if (taken.some((t) => overlaps(t, b))) continue;
+        taken.push(b);
+        out.push({ city: false, cap: false, x: cand.c.x, y: cand.c.y, text, fs: fsC });
+      } else if (cand.p) {
+        const text = cand.p.n;
+        const w = text.length * 0.55 * fsT;
+        const b = {
+          x0: cand.p.x - 0.5 * px,
+          x1: cand.p.x + 0.66 * px + w,
+          y0: cand.p.y - fsT * 0.72,
+          y1: cand.p.y + fsT * 0.62,
+        };
+        if (taken.some((t) => overlaps(t, b))) continue;
+        taken.push(b);
+        out.push({
+          city: true,
+          cap: cand.p.c === 1,
+          x: cand.p.x,
+          y: cand.p.y,
+          text,
+          fs: fsT,
+        });
+      }
+    }
+    return out;
+  });
 
   /**
    * Kept inside the drawing.
@@ -532,9 +753,79 @@
     clamp();
   }
 
+  /**
+   * Frame an arbitrary set of stations, the way `frameLine` frames one line.
+   *
+   * The margin is generous on purpose: a route framed tight to its own extent
+   * has its end labels hanging off the edge, and the two names a reader most
+   * wants to read on a journey map are the ones at the ends.
+   */
+  function frameStops(ids: string[]) {
+    const pts = ids
+      .map((n) => nodeById.get(n))
+      .filter(Boolean)
+      .map((n) => pos(n!));
+    if (pts.length < 1) return;
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const w = Math.max(10, Math.max(...xs) - Math.min(...xs)) * 1.6;
+    const h = Math.max(10, Math.max(...ys) - Math.min(...ys)) * 1.6;
+    zoom = Math.min(MAX_Z, Math.max(MIN_Z, Math.min(W / w, H / h)));
+    cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    clamp();
+  }
+
+  /** The journey as one path per leg, each in its own line's colour. */
+  const routeLegs = $derived(
+    route
+      ? route.legs.map((leg) => ({
+          line: leg.line,
+          colour: LINES.find((l) => l.id === leg.line)?.colour ?? 'var(--accent)',
+          d: routePath(leg.stops),
+        }))
+      : [],
+  );
+  /** Every stop on it, for the dots and for framing. */
+  const routeStops = $derived(route ? [route.from, ...route.hops.map((h) => h.node)] : []);
+
+  /*
+     Re-frame when the journey changes, and only then.
+
+     A reader who has zoomed in on their interchange and then changes the
+     passenger type should not be thrown back out to the whole route; a reader
+     who picks a different destination should. Keying on the two ends is the
+     difference — it is the same test the planner itself uses to decide whether
+     it is showing a new journey or the same one priced differently.
+  */
+  let framedKey = '';
+  $effect(() => {
+    if (!route) return;
+    const key = `${route.from}>${route.to}`;
+    if (key === framedKey) return;
+    framedKey = key;
+    frameStops(routeStops);
+  });
+
   /** Which lines are drawn at full strength. */
   const litLinesAll = $derived(
-    selectedLine ? new Set([selectedLine]) : selectedNode ? litLines : null,
+    route
+      ? /*
+           Every line stepped back, including the route's own.
+
+           Lighting the route's line at full strength looked right in the code
+           and wrong on the page: Marmaray runs Halkalı to Gebze, the journey
+           was Yenikapı to Üsküdar, and both were drawn in the same red at
+           nearly the same width — so the map appeared to be recommending the
+           whole line. The route is drawn separately, over the top, with a
+           casing. Everything underneath it is context.
+        */
+        new Set<string>()
+      : selectedLine
+        ? new Set([selectedLine])
+        : selectedNode
+          ? litLines
+          : null,
   );
 
   const REGISTERS: Array<{ id: Register; key: string }> = [
@@ -550,30 +841,35 @@
 />
 
 <div class="netmap">
-  <div class="netmap__bar">
-    <div class="seg" role="group" aria-label={labels['reg.label']}>
-      {#each REGISTERS as r (r.id)}
-        <button
-          type="button"
-          class="seg__btn"
-          aria-pressed={register === r.id}
-          onclick={() => setRegister(r.id)}
-        >
-          {labels[r.key]}
-        </button>
-      {/each}
+  {#if !isRouteMap}
+    <div class="netmap__bar">
+      <div class="seg" role="group" aria-label={labels['reg.label']}>
+        {#each REGISTERS as r (r.id)}
+          <button
+            type="button"
+            class="seg__btn"
+            aria-pressed={register === r.id}
+            onclick={() => setRegister(r.id)}
+          >
+            {labels[r.key]}
+          </button>
+        {/each}
+      </div>
     </div>
-  </div>
 
-  <p class="netmap__caveat mono">
-    {#if register === 'geographic'}
-      {labels['map.geoCaveat']}
-    {:else}
-      {labels['map.click']}
-    {/if}
-  </p>
+    <p class="netmap__caveat mono">
+      {#if register === 'geographic'}
+        {labels['map.geoCaveat']}
+      {:else}
+        {labels['map.click']}
+      {/if}
+    </p>
+  {/if}
 
-  <div class="netmap__stage" class:is-open={!!selectedNode || !!selectedLineObj}>
+  <div
+    class="netmap__stage"
+    class:is-open={!isRouteMap && (!!selectedNode || !!selectedLineObj)}
+  >
     <div class="netmap__frame" style={`--ar:${(W / H).toFixed(4)}`}>
       <!--
         role="application", because it is one.
@@ -618,7 +914,7 @@
           this railway is, which is the one question a map of the network
           cannot answer from inside itself.
         -->
-        {#if worldAlpha > 0}
+        {#if worldAlpha > 0 && world}
           <g class="world" opacity={worldAlpha}>
             <rect
               x={ISTANBUL.x - WORLD_W}
@@ -627,20 +923,80 @@
               height={WORLD_W * 2}
               class="geo__sea"
             />
-            {#each WORLD as d, i (i)}<path {d} class="world__land" />{/each}
-            <circle
-              cx={ISTANBUL.x}
-              cy={ISTANBUL.y}
-              r={Math.max(viewW * 0.012, 6)}
-              class="world__pin"
-              stroke-width={viewW * 0.004}
-            />
-            <text
-              x={ISTANBUL.x + viewW * 0.02}
-              y={ISTANBUL.y + viewW * 0.006}
-              class="world__label"
-              font-size={viewW * 0.026}>İstanbul</text
-            >
+            {#each copies as k (k)}
+              <g transform={`translate(${k * WORLD_W} 0)`}>
+                <!-- Land and borders in one pass. Every country is a filled
+                     polygon with a hairline on it, so a shared edge is drawn
+                     twice and reads as the border it is, and an unshared one
+                     reads as coast. That is how a printed atlas does it. -->
+                {#each world.countries as c, i (i)}
+                  <path d={c.d} class="world__country" stroke-width={0.14 * px} />
+                {/each}
+                {#each world.lakes as d, i (i)}
+                  <path {d} class="world__lake" stroke-width={0.1 * px} />
+                {/each}
+
+                <!-- Names, in the order the solver placed them, each with a
+                     halo: a name on a coast has land on one side and sea on the
+                     other and has to survive both. -->
+                {#each worldLabels as l, i (i)}
+                  {#if l.city}
+                    <circle
+                      cx={l.x}
+                      cy={l.y}
+                      r={(l.cap ? 0.32 : 0.24) * px}
+                      class="world__dot"
+                      class:is-capital={l.cap}
+                    />
+                    <text
+                      x={l.x + 0.66 * px}
+                      y={l.y + 0.42 * px}
+                      class="world__city"
+                      font-size={l.fs}
+                      stroke-width={0.34 * px}>{l.text}</text
+                    >
+                  {:else}
+                    <text
+                      x={l.x}
+                      y={l.y}
+                      class="world__country-name"
+                      font-size={l.fs}
+                      stroke-width={0.5 * px}>{l.text}</text
+                    >
+                  {/if}
+                {/each}
+
+                <!--
+                  The subject.
+
+                  Drawn larger than any city on the map, because at planet
+                  scale the question is not "which dot is bigger" but "where is
+                  this thing", and a reader should be able to answer it without
+                  hunting.
+
+                  It hands over to the network exactly as the network becomes
+                  legible: the moment you can see the lines, the lines ARE
+                  İstanbul, and a label naming the city on top of them is both
+                  redundant and in the way.
+                -->
+                <g opacity={1 - netAlpha}>
+                  <circle
+                    cx={ISTANBUL.x}
+                    cy={ISTANBUL.y}
+                    r={1.1 * px}
+                    class="world__pin"
+                    stroke-width={0.42 * px}
+                  />
+                  <text
+                    x={ISTANBUL.x + 1.9 * px}
+                    y={ISTANBUL.y + 0.75 * px}
+                    class="world__label"
+                    font-size={3.1 * px}
+                    stroke-width={0.9 * px}>İstanbul</text
+                  >
+                </g>
+              </g>
+            {/each}
           </g>
         {/if}
 
@@ -696,6 +1052,54 @@
             />
           {/each}
         </g>
+
+        <!--
+          THE JOURNEY, when there is one.
+
+          A ground casing under a coloured core, which is how a line is drawn on
+          every transit map ever printed and the reason it stays readable
+          crossing a coastline. Above the network and below the stations, so the
+          dots the reader is looking for sit on top of their own route.
+        -->
+        {#if isRouteMap}
+          <g class="rt" opacity={netAlpha}>
+            {#each routeLegs as leg, i (i)}
+              <path
+                d={leg.d}
+                class="rt__casing"
+                stroke-width={4.4 * ink * px}
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            {/each}
+            {#each routeLegs as leg, i (i)}
+              <path
+                d={leg.d}
+                stroke={leg.colour}
+                stroke-width={2.6 * ink * px}
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            {/each}
+            {#each routeStops as id, i (id)}
+              {@const n = nodeById.get(id)}
+              {#if n}
+                {@const q = pos(n)}
+                {@const end = i === 0 || i === routeStops.length - 1}
+                <circle
+                  cx={q.x}
+                  cy={q.y}
+                  r={(end ? 2.1 : 1.2) * ink * px}
+                  class="rt__stop"
+                  class:is-end={end}
+                  stroke-width={(end ? 1 : 0.6) * ink * px}
+                />
+              {/if}
+            {/each}
+          </g>
+        {/if}
 
         <!-- Stations. Interchanges are larger because they are where a decision
              gets made; everything else is a stop. -->
@@ -809,7 +1213,10 @@
       {/if}
     </div>
 
-    {#if selectedNode}
+    {#if isRouteMap}
+      <!-- Nothing in the side column: this map is answering one question and
+           it already knows the answer. -->
+    {:else if selectedNode}
       <StationCard
         node={selectedNode}
         {locale}
@@ -848,66 +1255,68 @@
     two components agreeing about which line is chosen, which is the kind of
     agreement that lasts until the next change.
   -->
-  <div class="lines">
-    <h2 class="lines__h">{labels['map.linesHeading']}</h2>
-    <ul class="lines__list">
-      {#each LINES as l (l.id)}
-        <li>
-          <button
-            type="button"
-            class="lines__row"
-            class:is-on={selectedLine === l.id}
-            aria-pressed={selectedLine === l.id}
-            onclick={() => pickLine(l.id)}
-          >
-            <span class="roundel" style={`--line:${l.colour}`}>{l.name}</span>
-            <span class="lines__meta mono">
-              {num(l.stations, locale)}
-              {labels['x.stations']}
-            </span>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </div>
-
-  <!--
-    The map as a table. Required by WCAG 1.1.1, and in practice the fastest way
-    to answer "which lines call at Yenikapı" - which no amount of hovering a
-    diagram will beat. The names are buttons, so the table is also the way to
-    open a station without hitting a two-pixel dot.
-  -->
-  <details class="netmap__table">
-    <summary>{labels['map.tableToggle']}</summary>
-    <div class="tw">
-      <table>
-        <caption>{labels['map.tableCaption']}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{labels['map.station']}</th>
-            <th scope="col">{labels['map.lines']}</th>
-            <th scope="col">{labels['map.continent']}</th>
-            <th scope="col">{labels['map.access']}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each byName as n (n.id)}
-            <tr class:is-dim={!shownIds.has(n.id)}>
-              <th scope="row">
-                <button type="button" class="tbl__pick" onclick={() => pick(n.id)}
-                  >{n.name}</button
-                >
-              </th>
-              <td>{n.lines.join(', ')}</td>
-              <td>{n.continent === 'EU' ? labels['j.europe'] : labels['j.asia']}</td>
-              <td>{n.stepFree ? labels['map.yes'] : labels['map.no']}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+  {#if !isRouteMap}
+    <div class="lines">
+      <h2 class="lines__h">{labels['map.linesHeading']}</h2>
+      <ul class="lines__list">
+        {#each LINES as l (l.id)}
+          <li>
+            <button
+              type="button"
+              class="lines__row"
+              class:is-on={selectedLine === l.id}
+              aria-pressed={selectedLine === l.id}
+              onclick={() => pickLine(l.id)}
+            >
+              <span class="roundel" style={`--line:${l.colour}`}>{l.name}</span>
+              <span class="lines__meta mono">
+                {num(l.stations, locale)}
+                {labels['x.stations']}
+              </span>
+            </button>
+          </li>
+        {/each}
+      </ul>
     </div>
-    <p class="netmap__note">{labels['map.notAll']}</p>
-  </details>
+
+    <!--
+      The map as a table. Required by WCAG 1.1.1, and in practice the fastest
+      way to answer "which lines call at Yenikapı" — which no amount of
+      hovering a diagram will beat. The names are buttons, so the table is also
+      the way to open a station without hitting a two-pixel dot.
+    -->
+    <details class="netmap__table">
+      <summary>{labels['map.tableToggle']}</summary>
+      <div class="tw">
+        <table>
+          <caption>{labels['map.tableCaption']}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{labels['map.station']}</th>
+              <th scope="col">{labels['map.lines']}</th>
+              <th scope="col">{labels['map.continent']}</th>
+              <th scope="col">{labels['map.access']}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each byName as n (n.id)}
+              <tr class:is-dim={!shownIds.has(n.id)}>
+                <th scope="row">
+                  <button type="button" class="tbl__pick" onclick={() => pick(n.id)}
+                    >{n.name}</button
+                  >
+                </th>
+                <td>{n.lines.join(', ')}</td>
+                <td>{n.continent === 'EU' ? labels['j.europe'] : labels['j.asia']}</td>
+                <td>{n.stepFree ? labels['map.yes'] : labels['map.no']}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <p class="netmap__note">{labels['map.notAll']}</p>
+    </details>
+  {/if}
 </div>
 
 <style>
@@ -1009,14 +1418,66 @@
   .netmap__svg.is-dragging {
     cursor: grabbing;
   }
-  .world__land {
-    fill: color-mix(in oklab, var(--gold) 10%, var(--ground-2));
+  /* Land is paper with the faintest warmth in it; the border is a hairline of
+     the same ink the rest of the map draws rules with, so the world reads as
+     part of this drawing rather than as an atlas pasted underneath it. */
+  .world__country {
+    /* Exactly `.geo__land`. The İstanbul window is painted on top of this
+       inside its own rectangle, and a shade of difference would draw a
+       rectangle around the city. */
+    fill: color-mix(in oklab, var(--gold) 7%, var(--surface));
+    stroke: color-mix(in oklab, var(--ink) 34%, transparent);
+    stroke-linejoin: round;
+    vector-effect: none;
+  }
+  .world__lake {
+    fill: color-mix(in oklab, var(--turquoise) 30%, var(--surface));
     stroke: color-mix(in oklab, var(--turquoise) 55%, transparent);
+  }
+  .world__dot {
+    fill: var(--ink-3);
+  }
+  .world__dot.is-capital {
+    fill: var(--ink);
+    stroke: var(--ground-2);
     stroke-width: 0;
+  }
+  .world__city {
+    fill: var(--ink-2);
+    font-family: var(--f-body);
+    font-weight: 500;
+    paint-order: stroke;
+    stroke: color-mix(in oklab, var(--ground-2) 82%, transparent);
+    stroke-linejoin: round;
+  }
+  .world__country-name {
+    fill: var(--ink-3);
+    font-family: var(--f-body);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-anchor: middle;
+    text-transform: uppercase;
+    paint-order: stroke;
+    stroke: color-mix(in oklab, var(--ground-2) 82%, transparent);
+    stroke-linejoin: round;
   }
   .world__pin {
     fill: var(--accent);
     stroke: var(--surface);
+  }
+
+  /* The journey. A casing of the page's own ground under a coloured core, so
+     the route survives crossing a coastline, a lake and six other lines. */
+  .rt__casing {
+    stroke: var(--ground);
+    opacity: 0.9;
+  }
+  .rt__stop {
+    fill: var(--surface);
+    stroke: var(--ink);
+  }
+  .rt__stop.is-end {
+    stroke: var(--accent);
   }
   .world__label {
     fill: var(--ink);
@@ -1024,7 +1485,6 @@
     font-weight: 700;
     paint-order: stroke;
     stroke: var(--surface);
-    stroke-width: 0.5%;
     stroke-linejoin: round;
   }
   .geo__sea {

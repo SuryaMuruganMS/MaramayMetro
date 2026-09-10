@@ -421,6 +421,9 @@ export const tr: Record<Keys, string> = {
   'data.alignmentBody': 'Marmaray merkez kesitinin kot kontrol noktaları.',
   'data.strata': 'Kazı katmanları',
   'data.strataBody': 'Yenikapı kesitinin katmanları ve dönem aralıkları.',
+  'data.world': 'Dünya altlığı',
+  'data.worldBody':
+    'Ülke sınırları, büyük göller ve yedi bin yerleşim noktası; bu haritanın kendi koordinatlarına yansıtılmış hâlde. Natural Earth, kamu malı.',
   'data.download': 'JSON indir',
   'data.licence': 'Lisans',
   'data.licenceBody':

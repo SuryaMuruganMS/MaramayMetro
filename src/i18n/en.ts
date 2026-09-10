@@ -445,6 +445,9 @@ export const en = {
   'data.alignmentBody': 'Level control points for the Marmaray central section.',
   'data.strata': 'Excavation layers',
   'data.strataBody': 'The Yenikapı section: layers and their date ranges.',
+  'data.world': 'World basemap',
+  'data.worldBody':
+    'Country outlines and borders, large lakes, and seven thousand populated places, projected into this map’s own coordinates. Natural Earth, public domain.',
   'data.download': 'Download JSON',
   'data.licence': 'Licence',
   'data.licenceBody':
